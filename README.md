@@ -11,3 +11,6 @@ Ce projet pédagogique et technique est mené par Damien Belharet et Dima Hussei
 
 **Déroulement et Utilisation**
 L'approche choisie repose sur une progression ludique. Les élèves commenceront par découvrir les signaux de manière visuelle via l'interface web, avant de comprendre concrètement comment on nettoie un signal bruité pour établir un diagnostic. Les instructions techniques détaillées pour lancer l'environnement web et exécuter les scripts d'analyse seront documentées ici au fil de notre période de préparation de deux semaines.
+
+
+hi
