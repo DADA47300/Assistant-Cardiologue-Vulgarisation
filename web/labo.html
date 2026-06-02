@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Labo ECG — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Barre du haut -->
+  <nav class="barre">
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <!-- Le role-play : on plante la mission -->
+    <header class="mission">
+      <h1>🩺 Labo ECG — à toi de jouer, ingénieur !</h1>
+      <p>Le cardiologue t'envoie l'enregistrement du cœur d'un patient… mais le signal est sale et illisible.
+         Ta mission : le nettoyer, repérer les battements, et annoncer la fréquence cardiaque du patient.</p>
+    </header>
+
+    <!-- Indicateur des 4 étapes -->
+    <div class="etapes" id="etapes">
+      <div class="pastille active" data-etape="1"><span class="num">1</span> Signal brut</div>
+      <div class="pastille" data-etape="2"><span class="num">2</span> Filtrage</div>
+      <div class="pastille" data-etape="3"><span class="num">3</span> Le bon zoom</div>
+      <div class="pastille" data-etape="4"><span class="num">4</span> Les battements</div>
+    </div>
+
+    <!-- Le graphique (rempli par Plotly) -->
+    <section class="carte graphe">
+      <div id="graphe"></div>
+    </section>
+
+    <!-- Étape 1 -->
+    <section class="carte etape" id="etape1">
+      <h2>Étape 1 — Le signal brut</h2>
+      <p class="explication">Voici ce que reçoit le cardiologue, directement du capteur. Il est pollué par deux
+        parasites : une <strong>ondulation lente</strong> (la respiration, les mouvements) et un
+        <strong>grésillement</strong> (le courant électrique). Tel quel, c'est inexploitable.</p>
+      <button class="bouton" id="btnFiltrer">🧹 Nettoyer le signal</button>
+    </section>
+
+    <!-- Étape 2 -->
+    <section class="carte etape cache" id="etape2">
+      <h2>Étape 2 — On a filtré !</h2>
+      <p class="explication">Les parasites ont disparu : un <strong>filtre</strong> a retiré l'ondulation lente et
+        le grésillement. C'est déjà beaucoup plus net. Mais l'enregistrement dure 24 secondes, donc tout est
+        tassé. Pour voir les battements un par un, il va falloir <strong>zoomer</strong>.</p>
+      <button class="bouton" id="btnVersZoom">🔍 Passer au zoom</button>
+    </section>
+
+    <!-- Étape 3 -->
+    <section class="carte etape cache" id="etape3">
+      <h2>Étape 3 — Trouve le bon zoom</h2>
+      <p class="explication">Déplace le curseur pour choisir la largeur de ce que tu affiches.
+        Trop large : on ne distingue rien. Trop serré : on perd la vue d'ensemble. Trouve le juste milieu.</p>
+      <div class="zoom-ligne">
+        <span>Large</span>
+        <input type="range" id="curseurZoom" min="1.5" max="24" step="0.5" value="24">
+        <span>Serré</span>
+        <span class="valeur" id="valeurZoom">24 s</span>
+      </div>
+      <div class="message" id="messageZoom">Affiche tout l'enregistrement pour l'instant…</div>
+      <button class="bouton" id="btnVersDetection" disabled>Continuer</button>
+    </section>
+
+    <!-- Étape 4 -->
+    <section class="carte etape cache" id="etape4">
+      <h2>Étape 4 — Compte les battements</h2>
+      <p class="explication">On voit bien les ondes maintenant. Demande à l'ordinateur de repérer les grands pics
+        (les <strong>ondes R</strong>). Le temps entre deux pics donne la fréquence cardiaque du patient.</p>
+      <button class="bouton" id="btnDetecter">❤️ Détecter les battements</button>
+    </section>
+
+    <!-- Verdict final -->
+    <section class="carte verdict cache" id="verdict">
+      <div><span class="bpm" id="bpmValeur">–</span></div>
+      <div class="unite">battements par minute</div>
+      <div class="etat" id="etatTexte"></div>
+      <p class="felicitations">Bravo 🎉 Tu as rendu le signal lisible et tu as donné au cardiologue
+        l'information qu'il attendait. C'est exactement le métier d'un ingénieur en traitement du signal.</p>
+      <button class="bouton secondaire" id="btnRecommencer">↻ Recommencer</button>
+    </section>
+
+    <p class="pied">Réalisé par <strong>[vos prénoms]</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <!-- Bibliothèque de graphiques (en local, marche hors-ligne) -->
+  <script src="lib/plotly-basic.min.js"></script>
+  <!-- Notre moteur de signaux -->
+  <script src="signaux.js"></script>
+
+  <!-- La logique de CETTE page -->
+  <script>
+  /* ---------- 1) On prépare les signaux une fois pour toutes ---------- */
+  const FE = 200;                                   // points par seconde
+  const ecg    = genererECG({ bpm: 72, duree: 24, fe: FE, graine: 7 });
+  const brut   = ajouterBruit(ecg, {});             // version "sale"
+  const propre = filtrer(brut, FE);                 // version nettoyée
+  const DUREE  = ecg.t[ecg.t.length - 1];
+  const CENTRE = DUREE / 2;                          // on zoome autour du milieu
+
+  let etapeActuelle = 1;
+  let plageActuelle = [0, DUREE];                    // ce qu'on affiche en x
+  let picsIndices = [];
+
+  /* ---------- 2) Fonction qui dessine le graphe ---------- */
+  function tracer(valeurs, couleur, plage, pics) {
+    const courbes = [{
+      x: ecg.t, y: valeurs, type: "scatter", mode: "lines",
+      line: { color: couleur, width: 1.2 }, hoverinfo: "skip"
+    }];
+    if (pics && pics.length) {
+      courbes.push({
+        x: pics.map(i => ecg.t[i]), y: pics.map(i => valeurs[i]),
+        type: "scatter", mode: "markers",
+        marker: { color: "#e11d48", size: 10, line: { color: "#fff", width: 1.5 } },
+        hoverinfo: "skip"
+      });
+    }
+    const mise = {
+      margin: { l: 24, r: 14, t: 8, b: 38 },
+      xaxis: { title: "temps (secondes)", range: plage, fixedrange: true,
+               gridcolor: "#eef2ef", zeroline: false },
+      yaxis: { fixedrange: true, showticklabels: false, gridcolor: "#f3f6f4", zeroline: false },
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "Atkinson, sans-serif", color: "#4b6058", size: 12 },
+      showlegend: false, dragmode: false
+    };
+    Plotly.react("graphe", courbes, mise, { displayModeBar: false, responsive: true });
+  }
+
+  /* ---------- 3) Afficher la bonne étape ---------- */
+  function allerEtape(n) {
+    etapeActuelle = n;
+    // cartes
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById("etape" + i).classList.toggle("cache", i !== n);
+    }
+    document.getElementById("verdict").classList.add("cache");
+    // pastilles
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      const e = Number(p.dataset.etape);
+      p.classList.toggle("active", e === n);
+      p.classList.toggle("faite", e < n);
+    });
+    // graphe selon l'étape
+    if (n === 1) tracer(brut, "#b45309", [0, DUREE]);
+    if (n === 2) tracer(propre, "#0e9f6e", [0, DUREE]);
+    if (n === 3) { appliquerZoom(); }
+    if (n === 4) tracer(propre, "#0e9f6e", plageActuelle);
+  }
+
+  /* ---------- 4) Le curseur de zoom ---------- */
+  function appliquerZoom() {
+    const largeur = Number(document.getElementById("curseurZoom").value);
+    document.getElementById("valeurZoom").textContent = largeur + " s";
+    let x0 = CENTRE - largeur / 2, x1 = CENTRE + largeur / 2;
+    if (x0 < 0) { x1 -= x0; x0 = 0; }
+    if (x1 > DUREE) { x0 -= (x1 - DUREE); x1 = DUREE; if (x0 < 0) x0 = 0; }
+    plageActuelle = [x0, x1];
+    tracer(propre, "#0e9f6e", plageActuelle);
+
+    // message qui réagit + bouton activé seulement dans la bonne zone
+    const msg = document.getElementById("messageZoom");
+    const btn = document.getElementById("btnVersDetection");
+    msg.className = "message";
+    if (largeur > 13) {
+      msg.classList.add("pas-encore");
+      msg.textContent = "🔭 Trop large : les battements sont tassés, on ne les distingue pas. Zoome encore.";
+      btn.disabled = true;
+    } else if (largeur < 2.5) {
+      msg.classList.add("pas-encore");
+      msg.textContent = "🔬 Trop serré : tu ne vois qu'un ou deux battements, tu perds la vue d'ensemble.";
+      btn.disabled = true;
+    } else if (largeur >= 3 && largeur <= 8) {
+      msg.classList.add("bon");
+      msg.textContent = "✅ Parfait : on voit bien chaque battement. Tu peux continuer !";
+      btn.disabled = false;
+    } else {
+      msg.textContent = "Presque… ajuste encore un peu le curseur.";
+      btn.disabled = true;
+    }
+  }
+
+  /* ---------- 5) La détection des battements ---------- */
+  function detecter() {
+    picsIndices = detecterPicsR(propre, FE);
+    tracer(propre, "#0e9f6e", plageActuelle, picsIndices);
+
+    const bpm = calculerBPM(picsIndices, FE);
+    const diag = diagnostiquer(bpm);
+    document.getElementById("bpmValeur").textContent = bpm;
+    const etat = document.getElementById("etatTexte");
+    etat.textContent = diag.etat + " — " + diag.texte;
+    etat.className = "etat " + diag.couleur;
+
+    document.getElementById("etape4").classList.add("cache");
+    document.getElementById("verdict").classList.remove("cache");
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      p.classList.add("faite"); p.classList.remove("active");
+    });
+  }
+
+  /* ---------- 6) On branche les boutons ---------- */
+  document.getElementById("btnFiltrer").addEventListener("click", () => allerEtape(2));
+  document.getElementById("btnVersZoom").addEventListener("click", () => allerEtape(3));
+  document.getElementById("btnVersDetection").addEventListener("click", () => allerEtape(4));
+  document.getElementById("btnDetecter").addEventListener("click", detecter);
+  document.getElementById("curseurZoom").addEventListener("input", appliquerZoom);
+  document.getElementById("btnRecommencer").addEventListener("click", function () {
+    document.getElementById("curseurZoom").value = 24;
+    allerEtape(1);
+  });
+
+  /* ---------- 7) C'est parti ---------- */
+  allerEtape(1);
+  </script>
+</body>
+</html>

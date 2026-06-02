@@ -1,0 +1,196 @@
+/* =====================================================================
+   style.css — l'habillage commun à toutes les pages du site
+   Thème : "papier d'électrocardiogramme" (fond quadrillé léger),
+   couleurs : encre sombre, vert "signal", rouge "battement".
+   ===================================================================== */
+
+/* --- Nos polices, stockées dans le dossier fonts/ (marchent hors-ligne) --- */
+@font-face {
+  font-family: "Bricolage"; font-style: normal; font-weight: 400;
+  src: url("fonts/bricolage-grotesque-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bricolage"; font-style: normal; font-weight: 700;
+  src: url("fonts/bricolage-grotesque-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bricolage"; font-style: normal; font-weight: 800;
+  src: url("fonts/bricolage-grotesque-latin-800-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson"; font-style: normal; font-weight: 400;
+  src: url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson"; font-style: normal; font-weight: 700;
+  src: url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* --- Les couleurs et réglages du site, au même endroit --- */
+:root {
+  --papier: #fbfaf6;
+  --encre: #16302a;
+  --encre-doux: #4b6058;
+  --signal: #0e9f6e;
+  --signal-fonce: #0b7a55;
+  --battement: #e11d48;
+  --carte: #ffffff;
+  --bord: #e3e7e2;
+  --ok: #0e9f6e;
+  --attention: #d97706;
+  --titre: "Bricolage", "Trebuchet MS", sans-serif;
+  --texte: "Atkinson", "Segoe UI", sans-serif;
+  --rayon: 16px;
+  --ombre: 0 10px 30px rgba(22, 48, 42, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--texte);
+  color: var(--encre);
+  background-color: var(--papier);
+  /* quadrillage façon papier ECG, très léger */
+  background-image:
+    linear-gradient(rgba(225, 29, 72, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 29, 72, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(225, 29, 72, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 29, 72, 0.09) 1px, transparent 1px);
+  background-size: 12px 12px, 12px 12px, 60px 60px, 60px 60px;
+  line-height: 1.5;
+}
+
+/* --- Barre du haut --- */
+.barre {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--carte);
+  border-bottom: 1px solid var(--bord);
+  position: sticky; top: 0; z-index: 10;
+}
+.barre .marque {
+  font-family: var(--titre); font-weight: 800; font-size: 1.25rem;
+  color: var(--encre); text-decoration: none; letter-spacing: -0.02em;
+}
+.barre .marque span { color: var(--battement); }
+.barre a.lien { color: var(--signal-fonce); text-decoration: none; font-weight: 700; }
+.barre a.lien:hover { text-decoration: underline; }
+
+/* --- Conteneur central --- */
+.page { max-width: 980px; margin: 0 auto; padding: 28px 22px 60px; }
+
+/* --- Bandeau de mission (le role-play) --- */
+.mission {
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7a55 100%);
+  color: #eafff5;
+  border-radius: var(--rayon);
+  padding: 22px 26px;
+  box-shadow: var(--ombre);
+  margin-bottom: 26px;
+}
+.mission h1 {
+  font-family: var(--titre); font-weight: 800; font-size: 1.7rem;
+  margin: 0 0 6px; letter-spacing: -0.02em;
+}
+.mission p { margin: 0; opacity: 0.95; }
+
+/* --- Indicateur d'étapes --- */
+.etapes { display: flex; gap: 10px; margin: 0 0 22px; flex-wrap: wrap; }
+.etapes .pastille {
+  flex: 1; min-width: 120px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 12px;
+  background: var(--carte); border: 1px solid var(--bord);
+  font-size: 0.92rem; color: var(--encre-doux);
+}
+.etapes .pastille .num {
+  width: 26px; height: 26px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-family: var(--titre);
+  font-weight: 700; background: #eef2ef; color: var(--encre-doux);
+}
+.etapes .pastille.active { border-color: var(--signal); color: var(--encre); font-weight: 700; }
+.etapes .pastille.active .num { background: var(--signal); color: #fff; }
+.etapes .pastille.faite .num { background: var(--encre); color: #fff; }
+
+/* --- Cartes --- */
+.carte {
+  background: var(--carte); border: 1px solid var(--bord);
+  border-radius: var(--rayon); box-shadow: var(--ombre);
+  padding: 20px 22px; margin-bottom: 22px;
+}
+.graphe { padding: 10px; }
+#graphe { width: 100%; height: 360px; }
+
+.carte h2 {
+  font-family: var(--titre); font-weight: 700; font-size: 1.25rem;
+  margin: 0 0 6px; color: var(--encre);
+}
+.carte .explication { color: var(--encre-doux); margin: 0 0 16px; }
+
+/* --- Boutons --- */
+.bouton {
+  font-family: var(--titre); font-weight: 700; font-size: 1.02rem;
+  border: none; cursor: pointer; border-radius: 12px;
+  padding: 13px 22px; background: var(--signal); color: #fff;
+  transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 16px rgba(14, 159, 110, 0.28);
+}
+.bouton:hover { background: var(--signal-fonce); transform: translateY(-1px); }
+.bouton:active { transform: translateY(1px); }
+.bouton:disabled { background: #cdd6d1; color: #fff; cursor: not-allowed; box-shadow: none; transform: none; }
+.bouton.secondaire {
+  background: transparent; color: var(--signal-fonce);
+  box-shadow: none; border: 2px solid var(--signal); padding: 11px 20px;
+}
+.bouton.secondaire:hover { background: #eafaf3; }
+
+/* --- Curseur du zoom --- */
+.zoom-ligne { display: flex; align-items: center; gap: 14px; margin: 6px 0 14px; }
+.zoom-ligne input[type=range] { flex: 1; accent-color: var(--signal); height: 6px; }
+.zoom-ligne .valeur { font-family: var(--titre); font-weight: 700; min-width: 70px; text-align: right; }
+
+/* --- Zone de message qui réagit --- */
+.message {
+  border-radius: 12px; padding: 12px 16px; margin: 4px 0 14px;
+  font-weight: 700; background: #f3f6f4; color: var(--encre-doux);
+}
+.message.bon { background: #e6f8ef; color: var(--signal-fonce); }
+.message.pas-encore { background: #fff4e5; color: var(--attention); }
+
+/* --- Verdict final --- */
+.verdict { text-align: center; padding: 26px; }
+.verdict .bpm {
+  font-family: var(--titre); font-weight: 800; font-size: 3.4rem;
+  color: var(--battement); line-height: 1; letter-spacing: -0.03em;
+}
+.verdict .unite { font-size: 1.1rem; color: var(--encre-doux); }
+.verdict .etat { font-family: var(--titre); font-weight: 700; font-size: 1.4rem; margin-top: 10px; }
+.verdict .etat.vert { color: var(--signal-fonce); }
+.verdict .etat.orange { color: var(--attention); }
+.verdict .etat.rouge { color: var(--battement); }
+.verdict .felicitations { margin-top: 12px; color: var(--encre-doux); }
+
+/* --- Petit utilitaire pour cacher/montrer --- */
+.cache { display: none !important; }
+
+/* --- Pied de page --- */
+.pied { text-align: center; color: var(--encre-doux); font-size: 0.88rem; padding: 10px 0 0; }
+
+/* --- Petite animation d'arrivée --- */
+@keyframes apparait { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.mission, .etapes, .carte { animation: apparait 0.5s ease both; }
+.etapes { animation-delay: 0.06s; }
+.graphe { animation-delay: 0.12s; }
+
+/* --- Responsive (petits écrans) --- */
+@media (max-width: 640px) {
+  .mission h1 { font-size: 1.4rem; }
+  #graphe { height: 300px; }
+  .etapes .pastille { min-width: 100%; }
+}
