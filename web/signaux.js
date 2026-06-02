@@ -114,31 +114,43 @@ function ajouterBruit(signal, reglages) {
      B) on lisse légèrement pour effacer le grésillement et le ronflement,
         en remplaçant chaque point par la moyenne de ses voisins proches.
    Renvoie un nouveau tableau de valeurs nettoyées. */
-function filtrer(valeurs, fe) {
+function filtrer(valeurs, fe, options) {
+  // options.derive  : true = on enlève l'ondulation lente, false = on n'y touche pas
+  // options.lissage : "aucun" | "leger" | "fort"  (fort = on écrase TOUT, même les battements)
+  const o = Object.assign({ derive: true, lissage: "leger" }, options);
   const n = valeurs.length;
 
-  // A) Estimation de la dérive : grosse moyenne glissante (~0,8 s).
-  const demiLarge = Math.round(0.4 * fe);
-  const sansDerive = new Array(n);
-  for (let i = 0; i < n; i++) {
-    let somme = 0, compte = 0;
-    for (let k = i - demiLarge; k <= i + demiLarge; k++) {
-      if (k >= 0 && k < n) { somme += valeurs[k]; compte++; }
+  // A) Estimation de la dérive : grosse moyenne glissante (~0,8 s), puis on la retire.
+  let etapeA;
+  if (o.derive) {
+    const demiLarge = Math.round(0.4 * fe);
+    etapeA = new Array(n);
+    for (let i = 0; i < n; i++) {
+      let somme = 0, compte = 0;
+      for (let k = i - demiLarge; k <= i + demiLarge; k++) {
+        if (k >= 0 && k < n) { somme += valeurs[k]; compte++; }
+      }
+      etapeA[i] = valeurs[i] - somme / compte; // on retire la partie lente
     }
-    sansDerive[i] = valeurs[i] - somme / compte; // on retire la partie lente
+  } else {
+    etapeA = valeurs.slice(); // on laisse l'ondulation lente
   }
 
-  // B) Petit lissage (~5 points) pour gommer le grésillement/ronflement.
-  const demiLisse = 2;
-  const propre = new Array(n);
+  // B) Lissage pour gommer le grésillement.
+  let demiLisse = 0;
+  if (o.lissage === "leger") demiLisse = 2;                 // ~5 points : gomme le bruit, garde les R
+  if (o.lissage === "fort")  demiLisse = Math.round(0.06 * fe); // ~25 points : écrase aussi les pics R !
+  if (demiLisse === 0) return etapeA;
+
+  const sortie = new Array(n);
   for (let i = 0; i < n; i++) {
     let somme = 0, compte = 0;
     for (let k = i - demiLisse; k <= i + demiLisse; k++) {
-      if (k >= 0 && k < n) { somme += sansDerive[k]; compte++; }
+      if (k >= 0 && k < n) { somme += etapeA[k]; compte++; }
     }
-    propre[i] = somme / compte;
+    sortie[i] = somme / compte;
   }
-  return propre;
+  return sortie;
 }
 
 /* --- Détection des pics R (les battements) ----------------------------
@@ -183,7 +195,41 @@ function diagnostiquer(bpm) {
   return { etat: "Rythme normal", texte: "entre 60 et 100 bpm, tout va bien", couleur: "vert" };
 }
 
-/* --- Permet d'utiliser ces fonctions aussi dans Node (pour nos tests) -- */
+/* --- Trouve le sommet (maximum local) le plus proche d'une position -----
+   Quand l'élève clique sur le graphe, on "aimante" son clic vers le vrai
+   sommet le plus proche, pour que le marqueur tombe pile sur le pic. */
+function trouverSommetProche(valeurs, indexApprox, demiFenetre) {
+  const n = valeurs.length;
+  const debut = Math.max(0, indexApprox - demiFenetre);
+  const fin = Math.min(n - 1, indexApprox + demiFenetre);
+  let meilleur = debut;
+  for (let i = debut; i <= fin; i++) {
+    if (valeurs[i] > valeurs[meilleur]) meilleur = i;
+  }
+  return meilleur;
+}
+
+/* --- Compare les pics choisis par l'élève aux vrais pics ----------------
+   Pour chaque pic choisi, on regarde s'il y a un vrai pic tout proche.
+   Renvoie : combien de bons (trouves), combien d'oubliés (manques),
+   combien d'erreurs (faux). */
+function evaluerSelection(picsVrais, picsChoisis, fe, tolerance) {
+  const tol = Math.round((tolerance || 0.15) * fe);
+  const restants = picsVrais.slice();
+  let trouves = 0, faux = 0;
+  for (const c of picsChoisis) {
+    let idx = -1, meilleureDist = tol + 1;
+    for (let k = 0; k < restants.length; k++) {
+      const d = Math.abs(restants[k] - c);
+      if (d <= tol && d < meilleureDist) { meilleureDist = d; idx = k; }
+    }
+    if (idx >= 0) { trouves++; restants.splice(idx, 1); }
+    else faux++;
+  }
+  return { trouves: trouves, manques: restants.length, faux: faux, total: picsVrais.length };
+}
+
+
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { genererECG, ajouterBruit, filtrer, detecterPicsR, calculerBPM, diagnostiquer };
+  module.exports = { genererECG, ajouterBruit, filtrer, detecterPicsR, calculerBPM, diagnostiquer, trouverSommetProche, evaluerSelection };
 }

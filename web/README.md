@@ -38,4 +38,4 @@ pour rester clairs et lisibles par des lycéens.
 
 ## Auteurs
 
-Damien Belharet & Dima Husseini — Stage 2026, ENSEIRB-MATMECA.
+[Vos prénoms] — Stage 2026, ENSEIRB-MATMECA.

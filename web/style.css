@@ -194,3 +194,21 @@ body {
   #graphe { height: 300px; }
   .etapes .pastille { min-width: 100%; }
 }
+
+/* =====================================================================
+   Éléments de jeu (ajoutés pour la version interactive du Labo)
+   ===================================================================== */
+.cartes-choix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 6px 0 14px; }
+.choix {
+  text-align: left; padding: 14px 16px; border: 2px solid var(--bord);
+  border-radius: 12px; background: #fff; cursor: pointer;
+  font-family: var(--texte); color: var(--encre);
+  transition: border-color .12s ease, transform .08s ease, box-shadow .12s ease;
+}
+.choix:hover { border-color: var(--signal); transform: translateY(-1px); }
+.choix.selectionne { border-color: var(--signal); box-shadow: 0 6px 16px rgba(14,159,110,.20); background: #f3fbf8; }
+.choix .opt-titre { font-family: var(--titre); font-weight: 700; display: block; margin-bottom: 3px; }
+.choix .opt-sous { font-size: .88rem; color: var(--encre-doux); }
+.compteur { font-family: var(--titre); font-weight: 700; color: var(--signal-fonce); margin: 0 0 10px; }
+.boutons-ligne { display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 640px) { .cartes-choix { grid-template-columns: 1fr; } }
