@@ -19,7 +19,7 @@ Tout fonctionne hors-ligne (les bibliothèques et les polices sont incluses dans
 |------|------|------|
 | `index.html` | Accueil / mission | ✅ |
 | `labo.html` | Labo ECG : nettoyer un signal et trouver la fréquence cardiaque | ✅ |
-| C'est quoi un signal ? | notions de base | à venir |
+| C'est quoi un signal ? | notions de base | ✅ |
 | Le cœur et l'ECG | biologie + ondes P-QRS-T | à venir |
 | Détective des pathologies | reconnaître tachy/brady/fibrillation | à venir |
 | Métiers & débouchés | les métiers du domaine | à venir |
@@ -38,4 +38,4 @@ pour rester clairs et lisibles par des lycéens.
 
 ## Auteurs
 
-[Vos prénoms] — Stage 2026, ENSEIRB-MATMECA.
+Damien Belharet & Dima Husseini — Stage 2026, ENSEIRB-MATMECA.
