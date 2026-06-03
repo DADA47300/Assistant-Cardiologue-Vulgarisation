@@ -6,7 +6,7 @@
   <title>C'est quoi un signal ? — Lis un cœur</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Styles spécifiques pour les mini-jeux de cette page */
+    /* ── Styles locaux à cette page ── */
     .zone-jeu {
       background: #ffffff;
       border: 2px solid var(--bord, #e5e7eb);
@@ -42,6 +42,7 @@
       width: 200px;
       margin-top: 8px;
       cursor: pointer;
+      accent-color: var(--signal);
     }
     .bouton-action {
       background: var(--signal, #0e9f6e);
@@ -52,78 +53,134 @@
       font-weight: bold;
       cursor: pointer;
       margin-top: 16px;
-      transition: transform 0.1s;
+      transition: transform 0.1s, background 0.15s;
     }
-    .bouton-action:hover {
-      transform: scale(1.05);
+    .bouton-action:hover { transform: scale(1.05); background: var(--signal-fonce); }
+    .bouton-action.inactif { background: #64748b; }
+
+    /* ── Annotation de période (flèche double) ── */
+    .periode-annot {
+      position: relative;
+      display: inline-block;
+      margin-top: 6px;
     }
-    .bouton-action.inactif {
-      background: #64748b;
-    }
-    /* --- Spectre --- */
+
+    /* ── Spectre ── */
     .spectre-boutons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 20px;
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center; margin-top: 20px;
     }
     .bouton-spectre {
-      background: #ffffff;
-      color: #2563eb;
+      background: #ffffff; color: #2563eb;
       border: 2px solid #2563eb;
-      padding: 12px 28px;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
+      padding: 12px 28px; border-radius: 10px;
+      font-size: 1rem; font-weight: bold; cursor: pointer;
       transition: background 0.2s, color 0.2s, transform 0.1s, box-shadow 0.2s;
       box-shadow: 0 1px 4px rgba(37,99,235,0.12);
     }
-    .bouton-spectre:hover {
-      background: #eff6ff;
-      transform: scale(1.04);
-      box-shadow: 0 4px 12px rgba(37,99,235,0.22);
+    .bouton-spectre:hover { background: #eff6ff; transform: scale(1.04); box-shadow: 0 4px 12px rgba(37,99,235,0.22); }
+    .bouton-spectre.actif { background: #2563eb; color: #fff; border-color: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,.40); }
+
+    /* ── Messages de victoire partagés ── */
+    .msg-victoire {
+      font-family: var(--titre); font-weight: 700; font-size: 1.3rem;
+      color: var(--signal-fonce); margin-top: 14px; min-height: 32px;
+      opacity: 0; transition: opacity 0.35s ease;
     }
-    .bouton-spectre.actif {
-      background: #2563eb;
-      color: #ffffff;
-      border-color: #1d4ed8;
-      box-shadow: 0 4px 14px rgba(37,99,235,0.40);
+    .msg-victoire.visible { opacity: 1; }
+
+    /* ── Section Échantillonnage ── */
+    .echant-info {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      margin: 10px 0 4px;
     }
-    #message-victoire {
-      color: var(--signal, #0e9f6e);
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-top: 16px;
-      min-height: 36px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+    .echant-chip {
+      padding: 6px 14px; border-radius: 20px; font-family: var(--titre);
+      font-weight: 700; font-size: 0.88rem; border: 2px solid;
     }
-    #message-victoire.visible {
-      opacity: 1;
+    .echant-chip.ok  { border-color: var(--signal);   color: var(--signal-fonce);   background: #f0fdf4; }
+    .echant-chip.ko  { border-color: var(--battement); color: var(--battement);      background: #fff1f2; }
+    .echant-chip.neutre { border-color: #94a3b8; color: #475569; background: #f8fafc; }
+
+    /* ── Section Bruit ── */
+    .bruit-legende {
+      display: flex; gap: 20px; justify-content: center;
+      margin: 12px 0 4px; flex-wrap: wrap;
+    }
+    .bruit-leg-item {
+      display: flex; align-items: center; gap: 7px;
+      font-family: var(--titre); font-weight: 700; font-size: 0.88rem;
+    }
+    .bruit-leg-couleur {
+      width: 28px; height: 4px; border-radius: 2px;
+    }
+
+    /* ── Boîte de définition ── */
+    .def-box {
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      border-left: 4px solid var(--signal);
+      border-radius: 0 12px 12px 0;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 1.02rem;
+    }
+    .def-box strong { color: var(--signal-fonce); }
+
+    /* ── Carte "notion clé" ── */
+    .notion-grille {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; margin: 14px 0;
+    }
+    .notion-carte {
+      background: #f8fafc; border: 1.5px solid var(--bord);
+      border-radius: 12px; padding: 14px 12px; text-align: center;
+    }
+    .notion-carte .notion-icone { font-size: 1.8rem; margin-bottom: 6px; }
+    .notion-carte .notion-titre { font-family: var(--titre); font-weight: 700; font-size: 0.95rem; color: var(--encre); }
+    .notion-carte .notion-def   { font-size: 0.82rem; color: var(--encre-doux); margin-top: 4px; }
+
+    @media (max-width: 640px) {
+      .notion-grille { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 
   <nav class="barre">
-    <a class="marque" href="index.html?badge=signal">Lis un <span>cœur</span></a>
-    <a class="lien" href="index.html?badge=signal">← Accueil</a>
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html">← Accueil</a>
   </nav>
 
   <main class="page">
 
-    <!-- ═══════════════════════════════════════════════════════
-         MINI-JEU TINDER — Signal ou Objet ?
-         ═══════════════════════════════════════════════════════ -->
-    <section class="carte" id="jeu-tinder">
-      <h2>🃏 0. Signal ou Objet ? — Le test de reconnaissance</h2>
-      <p>Avant de plonger dans les ondes, teste tes instincts !
-         <strong>Swipe à droite</strong> (ou ✓) si l'objet transporte une information → c'est un signal.
-         <strong>Swipe à gauche</strong> (ou ✕) si ce n'est qu'un objet ordinaire.</p>
+    <!-- ════════════════════════════════════════════════════════
+         BANDEAU INTRO
+         ════════════════════════════════════════════════════════ -->
+    <header class="mission">
+      <h1>🌊 C'est quoi un signal ?</h1>
+      <p>Avant de plonger dans le cœur humain, comprenons les bases. Un signal, c'est toute grandeur
+         physique qui <strong>transporte une information</strong>. Ici tu vas jouer avec les signaux, les entendre,
+         les déformer — et comprendre pourquoi le bruit est l'ennemi numéro 1 de l'ingénieur.</p>
+    </header>
 
-      <!-- Zone active du jeu -->
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 0 — DÉFINITION + MINI-JEU TINDER
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-definition">
+      <h2>🔍 0. C'est quoi un signal ?</h2>
+      <p>Un signal, ce n'est pas un objet : c'est une <strong>information qui voyage</strong>.
+         La lumière d'un feu rouge, les vibrations d'un haut-parleur, les impulsions électriques
+         du cœur — tout ça, c'est des signaux.</p>
+
+      <div class="def-box">
+        <strong>Définition :</strong> Un signal est une grandeur physique (tension, lumière, son, pression…)
+        qui <strong>varie dans le temps</strong> pour transporter une information d'un émetteur vers un récepteur.
+      </div>
+
+      <p>Maintenant, teste tes instincts ! <strong>Swipe à droite ✓</strong> si ça transporte une information,
+         <strong>swipe à gauche ✕</strong> si c'est juste un objet inerte.</p>
+
+      <!-- Zone active du jeu Tinder -->
       <div id="tinder-jeu-zone">
         <p class="tinder-compteur" id="tinder-compteur">Carte 1 / 10</p>
         <div class="tinder-directions">
@@ -147,23 +204,38 @@
         <button class="tinder-rejouer" id="tinder-btn-rejouer">↩ Rejouer</button>
       </div>
 
-      <!-- Notification flottante -->
       <div id="tinder-notif" class="tinder-notif" role="status" aria-live="polite"></div>
     </section>
 
-    <header class="mission">
-      <h1>🌊 C'est quoi un signal ?</h1>
-      <p>Avant de plonger dans le cœur humain, comprenons les bases ! Un signal, c'est comme une vague. 
-         Joue avec les curseurs pour comprendre comment l'<strong>Amplitude</strong> (la hauteur) et la <strong>Fréquence</strong> (la vitesse des vagues) modifient le signal... et le son !</p>
-    </header>
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 1 — AMPLITUDE & FRÉQUENCE (bac à sable)
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-bac">
+      <h2>🎛️ 1. Amplitude & Fréquence — Le bac à sable</h2>
+      <p>Un signal sinusoïdal est entièrement défini par deux paramètres :</p>
 
-    <section class="carte">
-      <h2>1. Le Bac à sable (Découverte)</h2>
-      <p>Modifie les paramètres et écoute le résultat. Plus la fréquence est élevée, plus le son est aigu !</p>
-      
+      <div class="notion-grille">
+        <div class="notion-carte">
+          <div class="notion-icone">📏</div>
+          <div class="notion-titre">Amplitude (A)</div>
+          <div class="notion-def">La <em>hauteur</em> de la vague. Plus A est grand, plus le signal est fort (son fort, courant élevé…).</div>
+        </div>
+        <div class="notion-carte">
+          <div class="notion-icone">⚡</div>
+          <div class="notion-titre">Fréquence (f)</div>
+          <div class="notion-def">Le nombre de cycles par seconde, en <em>Hertz (Hz)</em>. Plus f est élevée, plus le son est aigu.</div>
+        </div>
+        <div class="notion-carte">
+          <div class="notion-icone">⏱️</div>
+          <div class="notion-titre">Période (T)</div>
+          <div class="notion-def">La durée d'un cycle complet. <em>T = 1 / f</em> : si f = 2 Hz alors T = 0,5 s.</div>
+        </div>
+      </div>
+
+      <p>Joue avec les curseurs et écoute le résultat. Formule : <code>y(t) = A × sin(2π × f × t)</code></p>
+
       <div class="zone-jeu">
         <canvas id="canvas-bac-a-sable"></canvas>
-        
         <div class="panneau-controles">
           <div class="controle">
             <label>Amplitude : <strong id="val-amp-bac">2.0</strong></label>
@@ -174,77 +246,136 @@
             <input type="range" id="slide-freq-bac" min="0.5" max="5" step="0.1" value="1">
           </div>
         </div>
-        <button id="btn-son" class="bouton-action inactif">🔊 Activer le Son</button>
+        <button id="btn-son" class="bouton-action inactif">🔊 Activer le son</button>
       </div>
     </section>
 
-    <section class="carte">
-      <h2>2. Le Défi de Synchronisation 🎯</h2>
-      <p>L'ordinateur a généré un signal cible (en pointillés gris). Utilise tes curseurs pour superposer exactement ton signal (en vert) sur le sien !</p>
-      
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 2 — DÉFI SYNCHRONISATION
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-sync">
+      <h2>🎯 2. Défi de synchronisation</h2>
+      <p>L'ordinateur a généré un signal cible <span style="color:#94a3b8; font-weight:700;">(pointillés gris)</span>.
+         Règle ton amplitude et ta fréquence pour que ton signal
+         <span style="color:var(--signal); font-weight:700;">(vert)</span> se superpose exactement dessus !</p>
+
       <div class="zone-jeu">
         <canvas id="canvas-defi"></canvas>
-        
+        <div style="margin-top:10px; font-size:0.88rem; color:var(--encre-doux);">
+          Indice : observe d'abord la <em>hauteur</em> des pics, puis compte les cycles sur 2 secondes.
+        </div>
         <div class="panneau-controles">
           <div class="controle">
-            <label>Ton Amplitude</label>
+            <label>Amplitude : <strong id="val-amp-defi">1.0</strong></label>
             <input type="range" id="slide-amp-defi" min="0.5" max="4" step="0.5" value="1">
           </div>
           <div class="controle">
-            <label>Ta Fréquence</label>
+            <label>Fréquence : <strong id="val-freq-defi">1.0</strong> Hz</label>
             <input type="range" id="slide-freq-defi" min="0.5" max="4" step="0.5" value="1">
           </div>
         </div>
-        <div id="message-victoire">✨ Signal Synchronisé ! Bien joué ! ✨</div>
-        <button id="btn-nouvelle-cible" class="bouton-action">Générer une nouvelle cible</button>
+        <div class="msg-victoire" id="message-victoire">✨ Signal synchronisé ! Bien joué !</div>
+        <button id="btn-nouvelle-cible" class="bouton-action">🎲 Nouvelle cible</button>
       </div>
     </section>
 
-    <section class="carte">
-      <h2>3. Le Défi de la Période ⏱️</h2>
-      <p>La **Période (T)** est le temps (en secondes) que met la vague pour faire un motif complet. 
-         Regarde la grille : chaque grande ligne verticale vaut 0.5 seconde. Ajuste ton curseur pour atteindre la période demandée !</p>
-      
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 3 — DÉFI DE LA PÉRIODE (amélioré)
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-periode">
+      <h2>⏱️ 3. La Période — lire le temps sur le graphe</h2>
+      <p>La <strong>période T</strong> est la durée d'un cycle complet (un aller-retour de la vague).
+         Sur le graphe ci-dessous, la <strong>grille</strong> marque les secondes.
+         Une accolade <span style="color:var(--battement);font-weight:700;">rouge</span> te montre
+         exactement la largeur d'un cycle.</p>
+      <p>Objectif : règle le curseur pour atteindre la période cible
+         <strong id="cible-periode-texte" style="color:var(--signal-fonce);">1.5</strong> s.</p>
+
       <div class="zone-jeu">
-        <h3 style="margin-bottom: 12px; color: var(--encre);">Objectif : Atteindre une période <span id="cible-periode-texte" style="color: #057a55; font-weight: bold;">2.0</span> s</h3>
         <canvas id="canvas-periode"></canvas>
-        
         <div class="panneau-controles">
           <div class="controle">
-            <label>Ta Période (T) : <strong id="val-per-defi">1.0</strong> s</label>
+            <label>Ta Période T : <strong id="val-per-defi">1.0</strong> s &nbsp;→&nbsp; f = <strong id="val-freq-per">1.0</strong> Hz</label>
             <input type="range" id="slide-per-defi" min="0.5" max="2.5" step="0.5" value="1">
           </div>
         </div>
-        <div id="message-victoire-periode" style="color: var(--signal, #0e9f6e); font-size: 1.5rem; font-weight: bold; margin-top: 16px; min-height: 36px; display: none;">✨ Période exacte !</div>
-        <button id="btn-nouvelle-periode" class="bouton-action">Autre période cible</button>
+        <div class="msg-victoire" id="message-victoire-periode">✨ Période exacte ! T = <span id="periode-gagnee-val">–</span> s</div>
+        <button id="btn-nouvelle-periode" class="bouton-action">🎲 Autre période cible</button>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════
-         LE SPECTRE — Visualiseur de fréquences
-         ═══════════════════════════════════════════════════════ -->
-    <section class="carte" id="section-spectre">
-      <h2>4. Le Spectre : La recette secrète du signal</h2>
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 4 — ÉCHANTILLONNAGE (nouvelle section)
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-echantillonnage">
+      <h2>📊 4. L'échantillonnage — un signal discret</h2>
+      <p>Un ordinateur ne peut pas stocker un signal <em>continu</em> : il le prend en photo
+         très rapidement, à intervalles réguliers. C'est l'<strong>échantillonnage</strong>.
+         La fréquence d'échantillonnage <strong>fₑ</strong> (en Hz) est le nombre de mesures par seconde.</p>
+
+      <div class="def-box">
+        <strong>Théorème de Shannon :</strong> pour capturer fidèlement un signal de fréquence <em>f</em>,
+        il faut échantillonner à <em>fₑ ≥ 2f</em>.
+        En dessous, le signal est déformé — c'est l'<strong>aliasing</strong>.
+      </div>
+
+      <p>Déplace le curseur pour changer la fréquence d'échantillonnage et observe la reconstruction.</p>
+
+      <div class="zone-jeu">
+        <canvas id="canvas-echant"></canvas>
+
+        <div id="echant-info-chips" class="echant-info">
+          <!-- rempli par JS -->
+        </div>
+
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Fréquence d'échantillonnage fₑ : <strong id="val-fe">8</strong> Hz</label>
+            <input type="range" id="slide-fe" min="1" max="40" step="1" value="8">
+          </div>
+        </div>
+        <p id="msg-echant" style="font-family:var(--titre); font-weight:700; font-size:0.95rem; margin:10px 0 0; min-height:24px;"></p>
+      </div>
+
+      <p style="font-size:0.9rem; color:var(--encre-doux);">
+        💡 En ECG, on échantillonne typiquement à <strong>500 Hz</strong> ou <strong>1 000 Hz</strong>
+        pour capturer fidèlement les pics R (qui durent ~20 ms).
+      </p>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 5 — SPECTRE
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-spectre">
+      <h2>🎵 5. Le spectre — la recette secrète du signal</h2>
       <p>Un signal complexe (comme une voix) est un <strong>mélange de plusieurs ondes simples</strong>.
-         Le spectre permet de séparer les <strong>graves (à gauche)</strong> des <strong>aigus (à droite)</strong>
-         pour voir exactement de quoi le son est composé.</p>
+         Le spectre permet de séparer les <strong>graves</strong> (basses fréquences, à gauche)
+         des <strong>aigus</strong> (hautes fréquences, à droite) pour voir exactement de quoi le son est composé.</p>
+
+      <div class="def-box">
+        <strong>Spectre :</strong> représentation qui montre <em>quelles fréquences</em> composent un signal,
+        et avec quelle amplitude chacune est présente.
+        C'est comme décomposer une couleur en ses composantes rouge, vert, bleu.
+      </div>
 
       <div class="zone-jeu">
         <canvas id="canvas-spectre"></canvas>
         <div class="spectre-boutons">
           <button class="bouton-spectre" id="btn-spectre-1">▶ Voix Grave (Basses)</button>
           <button class="bouton-spectre" id="btn-spectre-2">▶ Sifflement (Aigus)</button>
-          <button class="bouton-spectre" id="btn-spectre-3">▶ Chut ! (Bruit complet)</button>
+          <button class="bouton-spectre" id="btn-spectre-3">▶ Chut ! (Bruit blanc)</button>
         </div>
+        <p id="msg-spectre-hint" style="font-size:0.85rem; color:var(--encre-doux); margin-top:12px; min-height:20px;"></p>
       </div>
     </section>
 
-    <!-- Bandeau de badge obtenu (caché par défaut, révélé par JS) -->
-    <section class="carte cache" id="badge-obtenu-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid var(--signal); text-align: center;">
-      <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🌊</div>
-      <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Maître des Ondes !</h2>
-      <p style="color: var(--encre-doux); margin: 0 0 18px;">Tu as compris l'amplitude, la fréquence et la période. Bravo !</p>
-      <a href="index.html?badge=signal" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
+    <!-- Bandeau de badge obtenu -->
+    <section class="carte cache" id="badge-obtenu-section"
+      style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid var(--signal);text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:8px;">🏅🌊</div>
+      <h2 style="color:var(--signal-fonce);margin:0 0 6px;">Badge obtenu : Maître des Ondes !</h2>
+      <p style="color:var(--encre-doux);margin:0 0 18px;">Tu as compris amplitude, fréquence, période, échantillonnage et bruit. Bravo !</p>
+      <a href="index.html?badge=signal" class="bouton" style="display:inline-block;text-decoration:none;">← Retour à l'accueil pour voir ton badge</a>
     </section>
 
     <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
@@ -253,277 +384,366 @@
   <script src="progression.js"></script>
   <script src="signaux.js"></script>
   <script>
-    /* =====================================================================
-       MOTEUR DE DESSIN (Canvas) ET JEUX INTERACTIFS
-       ===================================================================== */
-    
-    // --- PARTIE 1 : BAC À SABLE & AUDIO ---
-    const canvasBac = document.getElementById('canvas-bac-a-sable');
-    const ctxBac = canvasBac.getContext('2d');
-    const slideAmpBac = document.getElementById('slide-amp-bac');
-    const slideFreqBac = document.getElementById('slide-freq-bac');
-    const valAmpBac = document.getElementById('val-amp-bac');
-    const valFreqBac = document.getElementById('val-freq-bac');
-    const btnSon = document.getElementById('btn-son');
+  /* =====================================================================
+     MOTEUR DE DESSIN — signal.html
+     Sections : bac à sable, synchronisation, période, échantillonnage, bruit
+     ===================================================================== */
 
-    // Fixer la résolution interne des canvas pour qu'ils soient nets
-    canvasBac.width = 600; canvasBac.height = 250;
-    
-    let temps = 0;
-    
-    // Variables pour l'API Web Audio
-    let contexteAudio = null;
-    let oscillateur = null;
-    let controleVolume = null;
-    let sonActif = false;
+  /* ── Utilitaire : dessiner une grille temporelle sur un canvas ── */
+  function dessinerGrille(ctx, w, h, secondesTotal) {
+    const pixParSec = w / secondesTotal;
+    ctx.save();
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth   = 1;
+    ctx.fillStyle   = '#94a3b8';
+    ctx.font        = '10px sans-serif';
+    ctx.textAlign   = 'left';
+    for (let s = 0; s <= secondesTotal; s += 0.5) {
+      const x = s * pixParSec;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      if (s % 1 === 0 && x < w - 20) ctx.fillText(s + 's', x + 3, h - 5);
+    }
+    ctx.restore();
+  }
 
-    // Fonction pour dessiner la courbe du bac à sable
-    function dessinerBacASable() {
-      const amp = parseFloat(slideAmpBac.value);
-      const freq = parseFloat(slideFreqBac.value);
-      
-      // Mise à jour de l'affichage du texte
-      valAmpBac.textContent = amp.toFixed(1);
-      valFreqBac.textContent = freq.toFixed(1) + " Hz";
+  /* ── Axe central ── */
+  function dessinerAxe(ctx, w, h) {
+    ctx.save();
+    ctx.beginPath(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+    ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+    ctx.restore();
+  }
 
-      // Mise à jour de l'audio si activé
-      if (sonActif && oscillateur) {
-        // On convertit la fréquence visuelle (0.5-5Hz) en fréquence audible (ex: 200-600Hz)
-        oscillateur.frequency.value = 200 + (freq * 80); 
-        controleVolume.gain.value = (amp / 4) * 0.5; // Le volume max est limité pour les oreilles !
-      }
+  /* ── Tracer une onde sinusoïdale ── */
+  function tracerSinus(ctx, w, h, amp, freq, phase, couleur, epaisseur, tirets) {
+    ctx.save();
+    ctx.beginPath(); ctx.strokeStyle = couleur; ctx.lineWidth = epaisseur;
+    ctx.setLineDash(tirets || []);
+    for (let x = 0; x < w; x++) {
+      const t  = (x / w) * 2;
+      const y  = amp * 25 * Math.sin(2 * Math.PI * freq * t + phase);
+      const py = h / 2 - y;
+      x === 0 ? ctx.moveTo(x, py) : ctx.lineTo(x, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+  }
 
-      // Nettoyage de la zone de dessin
-      ctxBac.clearRect(0, 0, canvasBac.width, canvasBac.height);
-      
-      // Ligne centrale (Axe du temps)
-      ctxBac.beginPath();
-      ctxBac.strokeStyle = '#cbd5e1';
-      ctxBac.lineWidth = 1;
-      ctxBac.moveTo(0, canvasBac.height / 2);
-      ctxBac.lineTo(canvasBac.width, canvasBac.height / 2);
-      ctxBac.stroke();
+  /* ════════════════════════════════════
+     SECTION 1 — BAC À SABLE
+     ════════════════════════════════════ */
+  const canvasBac   = document.getElementById('canvas-bac-a-sable');
+  const ctxBac      = canvasBac.getContext('2d');
+  canvasBac.width   = 600; canvasBac.height = 250;
 
-      // Dessin de l'onde sinusoïdale
-      ctxBac.beginPath();
-      ctxBac.strokeStyle = '#0e9f6e'; // Vert "signal"
-      ctxBac.lineWidth = 4;
-      
-      for (let x = 0; x < canvasBac.width; x++) {
-        // Conversion de x (pixels) en temps
-        const t = (x / canvasBac.width) * 2; 
-        // Formule mathématique : y = A * sin(2 * PI * f * t + phase)
-        const y = amp * 25 * Math.sin(2 * Math.PI * freq * t - temps * 3);
-        
-        const posY = (canvasBac.height / 2) - y;
-        if (x === 0) ctxBac.moveTo(x, posY);
-        else ctxBac.lineTo(x, posY);
-      }
-      ctxBac.stroke();
+  const slideAmpBac  = document.getElementById('slide-amp-bac');
+  const slideFreqBac = document.getElementById('slide-freq-bac');
+  const valAmpBac    = document.getElementById('val-amp-bac');
+  const valFreqBac   = document.getElementById('val-freq-bac');
+  const btnSon       = document.getElementById('btn-son');
+
+  let tempsAnim = 0;
+  let contexteAudio = null, oscillateur = null, controleVolume = null, sonActif = false;
+
+  function dessinerBacASable() {
+    const amp  = parseFloat(slideAmpBac.value);
+    const freq = parseFloat(slideFreqBac.value);
+    valAmpBac.textContent  = amp.toFixed(1);
+    valFreqBac.textContent = freq.toFixed(1) + ' Hz';
+
+    if (sonActif && oscillateur) {
+      oscillateur.frequency.value = 200 + freq * 80;
+      controleVolume.gain.value   = (amp / 4) * 0.5;
     }
 
-    // Gestion du bouton son
-    btnSon.addEventListener('click', () => {
-      if (!contexteAudio) {
-        contexteAudio = new (window.AudioContext || window.webkitAudioContext)();
-        oscillateur = contexteAudio.createOscillator();
-        controleVolume = contexteAudio.createGain();
-        
-        oscillateur.type = 'sine';
-        oscillateur.connect(controleVolume);
-        controleVolume.connect(contexteAudio.destination);
-        oscillateur.start();
-      }
+    ctxBac.clearRect(0, 0, canvasBac.width, canvasBac.height);
+    dessinerGrille(ctxBac, canvasBac.width, canvasBac.height, 2);
+    dessinerAxe(ctxBac, canvasBac.width, canvasBac.height);
+    tracerSinus(ctxBac, canvasBac.width, canvasBac.height, amp, freq, -tempsAnim * 3, '#0e9f6e', 3);
+  }
 
-      sonActif = !sonActif;
-      if (sonActif) {
-        contexteAudio.resume();
-        btnSon.textContent = "🔇 Couper le Son";
-        btnSon.classList.remove('inactif');
-      } else {
-        contexteAudio.suspend();
-        btnSon.textContent = "🔊 Activer le Son";
-        btnSon.classList.add('inactif');
-      }
-    });
+  btnSon.addEventListener('click', () => {
+    if (!contexteAudio) {
+      contexteAudio   = new (window.AudioContext || window.webkitAudioContext)();
+      oscillateur     = contexteAudio.createOscillator();
+      controleVolume  = contexteAudio.createGain();
+      oscillateur.type = 'sine';
+      oscillateur.connect(controleVolume);
+      controleVolume.connect(contexteAudio.destination);
+      oscillateur.start();
+    }
+    sonActif = !sonActif;
+    if (sonActif) {
+      contexteAudio.resume();
+      btnSon.textContent = '🔇 Couper le son';
+      btnSon.classList.remove('inactif');
+    } else {
+      contexteAudio.suspend();
+      btnSon.textContent = '🔊 Activer le son';
+      btnSon.classList.add('inactif');
+    }
+  });
 
-    // --- PARTIE 2 : LE DÉFI DE SYNCHRONISATION ---
-    const canvasDefi = document.getElementById('canvas-defi');
-    const ctxDefi = canvasDefi.getContext('2d');
-    canvasDefi.width = 600; canvasDefi.height = 250;
+  /* ════════════════════════════════════
+     SECTION 2 — DÉFI SYNCHRONISATION
+     ════════════════════════════════════ */
+  const canvasDefi   = document.getElementById('canvas-defi');
+  const ctxDefi      = canvasDefi.getContext('2d');
+  canvasDefi.width   = 600; canvasDefi.height = 250;
 
-    const slideAmpDefi = document.getElementById('slide-amp-defi');
-    const slideFreqDefi = document.getElementById('slide-freq-defi');
-    const msgVictoire = document.getElementById('message-victoire');
-    
-    let cibleAmp = 2;
-    let cibleFreq = 2;
+  const slideAmpDefi  = document.getElementById('slide-amp-defi');
+  const slideFreqDefi = document.getElementById('slide-freq-defi');
+  const valAmpDefi    = document.getElementById('val-amp-defi');
+  const valFreqDefi   = document.getElementById('val-freq-defi');
+  const msgVictoire   = document.getElementById('message-victoire');
 
-    function genererNouvelleCible() {
-      // Choisit des valeurs aléatoires tombant pile sur les "crans" des curseurs (0.5 en 0.5)
-      const valeursPossibles = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
-      cibleAmp = valeursPossibles[Math.floor(Math.random() * valeursPossibles.length)];
-      cibleFreq = valeursPossibles[Math.floor(Math.random() * valeursPossibles.length)];
+  let cibleAmp = 2, cibleFreq = 2;
+
+  function genererNouvelleCible() {
+    const vals = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
+    cibleAmp  = vals[Math.floor(Math.random() * vals.length)];
+    cibleFreq = vals[Math.floor(Math.random() * vals.length)];
+    msgVictoire.classList.remove('visible');
+  }
+
+  function dessinerDefi() {
+    const uAmp  = parseFloat(slideAmpDefi.value);
+    const uFreq = parseFloat(slideFreqDefi.value);
+    valAmpDefi.textContent  = uAmp.toFixed(1);
+    valFreqDefi.textContent = uFreq.toFixed(1) + ' Hz';
+
+    ctxDefi.clearRect(0, 0, canvasDefi.width, canvasDefi.height);
+    dessinerGrille(ctxDefi, canvasDefi.width, canvasDefi.height, 2);
+    dessinerAxe(ctxDefi, canvasDefi.width, canvasDefi.height);
+    // Cible grise
+    tracerSinus(ctxDefi, canvasDefi.width, canvasDefi.height, cibleAmp, cibleFreq, -tempsAnim * 3, '#94a3b8', 3, [6, 4]);
+    // Signal utilisateur vert
+    tracerSinus(ctxDefi, canvasDefi.width, canvasDefi.height, uAmp, uFreq, -tempsAnim * 3, '#0e9f6e', 3);
+
+    if (uAmp === cibleAmp && uFreq === cibleFreq) {
+      msgVictoire.classList.add('visible');
+    } else {
       msgVictoire.classList.remove('visible');
     }
+  }
 
-    function dessinerDefi() {
-      const userAmp = parseFloat(slideAmpDefi.value);
-      const userFreq = parseFloat(slideFreqDefi.value);
+  document.getElementById('btn-nouvelle-cible').addEventListener('click', genererNouvelleCible);
 
-      ctxDefi.clearRect(0, 0, canvasDefi.width, canvasDefi.height);
+  /* ════════════════════════════════════
+     SECTION 3 — DÉFI DE LA PÉRIODE (amélioré)
+     Nouveauté : accolade rouge + annotation T sur le canvas
+     ════════════════════════════════════ */
+  const canvasPer   = document.getElementById('canvas-periode');
+  const ctxPer      = canvasPer.getContext('2d');
+  canvasPer.width   = 600; canvasPer.height = 250;
 
-      // Fonction utilitaire pour tracer une onde
-      function tracerOnde(ctx, amp, freq, couleur, tirets, epaisseur) {
-        ctx.beginPath();
-        ctx.strokeStyle = couleur;
-        ctx.lineWidth = epaisseur;
-        ctx.setLineDash(tirets);
-        for (let x = 0; x < canvasDefi.width; x++) {
-          const t = (x / canvasDefi.width) * 2; 
-          const y = amp * 25 * Math.sin(2 * Math.PI * freq * t - temps * 3);
-          const posY = (canvasDefi.height / 2) - y;
-          if (x === 0) ctx.moveTo(x, posY);
-          else ctx.lineTo(x, posY);
-        }
-        ctx.stroke();
-        ctx.setLineDash([]); // Reset des tirets
-      }
+  const slidePerDefi      = document.getElementById('slide-per-defi');
+  const valPerDefi        = document.getElementById('val-per-defi');
+  const valFreqPer        = document.getElementById('val-freq-per');
+  const msgVictoirePer    = document.getElementById('message-victoire-periode');
+  const periodeGagneeVal  = document.getElementById('periode-gagnee-val');
+  const ciblePeriodeTexte = document.getElementById('cible-periode-texte');
 
-      // 1. Trace la cible (en gris pointillé)
-      tracerOnde(ctxDefi, cibleAmp, cibleFreq, '#94a3b8', [5, 5], 3);
-      
-      // 2. Trace l'onde de l'utilisateur (en vert)
-      tracerOnde(ctxDefi, userAmp, userFreq, '#0e9f6e', [], 3);
+  let ciblePeriode = 1.5;
 
-      // Vérification de la victoire
-      if (userAmp === cibleAmp && userFreq === cibleFreq) {
-        msgVictoire.classList.add('visible');
-      } else {
-        msgVictoire.classList.remove('visible');
+  window._periodeGagnee       = false;
+  window._boutonsSectreCliques = new Set();
+
+  function verifierVictoireOndes() {
+    if (window._periodeGagnee && window._boutonsSectreCliques.size >= 3 && !window._badgeSignalObtenu) {
+      window._badgeSignalObtenu = true;
+      validerModule('signal');
+      var bs = document.getElementById('badge-obtenu-section');
+      if (bs) {
+        bs.classList.remove('cache');
+        setTimeout(() => bs.scrollIntoView({ behavior: 'smooth', block: 'center' }), 600);
       }
     }
+  }
 
-    document.getElementById('btn-nouvelle-cible').addEventListener('click', genererNouvelleCible);
-
-    // --- MOTEUR D'ANIMATION GLOBAL ---
-    // Cette fonction tourne en boucle à la vitesse de l'écran (ex: 60 fois par seconde)
-    function animer() {
-      temps += 0.01; // Fait défiler le temps pour faire avancer la vague
-      dessinerBacASable();
-      dessinerDefi();
-      requestAnimationFrame(animer); // Demande au navigateur de relancer la boucle
-    }
-
-    // Initialisation
-    genererNouvelleCible();
-    animer();
-
-    // --- PARTIE 3 : LE DÉFI DE LA PÉRIODE ---
-    const canvasPer = document.getElementById('canvas-periode');
-    const ctxPer = canvasPer.getContext('2d');
-    canvasPer.width = 600; canvasPer.height = 250;
-
-    const slidePerDefi = document.getElementById('slide-per-defi');
-    const valPerDefi = document.getElementById('val-per-defi');
-    const msgVictoirePeriode = document.getElementById('message-victoire-periode');
-    const ciblePeriodeTexte = document.getElementById('cible-periode-texte');
-    
-    let ciblePeriode = 1.5;
-
-    // Suivi des deux conditions pour le badge final
+  function genererNouvellePeriode() {
+    const opts = [0.5, 1.0, 1.5, 2.0, 2.5];
+    ciblePeriode = opts[Math.floor(Math.random() * opts.length)];
+    ciblePeriodeTexte.textContent = ciblePeriode.toFixed(1);
+    msgVictoirePer.classList.remove('visible');
     window._periodeGagnee = false;
-    window._boutonsSectreCliques = new Set();
+  }
 
-    function verifierVictoireOndes() {
-      if (window._periodeGagnee && window._boutonsSectreCliques.size >= 3 && !window._badgeSignalObtenu) {
-        window._badgeSignalObtenu = true;
-        validerModule("signal");
-        var badgeSection = document.getElementById('badge-obtenu-section');
-        if (badgeSection) {
-          badgeSection.classList.remove('cache');
-          setTimeout(function() {
-            badgeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 600);
-        }
-      }
+  /* Dessine une accolade horizontale sous le premier cycle */
+  function dessinerAccolade(ctx, x0, x1, y, couleur, label) {
+    const hBrace = 14; // hauteur de l'accolade sous le signal
+    const yBase  = y + hBrace;
+    ctx.save();
+    ctx.strokeStyle = couleur; ctx.fillStyle = couleur;
+    ctx.lineWidth   = 2; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+
+    // Ligne horizontale
+    ctx.beginPath();
+    ctx.moveTo(x0, yBase); ctx.lineTo(x1, yBase); ctx.stroke();
+    // Petits tirets verticaux aux extrémités
+    [x0, x1].forEach(x => {
+      ctx.beginPath(); ctx.moveTo(x, yBase - 5); ctx.lineTo(x, yBase + 5); ctx.stroke();
+    });
+    // Label centré
+    const mx = (x0 + x1) / 2;
+    ctx.fillText(label, mx, yBase + 16);
+    ctx.restore();
+  }
+
+  function dessinerPeriode() {
+    const userT    = parseFloat(slidePerDefi.value);
+    const userFreq = 1 / userT;
+    valPerDefi.textContent  = userT.toFixed(1);
+    valFreqPer.textContent  = userFreq.toFixed(2);
+
+    const W = canvasPer.width, H = canvasPer.height;
+    ctxPer.clearRect(0, 0, W, H);
+    dessinerGrille(ctxPer, W, H, 2);
+    dessinerAxe(ctxPer, W, H);
+
+    // Onde utilisateur (statique — pas d'animation, plus lisible pour compter)
+    ctxPer.save();
+    ctxPer.beginPath(); ctxPer.strokeStyle = '#0e9f6e'; ctxPer.lineWidth = 3;
+    for (let x = 0; x < W; x++) {
+      const t  = (x / W) * 2;
+      const y  = 2 * 25 * Math.sin(2 * Math.PI * userFreq * t);
+      const py = H / 2 - y;
+      x === 0 ? ctxPer.moveTo(x, py) : ctxPer.lineTo(x, py);
+    }
+    ctxPer.stroke(); ctxPer.restore();
+
+    // Accolade rouge : du début à la fin du premier cycle
+    const pixParSec = W / 2;       // l'écran = 2 secondes
+    const x0 = 0;
+    const x1 = userT * pixParSec;
+    if (x1 <= W) {
+      dessinerAccolade(ctxPer, x0, Math.min(x1, W - 2), H / 2 + 55, '#e11d48', 'T = ' + userT.toFixed(1) + ' s');
     }
 
-    function genererNouvellePeriode() {
-      const periodesPossibles = [0.5, 1.0, 1.5, 2.0, 2.5];
-      ciblePeriode = periodesPossibles[Math.floor(Math.random() * periodesPossibles.length)];
-      ciblePeriodeTexte.textContent = ciblePeriode.toFixed(1);
-      msgVictoirePeriode.style.display = 'none';
+    // Victoire
+    if (userT === ciblePeriode) {
+      msgVictoirePer.classList.add('visible');
+      periodeGagneeVal.textContent = userT.toFixed(1);
+      if (!window._periodeGagnee) {
+        window._periodeGagnee = true;
+        verifierVictoireOndes();
+      }
+    } else {
+      msgVictoirePer.classList.remove('visible');
+    }
+  }
+
+  document.getElementById('btn-nouvelle-periode').addEventListener('click', genererNouvellePeriode);
+  genererNouvellePeriode();
+
+  /* ════════════════════════════════════
+     SECTION 4 — ÉCHANTILLONNAGE
+     ════════════════════════════════════ */
+  const canvasEch = document.getElementById('canvas-echant');
+  const ctxEch    = canvasEch.getContext('2d');
+  canvasEch.width = 600; canvasEch.height = 250;
+
+  const slideFe   = document.getElementById('slide-fe');
+  const valFe     = document.getElementById('val-fe');
+  const msgEchant = document.getElementById('msg-echant');
+  const chipsEl   = document.getElementById('echant-info-chips');
+
+  // Signal continu de référence : sinus à 3 Hz
+  const FREQ_SIG_ECH = 3;
+
+  function dessinerEchantillonnage() {
+    const fe = parseInt(slideFe.value);
+    valFe.textContent = fe;
+
+    const W = canvasEch.width, H = canvasEch.height;
+    ctxEch.clearRect(0, 0, W, H);
+    dessinerGrille(ctxEch, W, H, 2);
+    dessinerAxe(ctxEch, W, H);
+
+    // 1. Signal continu (gris léger)
+    ctxEch.save(); ctxEch.beginPath();
+    ctxEch.strokeStyle = '#cbd5e1'; ctxEch.lineWidth = 1.5;
+    for (let x = 0; x < W; x++) {
+      const t = (x / W) * 2;
+      const y = 2 * 25 * Math.sin(2 * Math.PI * FREQ_SIG_ECH * t);
+      x === 0 ? ctxEch.moveTo(x, H/2 - y) : ctxEch.lineTo(x, H/2 - y);
+    }
+    ctxEch.stroke(); ctxEch.restore();
+
+    // 2. Échantillons (points oranges)
+    const nbEch = Math.floor(fe * 2); // 2 secondes
+    const pts   = [];
+    for (let k = 0; k <= nbEch; k++) {
+      const t  = k / fe;
+      const y  = 2 * 25 * Math.sin(2 * Math.PI * FREQ_SIG_ECH * t);
+      const px = (t / 2) * W;
+      const py = H / 2 - y;
+      pts.push({ px, py });
+
+      // Ligne verticale (tige)
+      ctxEch.save();
+      ctxEch.beginPath();
+      ctxEch.strokeStyle = 'rgba(245,158,11,0.35)'; ctxEch.lineWidth = 1;
+      ctxEch.moveTo(px, H/2); ctxEch.lineTo(px, py); ctxEch.stroke();
+      ctxEch.restore();
+
+      // Point
+      ctxEch.save();
+      ctxEch.beginPath();
+      ctxEch.arc(px, py, 4, 0, Math.PI * 2);
+      ctxEch.fillStyle = '#f59e0b'; ctxEch.fill();
+      ctxEch.restore();
     }
 
-    function dessinerPeriode() {
-      const userPeriode = parseFloat(slidePerDefi.value);
-      valPerDefi.textContent = userPeriode.toFixed(1);
-
-      ctxPer.clearRect(0, 0, canvasPer.width, canvasPer.height);
-
-      // 1. Dessiner la grille temporelle (lignes verticales toutes les 0.25s, soit toutes les 1/8eme de l'écran)
-      ctxPer.strokeStyle = '#e2e8f0';
-      ctxPer.lineWidth = 1;
-      for (let x = 0; x <= canvasPer.width; x += 75) { // 75 pixels = 0.25 seconde
-        ctxPer.beginPath();
-        ctxPer.moveTo(x, 0);
-        ctxPer.lineTo(x, canvasPer.height);
-        ctxPer.stroke();
-        
-        // Légende du temps en bas
-        if (x % 150 === 0) { // Toutes les 0.5s
-          ctxPer.fillStyle = '#94a3b8';
-          ctxPer.font = '10px sans-serif';
-          ctxPer.fillText((x / 300).toFixed(1) + "s", x + 4, canvasPer.height - 6);
-        }
-      }
-
-      // Ligne centrale
-      ctxPer.beginPath();
-      ctxPer.strokeStyle = '#cbd5e1';
-      ctxPer.moveTo(0, canvasPer.height / 2);
-      ctxPer.lineTo(canvasPer.width, canvasPer.height / 2);
-      ctxPer.stroke();
-
-      // 2. Dessiner l'onde de l'élève
-      // f = 1 / T
-      const userFreq = 1 / userPeriode;
-
-      ctxPer.beginPath();
-      ctxPer.strokeStyle = '#0e9f6e';
-      ctxPer.lineWidth = 4;
-      for (let x = 0; x < canvasPer.width; x++) {
-        const t = (x / canvasPer.width) * 2; // L'écran total fait 2 secondes
-        const y = 2 * 25 * Math.sin(2 * Math.PI * userFreq * t - temps * 3);
-        const posY = (canvasPer.height / 2) - y;
-        if (x === 0) ctxPer.moveTo(x, posY);
-        else ctxPer.lineTo(x, posY);
-      }
-      ctxPer.stroke();
-
-      // Vérification de la réussite
-      if (userPeriode === ciblePeriode) {
-        msgVictoirePeriode.style.display = 'block';
-        if (!window._periodeGagnee) {
-          window._periodeGagnee = true;
-          verifierVictoireOndes();
-        }
-      }
+    // 3. Signal reconstruit (vert si bon, rouge si aliasing)
+    const shannon = fe >= 2 * FREQ_SIG_ECH;
+    const coulRec = shannon ? '#0e9f6e' : '#e11d48';
+    ctxEch.save(); ctxEch.beginPath();
+    ctxEch.strokeStyle = coulRec; ctxEch.lineWidth = 2.5;
+    for (let i = 0; i < pts.length - 1; i++) {
+      ctxEch.moveTo(pts[i].px, pts[i].py);
+      ctxEch.lineTo(pts[i+1].px, pts[i+1].py);
     }
+    ctxEch.stroke(); ctxEch.restore();
 
-    document.getElementById('btn-nouvelle-periode').addEventListener('click', genererNouvellePeriode);
-    genererNouvellePeriode();
+    // 4. Chips d'info
+    const ratio = fe / FREQ_SIG_ECH;
+    chipsEl.innerHTML =
+      `<span class="echant-chip neutre">Signal : ${FREQ_SIG_ECH} Hz</span>` +
+      `<span class="echant-chip neutre">fₑ : ${fe} Hz</span>` +
+      `<span class="echant-chip ${shannon ? 'ok' : 'ko'}">` +
+        `fₑ / f = ${ratio.toFixed(1)} ${shannon ? '≥ 2 ✅' : '< 2 ❌ Aliasing !'}` +
+      `</span>`;
 
-    // Modifier la fonction animer existante pour inclure le dessin du 3eme jeu
-    const ancienneAnimation = animer;
-    animer = function() {
-      temps += 0.01;
-      dessinerBacASable();
-      dessinerDefi();
-      dessinerPeriode(); // Nouveau
-      requestAnimationFrame(animer);
-    };
+    // 5. Message
+    if (fe < 2 * FREQ_SIG_ECH) {
+      msgEchant.style.color = 'var(--battement)';
+      msgEchant.textContent = '⚠️ Aliasing ! La fréquence d\'échantillonnage est trop basse : le signal reconstruit est faux.';
+    } else if (fe < 5 * FREQ_SIG_ECH) {
+      msgEchant.style.color = 'var(--attention)';
+      msgEchant.textContent = '⚠️ Signal reconstruit, mais avec peu de points — la courbe est un peu anguleuse.';
+    } else {
+      msgEchant.style.color = 'var(--signal-fonce)';
+      msgEchant.textContent = '✅ Excellente reconstruction ! La courbe verte colle au signal d\'origine.';
+    }
+  }
+
+  slideFe.addEventListener('input', dessinerEchantillonnage);
+  dessinerEchantillonnage(); // dessin initial
+
+  /* ════════════════════════════════════
+     BOUCLE D'ANIMATION PRINCIPALE
+     (sections 1, 2 seulement — période et bruit sont statiques = plus lisibles)
+     ════════════════════════════════════ */
+  function animer() {
+    tempsAnim += 0.01;
+    dessinerBacASable();
+    dessinerDefi();
+    dessinerPeriode();   // statique mais on la garde dans la boucle pour réactivité curseur
+    requestAnimationFrame(animer);
+  }
+  genererNouvelleCible();
+  animer();
+
   </script>
 </body>
 </html>
