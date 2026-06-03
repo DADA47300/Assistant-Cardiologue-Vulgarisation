@@ -5,6 +5,179 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Labo ECG — Lis un cœur</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* --- Console de nettoyage --- */
+    .console-nettoyage {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 0 0 14px;
+    }
+    .console-titre {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--encre-doux);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 0 0 16px;
+    }
+    .slider-ligne { margin-bottom: 14px; }
+    .slider-ligne:last-child { margin-bottom: 0; }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 3px;
+    }
+    .slider-titre {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--encre);
+    }
+    .slider-valeur {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--signal-fonce);
+      min-width: 32px;
+      text-align: right;
+    }
+    .slider-sous {
+      font-size: 0.82rem;
+      color: var(--encre-doux);
+      margin: 0 0 7px;
+      display: block;
+    }
+    input[type=range].slider-ecg {
+      width: 100%;
+      accent-color: var(--signal);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    /* --- Jauge qualité --- */
+    .qualite-section {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1.5px dashed #e2e8f0;
+    }
+    .qualite-label-ligne {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .qualite-label {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--encre-doux);
+    }
+    .qualite-pct {
+      font-family: var(--titre);
+      font-weight: 800;
+      font-size: 1.1rem;
+      transition: color 0.3s ease;
+    }
+    .qualite-fond {
+      width: 100%;
+      height: 10px;
+      background: #e3e7e2;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .qualite-remplissage {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.25s ease, background 0.3s ease;
+      background: #ef4444;
+    }
+    .qualite-remplissage.parfait {
+      animation: shimmer-vert 1.4s ease-in-out infinite;
+    }
+    @keyframes shimmer-vert {
+      0%, 100% { background: #16a34a; }
+      50%       { background: #22c55e; }
+    }
+    .qualite-texte {
+      font-size: 0.88rem;
+      margin: 0;
+      min-height: 1.4em;
+      transition: color 0.3s ease;
+    }
+
+    /* --- Bouton capteur --- */
+    .bouton-capteur {
+      font-family: var(--titre);
+      font-weight: 800;
+      font-size: 1.15rem;
+      border: none;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 18px 36px;
+      background: #dc2626;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
+      transition: transform 0.1s, background 0.15s, box-shadow 0.15s;
+      animation: pulsation-rouge 1.8s ease-in-out infinite;
+    }
+    .bouton-capteur:hover {
+      background: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(220, 38, 38, 0.45);
+      animation: none;
+    }
+    .bouton-capteur:active { transform: translateY(0); }
+    @keyframes pulsation-rouge {
+      0%, 100% { box-shadow: 0 6px 20px rgba(220,38,38,0.35); }
+      50%       { box-shadow: 0 6px 24px rgba(220,38,38,0.55), 0 0 0 10px rgba(220,38,38,0.08); }
+    }
+
+    /* --- Bouton son (positionné sur le graphe) --- */
+    #btnSon {
+      position: absolute;
+      top: 12px; right: 12px;
+      z-index: 5;
+      background: rgba(255,255,255,0.92);
+      border: 1.5px solid var(--bord);
+      border-radius: 8px;
+      padding: 5px 9px;
+      font-size: 1.05rem;
+      cursor: pointer;
+      line-height: 1;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #btnSon:hover { background: #fff; border-color: var(--signal); }
+
+    /* --- Bouton valider nettoyage --- */
+    #btnValiderFiltre {
+      background: #16a34a !important;
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35) !important;
+    }
+    #btnValiderFiltre:hover { background: #15803d !important; }
+
+    /* --- Animation apparition sweet spot --- */
+    @keyframes pop-sweet {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .sweet-spot-apparait { animation: pop-sweet 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+    /* --- Zone phase acquisition --- */
+    #phase-acquisition {
+      text-align: center;
+      padding: 28px 16px;
+    }
+    #phase-acquisition p {
+      color: var(--encre-doux);
+      font-size: 0.9rem;
+      margin: 12px 0 0;
+    }
+  </style>
 </head>
 <body>
 
@@ -28,39 +201,66 @@
       <div class="pastille" data-etape="3"><span class="num">3</span> Repérer</div>
     </div>
 
-    <section class="carte graphe">
+    <section class="carte graphe" style="position: relative;">
+      <button id="btnSon" title="Activer / couper le son des bips">🔊</button>
       <div id="graphe"></div>
     </section>
 
-    <!-- DÉFI 1 : choisir le bon traitement -->
+    <!-- DÉFI 1 : Acquisition + Console de filtrage -->
     <section class="carte etape" id="etape1">
       <h2>Défi 1 — Répare le signal !</h2>
-      <p class="explication">L'enregistrement est illisible. Le tracé <strong>tangue</strong>  de haut en bas et est plein de <strong>parasites</strong>. 
-        Teste les outils d'ingénieur ci-dessous pour nettoyer l'ECG.</p>
+      <p class="explication">L'enregistrement est illisible. Le tracé <strong>tangue</strong> de haut en bas
+        et est plein de <strong>parasites</strong>. Lance d'abord le capteur, puis utilise la console pour
+        trouver le bon réglage des filtres.</p>
 
-      <div class="cartes-choix">
-        <button class="choix" data-id="gres">
-          <span class="opt-titre">Enlever seulement le grésillement</span>
-          <span class="opt-sous">Lisse la courbe, mais ne touche pas à l'ondulation lente.</span>
-        </button>
-        <button class="choix" data-id="fort">
-          <span class="opt-titre">Tout lisser au maximum</span>
-          <span class="opt-sous">Écrase fortement la courbe pour supprimer tout ce qui dépasse.</span>
-        </button>
-        <button class="choix" data-id="bon">
-          <span class="opt-titre">Enlever l'ondulation ET le grésillement</span>
-          <span class="opt-sous">Stabilise la ligne de base et gomme le bruit fin.</span>
-        </button>
-        <button class="choix" data-id="derive">
-          <span class="opt-titre">Enlever seulement l'ondulation lente</span>
-          <span class="opt-sous">Stabilise la ligne de base, mais garde le bruit fin.</span>
-        </button>
+      <!-- Phase A : bouton de lancement -->
+      <div id="phase-acquisition">
+        <button class="bouton-capteur" id="btnLancerCapteur">🔴 Lancer le capteur</button>
+        <p>Clique pour démarrer l'acquisition du signal en temps réel.</p>
       </div>
 
-      <div class="message cache" id="messageFiltre"></div>
-      <div class="boutons-ligne">
-        <button class="bouton" id="btnValiderFiltre" disabled>Valider mon choix</button>
-        <button class="bouton cache" id="btnVersZoom">Passer au zoom →</button>
+      <!-- Phase B : console de filtrage (cachée jusqu'à fin d'acquisition) -->
+      <div id="console-filtrage" class="cache">
+        <div class="console-nettoyage">
+          <p class="console-titre">🎛 Console de nettoyage</p>
+
+          <div class="slider-ligne">
+            <div class="slider-header">
+              <span class="slider-titre">〰️ Filtre Anti-Tangage</span>
+              <span class="slider-valeur" id="valDrive">0</span>
+            </div>
+            <span class="slider-sous">Supprime les ondulations lentes dues aux mouvements du patient.</span>
+            <input type="range" class="slider-ecg" id="sliderDrive" min="0" max="100" value="0">
+          </div>
+
+          <div class="slider-ligne">
+            <div class="slider-header">
+              <span class="slider-titre">⚡ Filtre Anti-Grésillement</span>
+              <span class="slider-valeur" id="valSmooth">0</span>
+            </div>
+            <span class="slider-sous">Supprime les interférences électriques et le bruit du capteur.</span>
+            <input type="range" class="slider-ecg" id="sliderSmooth" min="0" max="100" value="0">
+          </div>
+
+          <div class="qualite-section">
+            <div class="qualite-label-ligne">
+              <span class="qualite-label">Qualité du signal</span>
+              <span class="qualite-pct" id="qualitePct">0 %</span>
+            </div>
+            <div class="qualite-fond">
+              <div class="qualite-remplissage" id="qualiteRemplissage" style="width:0%;"></div>
+            </div>
+            <p class="qualite-texte" id="qualiteTexte" style="color: var(--encre-doux);">
+              Signal brut — ajuste les filtres pour le nettoyer.
+            </p>
+          </div>
+        </div>
+
+        <div class="message cache" id="messageFiltre"></div>
+        <div class="boutons-ligne">
+          <button class="bouton cache" id="btnValiderFiltre">✅ Valider le nettoyage</button>
+          <button class="bouton cache" id="btnVersZoom">Passer au zoom →</button>
+        </div>
       </div>
     </section>
 
@@ -105,7 +305,7 @@
       <button class="bouton secondaire" id="btnRecommencer">↻ Recommencer le labo</button>
     </section>
 
-    <!-- Bandeau de badge obtenu (caché par défaut, révélé par JS) -->
+    <!-- Bandeau de badge obtenu -->
     <section class="carte cache" id="badge-obtenu-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid var(--signal); text-align: center;">
       <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🔬</div>
       <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Technicien de Laboratoire !</h2>
@@ -121,35 +321,79 @@
   <script src="signaux.js"></script>
 
   <script>
-  /* ---------- 1) Préparation des signaux ---------- */
+  /* ================================================================
+     1) Préparation des signaux
+     ================================================================ */
   const FE = 200;
   const ecg = genererECG({ bpm: 72, duree: 24, fe: FE, graine: 7 });
   const brut = ajouterBruit(ecg, {});
   const DUREE = ecg.t[ecg.t.length - 1];
   const CENTRE = DUREE / 2;
 
-  // Les 4 traitements possibles (1 bon, 3 imparfaits/piège)
-  const variants = {
-    gres:   { opt: { derive: false, lissage: "leger" },
-              mauvais: "Le grésillement est parti, mais la courbe ondule encore vers le haut et le bas : la dérive lente est toujours là, la ligne de base n'est pas stable." },
-    fort:   { opt: { derive: true,  lissage: "fort" },
-              mauvais: "Trop lissé ! En écrasant le bruit, tu as aussi écrasé les pics R. Sans pics nets, impossible de compter les battements." },
-    bon:    { opt: { derive: true,  lissage: "leger" }, bon: true },
-    derive: { opt: { derive: true,  lissage: "aucun" },
-              mauvais: "Bien vu pour l'ondulation lente, mais il reste le grésillement : la courbe tremble encore, ce n'est pas assez propre." }
-  };
-  Object.keys(variants).forEach(function (k) { variants[k].y = filtrer(brut, FE, variants[k].opt); });
+  // Pré-calcul des 4 variantes de filtrage
+  const sig_d_only = filtrer(brut, FE, { derive: true,  lissage: "aucun" }); // dérive corrigée, bruité
+  const sig_g_only = filtrer(brut, FE, { derive: false, lissage: "leger" }); // lissé, dérive présente
+  const sig_bon    = filtrer(brut, FE, { derive: true,  lissage: "leger" }); // optimal
+  const sig_fort   = filtrer(brut, FE, { derive: true,  lissage: "fort"  }); // sur-lissé (pics détruits)
 
   // État du jeu
-  let etapeActuelle = 1;
-  let plageActuelle = [0, DUREE];
-  let choixFiltre = null;
-  let propre = null;       // sera la version nettoyée validée
-  let picsChoisis = [];    // les clics de l'élève
-  let picsVrais = [];      // les vrais pics (détectés par le programme)
-  let modeClicActif = false;
+  let etapeActuelle  = 1;
+  let plageActuelle  = [0, DUREE];
+  let propre         = null;
+  let picsChoisis    = [];
+  let picsVrais      = [];
+  let modeClicActif  = false;
+  let animAcqFrame   = null;
 
-  /* ---------- 2) Dessin du graphe ---------- */
+  /* ================================================================
+     2) Audio — bips ECG
+     ================================================================ */
+  let audioCtx = null;
+  let sonActif = true;
+
+  function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function jouerBip() {
+    if (!sonActif) return;
+    try {
+      initAudio();
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      const t0 = audioCtx.currentTime;
+      gain.gain.setValueAtTime(0.25, t0);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.09);
+      osc.start(t0);
+      osc.stop(t0 + 0.09);
+    } catch (e) {}
+  }
+
+  document.getElementById('btnSon').addEventListener('click', function () {
+    sonActif = !sonActif;
+    this.textContent = sonActif ? '🔊' : '🔇';
+  });
+
+  /* ================================================================
+     3) Dessin du graphe (Plotly)
+     ================================================================ */
+  const LAYOUT_BASE = {
+    margin: { l: 24, r: 14, t: 8, b: 38 },
+    xaxis: { title: "temps (secondes)", range: [0, DUREE], fixedrange: true,
+             gridcolor: "#eef2ef", zeroline: false },
+    yaxis: { fixedrange: true, showticklabels: false,
+             gridcolor: "#f3f6f4", zeroline: false },
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "Atkinson, sans-serif", color: "#4b6058", size: 12 },
+    showlegend: false, dragmode: false
+  };
+  const CFG = { displayModeBar: false, responsive: true };
+
   function tracer(valeurs, couleur, plage, marqueurs) {
     const courbes = [{
       x: ecg.t, y: valeurs, type: "scatter", mode: "lines",
@@ -164,18 +408,204 @@
         hoverinfo: "none"
       });
     });
-    const mise = {
-      margin: { l: 24, r: 14, t: 8, b: 38 },
-      xaxis: { title: "temps (secondes)", range: plage, fixedrange: true, gridcolor: "#eef2ef", zeroline: false },
-      yaxis: { fixedrange: true, showticklabels: false, gridcolor: "#f3f6f4", zeroline: false },
-      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
-      font: { family: "Atkinson, sans-serif", color: "#4b6058", size: 12 },
-      showlegend: false, dragmode: false
-    };
-    Plotly.react("graphe", courbes, mise, { displayModeBar: false, responsive: true });
+    const mise = Object.assign({}, LAYOUT_BASE,
+      { xaxis: Object.assign({}, LAYOUT_BASE.xaxis, { range: plage }) });
+    Plotly.react("graphe", courbes, mise, CFG);
   }
 
-  /* ---------- 3) Navigation entre les défis ---------- */
+  function tracerVide() {
+    const mise = Object.assign({}, LAYOUT_BASE, {
+      annotations: [{
+        x: 0.5, y: 0.5, xref: 'paper', yref: 'paper',
+        text: "⏳ En attente du capteur…",
+        showarrow: false,
+        font: { size: 14, color: "#9ca3af", family: "Atkinson, sans-serif" }
+      }]
+    });
+    Plotly.react("graphe", [], mise, CFG);
+  }
+
+  /* ================================================================
+     4) Acquisition — animation temps réel
+     ================================================================ */
+  function lancerAcquisition() {
+    initAudio(); // initialise l'AudioContext sur geste utilisateur
+    document.getElementById('phase-acquisition').classList.add('cache');
+
+    const DUREE_ANIM = 7000; // ms pour afficher les 24 s de signal
+    const picsR    = detecterPicsR(brut, FE);
+    const bipsFaits = new Set();
+    const debut    = performance.now();
+    let lastIdx    = 0;
+
+    // Initialiser la trace vide (axes fixes, no data)
+    Plotly.react("graphe", [{
+      x: [], y: [], type: "scatter", mode: "lines",
+      line: { color: "#b45309", width: 1.6 }, hoverinfo: "none"
+    }], LAYOUT_BASE, CFG);
+
+    function frame(now) {
+      const progress = Math.min((now - debut) / DUREE_ANIM, 1);
+      const idx = Math.round(progress * brut.length);
+
+      if (idx > lastIdx) {
+        Plotly.extendTraces("graphe", {
+          x: [ecg.t.slice(lastIdx, idx)],
+          y: [brut.slice(lastIdx, idx)]
+        }, [0]);
+
+        for (const pic of picsR) {
+          if (pic >= lastIdx && pic < idx && !bipsFaits.has(pic)) {
+            bipsFaits.add(pic);
+            jouerBip();
+          }
+        }
+        lastIdx = idx;
+      }
+
+      if (progress < 1) {
+        animAcqFrame = requestAnimationFrame(frame);
+      } else {
+        onAcquisitionComplete();
+      }
+    }
+
+    animAcqFrame = requestAnimationFrame(frame);
+  }
+
+  function onAcquisitionComplete() {
+    animAcqFrame = null;
+    tracer(brut, "#b45309", [0, DUREE]); // état stable avec Plotly.react
+    document.getElementById('console-filtrage').classList.remove('cache');
+    mettreAJourFiltre();
+  }
+
+  document.getElementById('btnLancerCapteur').addEventListener('click', lancerAcquisition);
+
+  /* ================================================================
+     5) Console de filtrage — calcul dynamique du signal
+     ================================================================ */
+  function computeSliderSignal(s1, s2) {
+    const n = brut.length;
+    const out = new Array(n);
+
+    // s1 : correction de dérive (0 = rien, 50 = optimal, >70 = trop agressif)
+    let wDrift = 0, crush = 0;
+    if      (s1 <= 50) { wDrift = s1 / 50; }
+    else if (s1 <= 70) { wDrift = 1; }
+    else               { wDrift = 1; crush = (s1 - 70) / 30; }
+
+    // s2 : lissage (0 = rien, 50 = optimal, >70 = pics rabotés)
+    let wSmooth = 0, rabotage = 0;
+    if      (s2 <= 50) { wSmooth = s2 / 50; }
+    else if (s2 <= 70) { wSmooth = 1; }
+    else               { wSmooth = 1; rabotage = (s2 - 70) / 30; }
+
+    for (let i = 0; i < n; i++) {
+      // Interpolation dérive : brut → d_only
+      let base     = brut[i]     * (1 - wDrift) + sig_d_only[i] * wDrift;
+      // Version lissée correspondante : g_only → bon
+      let baseLisse = sig_g_only[i] * (1 - wDrift) + sig_bon[i] * wDrift;
+      // Interpolation lissage
+      let val = base * (1 - wSmooth) + baseLisse * wSmooth;
+      // Sur-filtrage dérive : amplitude écrasée
+      if (crush > 0)   val *= (1 - crush * 0.9);
+      // Sur-filtrage lissage : pics R détruits (→ sig_fort)
+      if (rabotage > 0) val = val * (1 - rabotage) + sig_fort[i] * rabotage;
+      out[i] = val;
+    }
+    return out;
+  }
+
+  function sliderQualite(s) {
+    if (s >= 40 && s <= 60) return 1.0;
+    if (s < 40) return s / 40;
+    return (100 - s) / 40;
+  }
+
+  function mettreAJourFiltre() {
+    const s1 = Number(document.getElementById('sliderDrive').value);
+    const s2 = Number(document.getElementById('sliderSmooth').value);
+
+    document.getElementById('valDrive').textContent  = s1;
+    document.getElementById('valSmooth').textContent = s2;
+
+    const yAffiche = computeSliderSignal(s1, s2);
+    const q = Math.round(sliderQualite(s1) * sliderQualite(s2) * 100);
+    const sweetSpot = (s1 >= 40 && s1 <= 60 && s2 >= 40 && s2 <= 60);
+
+    // Couleur du tracé selon qualité
+    let couleur;
+    if (q >= 90)      couleur = "#16a34a";
+    else if (q >= 50) couleur = "#0b7a55";
+    else if (q >= 20) couleur = "#f59e0b";
+    else              couleur = "#ef4444";
+
+    tracer(yAffiche, couleur, [0, DUREE]);
+
+    // Jauge
+    const rem = document.getElementById('qualiteRemplissage');
+    rem.style.width      = q + '%';
+    rem.style.background = couleur;
+    rem.classList.toggle('parfait', sweetSpot);
+
+    const pct = document.getElementById('qualitePct');
+    pct.textContent = q + ' %';
+    pct.style.color = couleur;
+
+    // Texte descriptif
+    const txt = document.getElementById('qualiteTexte');
+    if (sweetSpot) {
+      txt.textContent = "🎯 Point d'équilibre atteint ! Signal parfaitement lisible.";
+      txt.style.color = '#16a34a';
+    } else if (s1 > 70) {
+      txt.textContent = "⚠️ Filtre anti-tangage trop fort : la ligne de base s'écrase !";
+      txt.style.color = '#d97706';
+    } else if (s2 > 70) {
+      txt.textContent = "⚠️ Filtre anti-grésillement trop fort : les pics R sont détruits !";
+      txt.style.color = '#d97706';
+    } else if (s1 < 15 && s2 < 15) {
+      txt.textContent = "Signal brut — ajuste les filtres pour le nettoyer.";
+      txt.style.color = '#4b6058';
+    } else if (q >= 65) {
+      txt.textContent = "Bien ! Tu approches de la zone optimale…";
+      txt.style.color = '#0b7a55';
+    } else {
+      txt.textContent = "Continue d'ajuster les deux filtres simultanément.";
+      txt.style.color = '#4b6058';
+    }
+
+    // Bouton valider (n'apparaît que dans la sweet spot)
+    const btnVal = document.getElementById('btnValiderFiltre');
+    const wasHidden = btnVal.classList.contains('cache');
+    btnVal.classList.toggle('cache', !sweetSpot);
+    if (sweetSpot && wasHidden) {
+      btnVal.classList.add('sweet-spot-apparait');
+      setTimeout(function () { btnVal.classList.remove('sweet-spot-apparait'); }, 500);
+    }
+  }
+
+  function validerFiltre() {
+    const s1 = Number(document.getElementById('sliderDrive').value);
+    const s2 = Number(document.getElementById('sliderSmooth').value);
+    propre = computeSliderSignal(s1, s2);
+
+    const msg = document.getElementById('messageFiltre');
+    msg.className = 'message bon';
+    msg.textContent = "✅ Signal nettoyé ! Ligne de base stable et pics bien visibles. Signal exploitable !";
+
+    document.getElementById('btnValiderFiltre').disabled = true;
+    document.getElementById('btnVersZoom').classList.remove('cache');
+  }
+
+  document.getElementById('sliderDrive').addEventListener('input',  mettreAJourFiltre);
+  document.getElementById('sliderSmooth').addEventListener('input', mettreAJourFiltre);
+  document.getElementById('btnValiderFiltre').addEventListener('click', validerFiltre);
+  document.getElementById('btnVersZoom').addEventListener('click', function () { allerEtape(2); });
+
+  /* ================================================================
+     6) Navigation entre les défis
+     ================================================================ */
   function allerEtape(n) {
     etapeActuelle = n; modeClicActif = false;
     document.getElementById("graphe").style.cursor = (n === 3) ? "crosshair" : "default";
@@ -186,37 +616,25 @@
       p.classList.toggle("active", e === n);
       p.classList.toggle("faite", e < n);
     });
-    if (n === 1) tracer(brut, "#b45309", [0, DUREE]);
+    if (n === 1) {
+      // Réinitialiser la phase d'acquisition
+      if (animAcqFrame) { cancelAnimationFrame(animAcqFrame); animAcqFrame = null; }
+      document.getElementById('phase-acquisition').classList.remove('cache');
+      document.getElementById('console-filtrage').classList.add('cache');
+      document.getElementById('btnValiderFiltre').disabled = false;
+      document.getElementById('btnValiderFiltre').classList.add('cache');
+      document.getElementById('btnVersZoom').classList.add('cache');
+      const mf = document.getElementById('messageFiltre');
+      mf.textContent = ''; mf.className = 'message cache';
+      tracerVide();
+    }
     if (n === 2) appliquerZoom();
     if (n === 3) lancerClic();
   }
 
-  /* ---------- 4) Défi 1 : le choix du filtre ---------- */
-  function previsualiser(id) {
-    choixFiltre = id;
-    document.querySelectorAll(".choix").forEach(function (c) {
-      c.classList.toggle("selectionne", c.dataset.id === id);
-    });
-    tracer(variants[id].y, "#0b7a55", [0, DUREE]);
-    document.getElementById("btnValiderFiltre").disabled = false;
-  }
-  function validerFiltre() {
-    const msg = document.getElementById("messageFiltre");
-    msg.className = "message";
-    if (choixFiltre === "bon") {
-      propre = variants.bon.y;
-      msg.classList.add("bon");
-      msg.textContent = "✅ Parfait : ligne de base stable et pics bien visibles. Signal exploitable !";
-      document.getElementById("btnVersZoom").classList.remove("cache");
-      document.getElementById("btnValiderFiltre").disabled = true;
-    } else {
-      msg.classList.add("pas-encore");
-      msg.textContent = "❌ " + variants[choixFiltre].mauvais + " Essaie un autre traitement.";
-      document.getElementById("btnVersZoom").classList.add("cache");
-    }
-  }
-
-  /* ---------- 5) Défi 2 : le zoom ---------- */
+  /* ================================================================
+     7) Défi 2 : le zoom
+     ================================================================ */
   function appliquerZoom() {
     const largeur = Number(document.getElementById("curseurZoom").value);
     document.getElementById("valeurZoom").textContent = largeur + " s";
@@ -247,10 +665,15 @@
     }
   }
 
-  /* ---------- 6) Défi 3 : repérer les battements à la main ---------- */
+  document.getElementById("curseurZoom").addEventListener("input", appliquerZoom);
+  document.getElementById("btnVersClic").addEventListener("click", function () { allerEtape(3); });
+
+  /* ================================================================
+     8) Défi 3 : repérer les battements à la main
+     ================================================================ */
   function lancerClic() {
     picsChoisis = [];
-    picsVrais = detecterPicsR(propre, FE);
+    picsVrais   = detecterPicsR(propre, FE);
     modeClicActif = true;
     document.getElementById("btnFinir").classList.add("cache");
     document.getElementById("btnVerifier").classList.remove("cache");
@@ -261,30 +684,31 @@
     majCompteur();
     tracer(propre, "#0b7a55", plageActuelle, [{ indices: picsChoisis, couleur: "#f59e0b" }]);
   }
+
   function majCompteur() {
     document.getElementById("compteur").textContent = "Points placés : " + picsChoisis.length;
     document.getElementById("btnVerifier").disabled = picsChoisis.length === 0;
   }
+
   function surClicGraphe(e) {
     if (etapeActuelle !== 3 || !modeClicActif) return;
     const gd = document.getElementById("graphe");
-    const xa = gd._fullLayout && gd._fullLayout.xaxis;
+    const xa  = gd._fullLayout && gd._fullLayout.xaxis;
     if (!xa) return;
-    // On convertit la position du clic (en pixels) en "temps" (secondes),
-    // grâce aux repères internes de Plotly : _offset (début de la zone) et p2d (pixel -> donnée).
     const rect = gd.getBoundingClientRect();
     const pixelDansZone = (e.clientX - rect.left) - xa._offset;
-    if (pixelDansZone < 0 || pixelDansZone > xa._length) return; // clic en dehors de la courbe
+    if (pixelDansZone < 0 || pixelDansZone > xa._length) return;
     const temps = xa.p2d(pixelDansZone);
     let idx = Math.round(temps * FE);
     if (idx < 0 || idx >= propre.length) return;
-    idx = trouverSommetProche(propre, idx, Math.round(0.12 * FE)); // on aimante vers le sommet le plus proche
+    idx = trouverSommetProche(propre, idx, Math.round(0.12 * FE));
     const seuilProche = Math.round(0.20 * FE);
     const dejaLa = picsChoisis.findIndex(function (p) { return Math.abs(p - idx) < seuilProche; });
-    if (dejaLa >= 0) picsChoisis.splice(dejaLa, 1); else picsChoisis.push(idx); // reclic = on enlève le point
+    if (dejaLa >= 0) picsChoisis.splice(dejaLa, 1); else picsChoisis.push(idx);
     majCompteur();
     tracer(propre, "#0b7a55", plageActuelle, [{ indices: picsChoisis, couleur: "#f59e0b" }]);
   }
+
   function verifier() {
     const vraisFenetre = picsVrais.filter(function (i) {
       return ecg.t[i] >= plageActuelle[0] && ecg.t[i] <= plageActuelle[1];
@@ -299,8 +723,8 @@
       msg.textContent = "✅ Bien joué ! Tu as trouvé " + r.trouves + " battements sur " + r.total +
         (r.faux ? " (avec " + r.faux + " petite erreur)" : "") + ". Tu as l'œil d'un cardiologue !";
       tracer(propre, "#0b7a55", plageActuelle, [
-        { indices: picsChoisis, couleur: "#f59e0b", taille: 9 },
-        { indices: vraisFenetre, couleur: "#e11d48", taille: 13 }
+        { indices: picsChoisis,   couleur: "#f59e0b", taille: 9 },
+        { indices: vraisFenetre,  couleur: "#e11d48", taille: 13 }
       ]);
       document.getElementById("btnVerifier").classList.add("cache");
       document.getElementById("btnEffacer").classList.add("cache");
@@ -311,13 +735,15 @@
         r.faux + " erreur(s). Indice : un pic R, c'est les pics les PLUS HAUTS et bien réguliers. Réessaie !";
     }
   }
+
   function effacer() {
     picsChoisis = [];
     majCompteur();
     tracer(propre, "#0b7a55", plageActuelle, [{ indices: [], couleur: "#f59e0b" }]);
   }
+
   function finir() {
-    const bpm = calculerBPM(picsVrais, FE);
+    const bpm  = calculerBPM(picsVrais, FE);
     const diag = diagnostiquer(bpm);
     document.getElementById("bpmValeur").textContent = bpm;
     const etat = document.getElementById("etatTexte");
@@ -329,42 +755,37 @@
       p.classList.add("faite"); p.classList.remove("active");
     });
     tracer(propre, "#0b7a55", [0, DUREE], [{ indices: picsVrais, couleur: "#e11d48", taille: 7 }]);
-    // ATTRIBUTION DU BADGE « Technicien de Laboratoire »
     validerModule("labo");
-    // Afficher la section de célébration du badge
     var badgeSection = document.getElementById('badge-obtenu-section');
     if (badgeSection) {
       badgeSection.classList.remove('cache');
-      setTimeout(function() {
+      setTimeout(function () {
         badgeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 800);
     }
   }
 
-  /* ---------- 7) Branchements ---------- */
-  document.querySelectorAll(".choix").forEach(function (c) {
-    c.addEventListener("click", function () { previsualiser(c.dataset.id); });
-  });
-  document.getElementById("btnValiderFiltre").addEventListener("click", validerFiltre);
-  document.getElementById("btnVersZoom").addEventListener("click", function () { allerEtape(2); });
-  document.getElementById("curseurZoom").addEventListener("input", appliquerZoom);
-  document.getElementById("btnVersClic").addEventListener("click", function () { allerEtape(3); });
   document.getElementById("btnVerifier").addEventListener("click", verifier);
   document.getElementById("btnEffacer").addEventListener("click", effacer);
   document.getElementById("btnFinir").addEventListener("click", finir);
+  document.getElementById("graphe").addEventListener("click", surClicGraphe);
+
   document.getElementById("btnRecommencer").addEventListener("click", function () {
-    choixFiltre = null; propre = null;
+    propre = null;
+    if (animAcqFrame) { cancelAnimationFrame(animAcqFrame); animAcqFrame = null; }
     document.getElementById("curseurZoom").value = 24;
-    document.querySelectorAll(".choix").forEach(function (c) { c.classList.remove("selectionne"); });
-    document.getElementById("btnValiderFiltre").disabled = true;
-    document.getElementById("btnVersZoom").classList.add("cache");
-    const mf = document.getElementById("messageFiltre"); mf.textContent = ""; mf.className = "message cache";
+    document.getElementById('sliderDrive').value  = 0;
+    document.getElementById('sliderSmooth').value = 0;
+    document.getElementById('valDrive').textContent  = '0';
+    document.getElementById('valSmooth').textContent = '0';
+    document.getElementById('btnValiderFiltre').disabled = false;
     allerEtape(1);
   });
 
-  /* ---------- 8) Démarrage ---------- */
+  /* ================================================================
+     9) Démarrage
+     ================================================================ */
   allerEtape(1);
-  document.getElementById("graphe").addEventListener("click", surClicGraphe); // clic n'importe où dans le graphe
   </script>
 </body>
 </html>
