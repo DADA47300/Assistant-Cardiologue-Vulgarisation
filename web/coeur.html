@@ -117,6 +117,65 @@
       background: linear-gradient(135deg, #fff1f2 0%, #fffbfb 100%);
       border: 2px solid var(--battement); text-align: center;
     }
+    /* ===== LA SUPERPOSITION DE L'IMAGE REALISTE ===== */
+.conteneur-coeur-interactif {
+  position: relative;
+  width: 100%;
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+.image-fond-coeur {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.calque-interactif-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+/* On rend tes 4 tracés invisibles par défaut */
+.zone-oreil, .zone-ventr {
+  fill: transparent;
+  stroke: transparent; /* On enlève le trait noir de Figma */
+  transition: fill 0.3s ease, filter 0.3s ease, transform 0.25s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+  cursor: pointer;
+}
+
+/* L'effet d'allumage avec un beau halo lumineux */
+.zone-oreil.allumee { 
+  fill: rgba(251, 191, 36, 0.45); 
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.9));
+}
+
+.zone-ventr.allumee { 
+  fill: rgba(225, 29, 72, 0.45);
+  filter: drop-shadow(0 0 15px rgba(225, 29, 72, 0.9));
+  transform: scale(1.02); /* Légère contraction de la pompe */
+}
+
+/* Pour le Module 3 plus tard */
+.zone-oreil.recharge, .zone-ventr.recharge {
+  fill: rgba(59, 130, 246, 0.3);
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8));
+}
+.zone-oreil.pulse-p { 
+  animation: clignoter-p-halo 0.5s ease-in-out infinite; 
+}
+@keyframes clignoter-p-halo {
+  0%, 100% { fill: rgba(251, 191, 36, 0.45); filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.9)); }
+  50%      { fill: rgba(253, 230, 138, 0.2); filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.4)); }
+}
+
   </style>
 </head>
 <body>
@@ -155,44 +214,24 @@
       et les <strong>ventricules</strong> (pompes) en bas. Allume-les pour comprendre leur rôle.
     </p>
 
-    <svg class="svg-coeur" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg"
-         style="display:block;margin:0 auto;max-width:240px;"
-         role="img" aria-label="Schéma anatomique simplifié du cœur avec oreillettes et ventricules">
+    <div class="conteneur-coeur-interactif">
+  <img src="coeur.png" alt="Anatomie du coeur" class="image-fond-coeur">
 
-      <!-- Gros vaisseaux (décoratifs, non interactifs) -->
-      <g id="vaisseaux" fill="#d7b1bc" stroke="#b98a98" stroke-width="2.2" stroke-linejoin="round" pointer-events="none">
-        <path d="M128 84 C124 50 130 24 156 20 C182 16 198 36 190 58 C186 70 174 68 174 56 C178 42 169 36 159 39 C148 42 147 60 150 84 Z"/>
-        <path d="M106 86 C100 56 102 34 120 30 C132 27 141 35 140 46 L128 48 C122 46 120 56 122 70 C123 78 126 82 128 86 Z"/>
-        <path d="M174 98 L176 54 C176 42 186 38 194 42 C202 46 202 58 200 68 L198 98 Z"/>
-      </g>
-
-      <!-- Ventricules (zone basse, coloriable) -->
+  <svg class="calque-interactif-svg" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(48, 17)">
+      
       <g id="ventricules">
-        <path class="zone-ventr"
-              d="M92 284 C62 250 50 206 54 168 C57 138 66 110 90 94 C106 84 124 82 144 88 C176 97 200 110 206 140 C212 170 198 210 170 240 C146 266 116 282 92 284 Z"/>
-        <text x="86"  y="198" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">Ventricule</text>
-        <text x="86"  y="210" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">droit</text>
-        <text x="166" y="184" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">Ventricule</text>
-        <text x="166" y="196" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">gauche</text>
+        <path class="zone-ventr" d="M76.0074 152.202L72.0074 138.202L105.507 131.202L125.507 134.202L145.007 144.202L153.507 168.702L156.007 196.202L149.507 225.702L134.507 254.202L125.507 260.702L119.507 263.702L105.507 231.702L92.5074 201.202L83.0074 171.702L76.0074 152.202Z"/>
+        <path class="zone-ventr" d="M51.5074 143.202L73.0074 138.202L84.5074 176.702L94.5074 208.202L108.007 240.202L119.007 264.702L103.507 262.202L68.5074 250.702L41.5074 233.702L27.0074 218.702L19.0074 199.702L16.5074 179.702L19.0074 164.702L24.5074 155.202L36.0074 147.702L51.5074 143.202Z"/>
       </g>
 
-      <!-- Oreillettes (coiffe haute, coloriable) -->
       <g id="oreillettes">
-        <path class="zone-oreil"
-              d="M58 128 C46 116 44 96 60 86 C74 78 90 84 92 98 C96 90 104 92 116 88 C130 80 152 80 168 90 C190 102 196 122 188 138 C150 150 96 150 58 128 Z"/>
-        <text x="76"  y="104" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">Oreillette</text>
-        <text x="76"  y="116" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">droite</text>
-        <text x="152" y="102" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">Oreillette</text>
-        <text x="152" y="114" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">gauche</text>
+        <path class="zone-oreil" d="M51.5074 143.202L73.0074 139.202L69.5074 121.702V107.202L73.0074 92.2022L87.0074 80.7022V70.2022L91.0074 64.2022L98.0074 66.7022H109.507L119.007 58.2022V51.7022L115.007 37.7022L106.007 23.2022L103.507 3.20218H93.0074L91.0074 5.20218V0.702185L78.0074 5.20218V29.7022L69.5074 0.702185L53.5074 5.20218L56.0074 16.2022L53.5074 18.7022L51.5074 5.20218H37.5074L31.0074 7.20218V37.7022L26.5074 58.2022L23.5074 86.7022L13.0074 100.702L4.00742 118.702L0.507416 139.202L4.00742 159.202L9.50742 173.202L17.0074 180.202V165.202L26.5074 154.202L37.5074 146.702L51.5074 143.202Z"/>
+        <path class="zone-oreil" d="M106.007 131.202L73.5074 137.202L69.5074 125.702V109.202L73.5074 91.2022L87.5074 79.7022V71.2022L90.5074 68.7022L106.007 71.2022H119.007H135.507L139.007 73.7022L150.007 76.7022L152.507 91.2022L148.007 95.2022H139.007V99.2022H156.507L159.007 104.702L160.507 109.202L156.507 111.202L148.007 114.702H159.007L162.007 118.702V125.702L150.007 129.702L148.007 140.202L145.507 144.202L133.507 137.202L121.507 133.702L106.007 131.202Z"/>
       </g>
-
-      <!-- Coronaires + sillons (décoratifs, jamais recoloriés) -->
-      <g fill="none" stroke="#c07070" stroke-linecap="round" pointer-events="none">
-        <path d="M124 132 C130 168 116 224 98 274" stroke-width="2.2" opacity="0.6"/>
-        <path d="M150 138 C172 158 178 188 168 214" stroke-width="1.6" opacity="0.4"/>
-        <path d="M58 128 C96 150 150 150 188 138" stroke-width="2" stroke-dasharray="3 5" opacity="0.35"/>
-      </g>
-    </svg>
+    </g>
+  </svg>
+</div>
 
     <div class="coeur-note" id="note-anatomie" aria-live="polite">
       Clique sur un bouton pour éclairer la zone correspondante.
@@ -293,25 +332,18 @@
     <div class="sync-layout">
 
       <!-- Cœur animé (gauche) -->
-      <div>
-        <svg class="svg-coeur-sync" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg"
-             role="img" aria-label="Cœur réagissant à la phase du cycle cardiaque">
-          <g id="vaisseaux-sync" fill="#d7b1bc" stroke="#b98a98" stroke-width="2.2" stroke-linejoin="round" pointer-events="none">
-            <path d="M128 84 C124 50 130 24 156 20 C182 16 198 36 190 58 C186 70 174 68 174 56 C178 42 169 36 159 39 C148 42 147 60 150 84 Z"/>
-            <path d="M106 86 C100 56 102 34 120 30 C132 27 141 35 140 46 L128 48 C122 46 120 56 122 70 C123 78 126 82 128 86 Z"/>
-            <path d="M174 98 L176 54 C176 42 186 38 194 42 C202 46 202 58 200 68 L198 98 Z"/>
-          </g>
-          <g id="s-ventricules">
-            <path id="s-ventr-path" class="zone-ventr"
-                  d="M92 284 C62 250 50 206 54 168 C57 138 66 110 90 94 C106 84 124 82 144 88 C176 97 200 110 206 140 C212 170 198 210 170 240 C146 266 116 282 92 284 Z"/>
-          </g>
-          <g id="s-oreillettes">
-            <path class="zone-oreil"
-                  d="M58 128 C46 116 44 96 60 86 C74 78 90 84 92 98 C96 90 104 92 116 88 C130 80 152 80 168 90 C190 102 196 122 188 138 C150 150 96 150 58 128 Z"/>
-          </g>
-          <g fill="none" stroke="#c07070" stroke-linecap="round" pointer-events="none">
-            <path d="M124 132 C130 168 116 224 98 274" stroke-width="2.2" opacity="0.6"/>
-            <path d="M58 128 C96 150 150 150 188 138" stroke-width="2" stroke-dasharray="3 5" opacity="0.3"/>
+      <div id="coeur-sync-container" class="conteneur-coeur-interactif" style="max-width: 190px;">
+        <img src="coeur.png" alt="Anatomie du coeur" class="image-fond-coeur">
+        <svg class="calque-interactif-svg" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(48, 17)">
+            <g id="sync-ventricules">
+              <path class="zone-ventr" d="M76.0074 152.202L72.0074 138.202L105.507 131.202L125.507 134.202L145.007 144.202L153.507 168.702L156.007 196.202L149.507 225.702L134.507 254.202L125.507 260.702L119.507 263.702L105.507 231.702L92.5074 201.202L83.0074 171.702L76.0074 152.202Z"/>
+              <path class="zone-ventr" d="M51.5074 143.202L73.0074 138.202L84.5074 176.702L94.5074 208.202L108.007 240.202L119.007 264.702L103.507 262.202L68.5074 250.702L41.5074 233.702L27.0074 218.702L19.0074 199.702L16.5074 179.702L19.0074 164.702L24.5074 155.202L36.0074 147.702L51.5074 143.202Z"/>
+            </g>
+            <g id="sync-oreillettes">
+              <path class="zone-oreil" d="M51.5074 143.202L73.0074 139.202L69.5074 121.702V107.202L73.0074 92.2022L87.0074 80.7022V70.2022L91.0074 64.2022L98.0074 66.7022H109.507L119.007 58.2022V51.7022L115.007 37.7022L106.007 23.2022L103.507 3.20218H93.0074L91.0074 5.20218V0.702185L78.0074 5.20218V29.7022L69.5074 0.702185L53.5074 5.20218L56.0074 16.2022L53.5074 18.7022L51.5074 5.20218H37.5074L31.0074 7.20218V37.7022L26.5074 58.2022L23.5074 86.7022L13.0074 100.702L4.00742 118.702L0.507416 139.202L4.00742 159.202L9.50742 173.202L17.0074 180.202V165.202L26.5074 154.202L37.5074 146.702L51.5074 143.202Z"/>
+              <path class="zone-oreil" d="M106.007 131.202L73.5074 137.202L69.5074 125.702V109.202L73.5074 91.2022L87.5074 79.7022V71.2022L90.5074 68.7022L106.007 71.2022H119.007H135.507L139.007 73.7022L150.007 76.7022L152.507 91.2022L148.007 95.2022H139.007V99.2022H156.507L159.007 104.702L160.507 109.202L156.507 111.202L148.007 114.702H159.007L162.007 118.702V125.702L150.007 129.702L148.007 140.202L145.507 144.202L133.507 137.202L121.507 133.702L106.007 131.202Z"/>
+            </g>
           </g>
         </svg>
       </div>
@@ -529,27 +561,34 @@
     var y     = getY(x);
     var phase = getPhase(v);
 
+    // 1. Mise à jour du point rouge sur la ligne ECG
     dot.setAttribute('cx', x.toFixed(1));
     dot.setAttribute('cy', y.toFixed(1));
     phaseLabel.textContent = phaseTextes[phase] || '';
 
-    var sOreil = document.querySelectorAll('#s-oreillettes .zone-oreil');
-    var sVentr = document.getElementById('s-ventr-path');
+    // 2. On cible le coeur spécifique au Module 3
+    var sOreil = document.querySelectorAll('#coeur-sync-container .zone-oreil');
+    var sVentr = document.querySelectorAll('#coeur-sync-container .zone-ventr');
 
+    // 3. On éteint tout pour repartir à zéro à chaque mouvement
     sOreil.forEach(function(el) {
       el.classList.remove('pulse-p', 'allumee', 'recharge');
     });
-    sVentr.classList.remove('allumee', 'recharge');
+    sVentr.forEach(function(el) {
+      el.classList.remove('allumee', 'recharge');
+    });
 
+    // 4. On allume selon la phase de l'ECG
     if (phase === 'p') {
       sOreil.forEach(function(el) { el.classList.add('pulse-p'); });
     } else if (phase === 'qrs') {
-      sVentr.classList.add('allumee');
+      sVentr.forEach(function(el) { el.classList.add('allumee'); });
     } else if (phase === 't') {
       sOreil.forEach(function(el) { el.classList.add('recharge'); });
-      sVentr.classList.add('recharge');
+      sVentr.forEach(function(el) { el.classList.add('recharge'); });
     }
 
+    // 5. Validation de la progression (Badge)
     if (v >= 95) cocher('cycle');
   }
 
