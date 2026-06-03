@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lis un cœur — Découvre les télécommunications avec l'ECG</title>
+  <meta name="description" content="Atelier pédagogique interactif de 4h — Deviens ingénieur biomédical junior en explorant les signaux, l'ECG et les pathologies cardiaques.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,18 +22,201 @@
     </header>
 
     <div class="etapes" style="flex-direction:column; gap:14px;">
-      <!-- Chaque "tuile" mène à une page. Pour l'instant seule le Labo ECG existe. -->
-      <a class="pastille active" href="labo.html" style="text-decoration:none;">
-        <span class="num">★</span>
-        <span><strong>Le Labo ECG</strong> — relève 3 défis : choisis le bon nettoyage, règle ton zoom, puis repère toi-même les battements (commence ici !)</span>
+      <a class="pastille" id="lien-signal" href="signal.html" style="text-decoration:none;">
+        <span class="num" id="badge-signal">★</span>
+        <span><strong>C'est quoi un signal ?</strong> — Joue avec l'amplitude, la fréquence et la période.</span>
       </a>
-      <div class="pastille"><span class="num">·</span><span>C'est quoi un signal ? <em>(à venir)</em></span></div>
-      <div class="pastille"><span class="num">·</span><span>Le cœur et l'ECG <em>(à venir)</em></span></div>
-      <div class="pastille"><span class="num">·</span><span>Détective des pathologies <em>(à venir)</em></span></div>
-      <div class="pastille"><span class="num">·</span><span>Métiers &amp; débouchés <em>(à venir)</em></span></div>
+
+      <div class="pastille"><span class="num">★</span><span>Le cœur et l'ECG <em>(à venir)</em></span></div>
+
+      <a class="pastille" id="lien-labo" href="labo.html" style="text-decoration:none;">
+        <span class="num" id="badge-labo">★</span>
+        <span><strong>Le Labo ECG</strong> — Nettoie le signal, règle ton zoom, puis repère les battements.</span>
+      </a>
+
+      <div class="pastille"><span class="num">★</span><span>Détective des pathologies <em>(à venir)</em></span></div>
     </div>
+
+    <!-- =================== SECTION PROGRESSION =================== -->
+    <section class="progression-section" id="section-progression">
+      <h2>🏅 Ta progression</h2>
+      <p class="sous-titre">Complète chaque module pour obtenir ton badge et débloquer le diplôme final !</p>
+
+      <!-- Barre de progression -->
+      <div class="barre-progression">
+        <div class="barre-progression-remplissage" id="barre-remplissage" style="width: 0%;"></div>
+      </div>
+      <div class="progression-compteur" id="progression-compteur">0 / 4 badges</div>
+
+      <!-- Grille des 4 badges -->
+      <div class="badges-grille" id="badges-grille">
+        <!-- Rempli dynamiquement par JS -->
+      </div>
+    </section>
+
+    <!-- Zone du bouton diplôme (apparaît quand les 4 badges sont obtenus) -->
+    <div id="zone-bouton-diplome"></div>
+
+    <!-- Zone du diplôme (apparaît après clic sur le bouton) -->
+    <div id="zone-diplome"></div>
 
     <p class="pied">Réalisé par <strong>[vos prénoms]</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
   </main>
+
+  <!-- Progression manager (doit être chargé en premier) -->
+  <script src="progression.js"></script>
+
+  <script>
+  /* =====================================================================
+     INDEX — Affichage dynamique de la progression
+     ===================================================================== */
+
+  /** Ordre d'affichage des badges sur l'index */
+  var ORDRE_MODULES = [
+    { id: "signal",      module: "C'est quoi un signal ?" },
+    { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
+    { id: "labo",        module: "Le Labo ECG" },
+    { id: "pathologies", module: "Détective des pathologies" }
+  ];
+
+  /** Construit la grille de badges */
+  function construireBadges() {
+    var grille = document.getElementById("badges-grille");
+    grille.innerHTML = "";
+    var valides = modulesValides();
+    var nbValides = valides.length;
+
+    ORDRE_MODULES.forEach(function (m) {
+      var badge = BADGES[m.id];
+      var estObtenu = valides.indexOf(m.id) !== -1;
+
+      var carte = document.createElement("div");
+      carte.className = "badge-carte " + (estObtenu ? "obtenu" : "verrouille");
+
+      carte.innerHTML =
+        '<div class="badge-icone">' + badge.icone + '</div>' +
+        '<div class="badge-info">' +
+          '<span class="badge-nom">' + badge.nom + '</span>' +
+          '<span class="badge-etat">' +
+            (estObtenu ? "✅ Obtenu" : "🔒 " + m.module) +
+          '</span>' +
+        '</div>' +
+        (estObtenu ? '<div class="badge-coche">✓</div>' : '');
+
+      grille.appendChild(carte);
+    });
+
+    // Barre de progression
+    var pourcent = (nbValides / 4) * 100;
+    document.getElementById("barre-remplissage").style.width = pourcent + "%";
+    document.getElementById("progression-compteur").textContent =
+      nbValides + " / 4 badge" + (nbValides > 1 ? "s" : "");
+
+    // Marquer les modules complétés dans la liste des étapes
+    if (moduleValide("signal")) {
+      var numSignal = document.getElementById("badge-signal");
+      if (numSignal) { numSignal.style.background = "var(--signal)"; numSignal.style.color = "#fff"; }
+    }
+    if (moduleValide("labo")) {
+      var numLabo = document.getElementById("badge-labo");
+      if (numLabo) { numLabo.style.background = "var(--signal)"; numLabo.style.color = "#fff"; }
+    }
+  }
+
+  /** Gère l'apparition du bouton diplôme ou de la zone diplôme */
+  function gererDiplome() {
+    var zoneBouton = document.getElementById("zone-bouton-diplome");
+    var zoneDiplome = document.getElementById("zone-diplome");
+
+    if (!tousLesBadges()) {
+      zoneBouton.innerHTML = "";
+      zoneDiplome.innerHTML = "";
+      return;
+    }
+
+    // Si le diplôme a déjà été « cliqué » cette session ou avant
+    if (sessionStorage.getItem("diplome_affiche") === "oui") {
+      afficherDiplome();
+      return;
+    }
+
+    // Sinon, afficher le gros bouton
+    zoneBouton.innerHTML =
+      '<button class="bouton-diplome" id="btn-obtenir-diplome" onclick="debloquerDiplome()">' +
+        '🎓 Obtenir mon diplôme d\'ingénieur biomédical junior' +
+      '</button>';
+  }
+
+  /** Déclenchée au clic sur le bouton "Obtenir mon diplôme" */
+  function debloquerDiplome() {
+    sessionStorage.setItem("diplome_affiche", "oui");
+    document.getElementById("zone-bouton-diplome").innerHTML = "";
+    lancerConfettis();
+    setTimeout(afficherDiplome, 400);
+  }
+
+  /** Affiche la zone de diplôme */
+  function afficherDiplome() {
+    document.getElementById("zone-bouton-diplome").innerHTML = "";
+    document.getElementById("zone-diplome").innerHTML =
+      '<div class="diplome-zone">' +
+        '<div class="diplome-carte">' +
+          '<span class="diplome-emoji">🎓</span>' +
+          '<h2 class="diplome-titre">Félicitations, tu as réussi !</h2>' +
+          '<p class="diplome-sous-titre">Tu as collecté les 4 badges. Tu obtiens officiellement le titre de :</p>' +
+          '<div class="diplome-cadre">INGÉNIEUR BIOMÉDICAL JUNIOR</div>' +
+          '<div class="diplome-action">' +
+            '<p>🚀 Appelle un animateur de l\'ENSEIRB-MATMECA pour valider ton diplôme papier !</p>' +
+            '<button class="bouton-reset" onclick="reinitialiserTout()">Réinitialiser la progression</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* --- Initialisation --- */
+  function mettreAJour() {
+    console.log("[Index] 🔄 Mise à jour de l'affichage des badges...");
+    construireBadges();
+    gererDiplome();
+  }
+
+  // Gérer la validation par paramètre URL (contourne le bug Firefox file://)
+  var params = new URLSearchParams(window.location.search);
+  var badgeURL = params.get("badge");
+  if (badgeURL && typeof validerModule === "function") {
+    console.log("[Index] 📥 Badge reçu via URL:", badgeURL);
+    validerModule(badgeURL);
+    // Nettoyer l'URL pour ne pas re-valider si on rafraîchit
+    if (window.history && window.history.replaceState) {
+      var cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
+    }
+  }
+
+  // Exécution immédiate au chargement
+  mettreAJour();
+
+  // Re-exécuter quand la page est restaurée depuis le bfcache (bouton retour du navigateur)
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+      console.log("[Index] 📦 Page restaurée depuis le bfcache, rafraîchissement...");
+    }
+    mettreAJour();
+  });
+
+  // Re-exécuter quand l'onglet redevient visible (retour depuis un autre onglet)
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+      console.log("[Index] 👁️ Onglet redevenu visible, rafraîchissement...");
+      mettreAJour();
+    }
+  });
+
+  // Re-exécuter quand la fenêtre reprend le focus
+  window.addEventListener("focus", function () {
+    console.log("[Index] 🎯 Fenêtre focalisée, rafraîchissement...");
+    mettreAJour();
+  });
+  </script>
 </body>
 </html>

@@ -233,3 +233,439 @@ function evaluerSelection(picsVrais, picsChoisis, fe, tolerance) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { genererECG, ajouterBruit, filtrer, detecterPicsR, calculerBPM, diagnostiquer, trouverSommetProche, evaluerSelection };
 }
+
+/* =====================================================================
+   Mini-jeu Tinder — "Signal ou Objet ?" (signal.html uniquement)
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  /* --- Les 10 cartes ------------------------------------------------- */
+  var CARTES = [
+    { emoji: "🚦", nom: "Feu tricolore",      sous: "Signal visuel",             estSignal: true  },
+    { emoji: "🪨", nom: "Un caillou",          sous: "Matière morte",             estSignal: false },
+    { emoji: "📡", nom: "Box Wi-Fi",           sous: "Signal électromagnétique",  estSignal: true  },
+    { emoji: "🪑", nom: "Une chaise en bois",  sous: "Objet inerte",              estSignal: false },
+    { emoji: "❤️", nom: "Cœur qui bat",        sous: "Signal électrique",         estSignal: true  },
+    { emoji: "💧", nom: "Une bouteille d'eau", sous: "Objet",                     estSignal: false },
+    { emoji: "📻", nom: "Talkie-Walkie",       sous: "Signal radio",              estSignal: true  },
+    { emoji: "🍎", nom: "Une pomme",           sous: "Nourriture",                estSignal: false },
+    { emoji: "🎇", nom: "Fibre optique",       sous: "Signal lumineux",           estSignal: true  },
+    { emoji: "☕", nom: "Tasse de café",       sous: "Objet",                     estSignal: false },
+  ];
+
+  /* --- Garde : ne s'exécute que si la pile existe dans la page ------- */
+  var pile = document.getElementById('tinder-pile');
+  if (!pile) return;
+
+  var notifEl    = document.getElementById('tinder-notif');
+  var resultatEl = document.getElementById('tinder-resultat');
+  var jeuZone    = document.getElementById('tinder-jeu-zone');
+  var compteurEl = document.getElementById('tinder-compteur');
+  var btnSignal  = document.getElementById('tinder-btn-signal');
+  var btnObjet   = document.getElementById('tinder-btn-objet');
+  var btnRejouer = document.getElementById('tinder-btn-rejouer');
+
+  var deck         = [];
+  var indexCourant = 0;
+  var score        = 0;
+  var enAnimation  = false;
+  var notifTimer   = null;
+
+  /* --- Mélange (Fisher-Yates) ---------------------------------------- */
+  function melanger(arr) {
+    var t = arr.slice();
+    for (var i = t.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = t[i]; t[i] = t[j]; t[j] = tmp;
+    }
+    return t;
+  }
+
+  /* --- Démarrage / redémarrage --------------------------------------- */
+  function demarrer() {
+    deck         = melanger(CARTES);
+    indexCourant = 0;
+    score        = 0;
+    enAnimation  = false;
+    resultatEl.classList.add('cache');
+    jeuZone.classList.remove('cache');
+    afficherPile();
+    mettreAJourCompteur();
+  }
+
+  /* --- Construction de la pile (top 3 cartes) ------------------------ */
+  function afficherPile() {
+    pile.innerHTML = '';
+    var restantes = deck.length - indexCourant;
+    var nbVis = Math.min(3, restantes);
+    if (nbVis === 0) return;
+
+    /* On insère de bas en haut pour que l'ordre DOM = ordre z-index */
+    for (var offset = nbVis - 1; offset >= 0; offset--) {
+      var data = deck[indexCourant + offset];
+      var el = document.createElement('div');
+      el.className = 'tinder-carte';
+      el.innerHTML =
+        '<span class="tinder-badge tinder-badge-signal">SIGNAL ✅</span>' +
+        '<span class="tinder-badge tinder-badge-objet">❌ OBJET</span>' +
+        '<span class="tc-emoji">' + data.emoji + '</span>' +
+        '<strong class="tc-nom">' + data.nom + '</strong>' +
+        '<span class="tc-sous">' + data.sous + '</span>' +
+        '<span class="tc-hint">← glisse à gauche ou à droite →</span>';
+
+      if (offset === 0) {
+        el.classList.add('tc-active');
+      } else if (offset === 1) {
+        el.classList.add('tc-dessous1');
+      } else {
+        el.classList.add('tc-dessous2');
+      }
+      pile.appendChild(el);
+    }
+
+    /* Activer le drag sur la carte du dessus */
+    var topCard = pile.querySelector('.tc-active');
+    if (topCard) activerDrag(topCard);
+  }
+
+  function mettreAJourCompteur() {
+    var n = Math.min(indexCourant + 1, CARTES.length);
+    compteurEl.textContent = 'Carte ' + n + ' / ' + CARTES.length;
+  }
+
+  /* --- Drag & Drop (souris + tactile) -------------------------------- */
+  function activerDrag(el) {
+    var SEUIL = 80;
+    var startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+    var bSig = el.querySelector('.tinder-badge-signal');
+    var bObj = el.querySelector('.tinder-badge-objet');
+
+    function onMove(e) {
+      if (!dragging) return;
+      if (e.cancelable) e.preventDefault();
+      var p = e.touches ? e.touches[0] : e;
+      dx = p.clientX - startX;
+      dy = p.clientY - startY;
+      el.style.transform = 'translate(' + dx + 'px,' + (dy * 0.25) + 'px) rotate(' + (dx * 0.05) + 'deg)';
+      var ratio = Math.min(Math.abs(dx) / SEUIL, 1);
+      bSig.style.opacity = dx > 20  ? ratio : 0;
+      bObj.style.opacity = dx < -20 ? ratio : 0;
+    }
+
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onEnd);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend',  onEnd);
+      bSig.style.opacity = 0;
+      bObj.style.opacity = 0;
+
+      if (Math.abs(dx) >= SEUIL) {
+        effectuerChoix(el, dx > 0, dx > 0 ? 1 : -1);
+      } else {
+        /* Snap-back */
+        el.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)';
+        el.style.transform  = '';
+        setTimeout(function () { el.style.transition = ''; }, 420);
+      }
+    }
+
+    function onStart(e) {
+      if (enAnimation) return;
+      dragging = true;
+      dx = 0; dy = 0;
+      var p = e.touches ? e.touches[0] : e;
+      startX = p.clientX;
+      startY = p.clientY;
+      el.style.transition = 'none';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onEnd);
+      el.addEventListener('touchmove', onMove, { passive: false });
+      el.addEventListener('touchend',  onEnd);
+    }
+
+    el.addEventListener('mousedown',  onStart);
+    el.addEventListener('touchstart', onStart, { passive: true });
+  }
+
+  /* --- Validation d'un choix ----------------------------------------- */
+  function effectuerChoix(el, reponduSignal, dir) {
+    if (enAnimation) return;
+    enAnimation = true;
+
+    var carte = deck[indexCourant];
+    var ok    = reponduSignal === carte.estSignal;
+    if (ok) score++;
+
+    /* Animer la carte hors-écran */
+    var tx = dir * (window.innerWidth + 300);
+    el.style.transition = 'transform 0.38s ease, opacity 0.38s ease';
+    el.style.transform  = 'translate(' + tx + 'px,' + (dir * 30) + 'px) rotate(' + (dir * 20) + 'deg)';
+    el.style.opacity    = '0';
+
+    afficherNotif(ok, carte);
+    indexCourant++;
+    mettreAJourCompteur();
+
+    setTimeout(function () {
+      if (indexCourant >= deck.length) {
+        afficherResultat();
+      } else {
+        afficherPile();
+      }
+      enAnimation = false;
+    }, 400);
+  }
+
+  /* --- Notification 1,5 s ------------------------------------------- */
+  function afficherNotif(ok, carte) {
+    clearTimeout(notifTimer);
+    var texte;
+    if (ok) {
+      texte = carte.estSignal
+        ? '✅ Bonne réponse ! <strong>' + carte.nom + '</strong> transporte bien une information.'
+        : '✅ Bonne réponse ! <strong>' + carte.nom + '</strong>, c’est un simple objet.';
+    } else {
+      texte = carte.estSignal
+        ? '❌ Raté ! <strong>' + carte.nom + '</strong> transporte une information : c’est un signal !'
+        : '❌ Raté ! <strong>' + carte.nom + '</strong> n’est pas un signal, c’est juste un objet.';
+    }
+    notifEl.className   = 'tinder-notif visible ' + (ok ? 'notif-ok' : 'notif-ko');
+    notifEl.innerHTML   = texte;
+    notifTimer = setTimeout(function () {
+      notifEl.className = 'tinder-notif';
+    }, 1500);
+  }
+
+  /* --- Écran de résultat --------------------------------------------- */
+  function afficherResultat() {
+    jeuZone.classList.add('cache');
+    resultatEl.classList.remove('cache');
+    document.getElementById('tinder-score-valeur').textContent = score;
+
+    var emoji, commentaire;
+    if (score <= 4) {
+      emoji       = '😅';
+      commentaire = "Oups ! Un signal, c’est vraiment le transport d’une information. On revoit ça ensemble !";
+    } else if (score <= 7) {
+      emoji       = '🙂';
+      commentaire = "Pas mal ! Tu as compris la base, mais il y a quelques pièges.";
+    } else {
+      emoji       = '🎉';
+      commentaire = "Excellent ! Tu as un vrai radar à signaux !";
+    }
+    document.getElementById('tinder-resultat-emoji').textContent = emoji;
+    document.getElementById('tinder-commentaire').textContent    = commentaire;
+  }
+
+  /* --- Boutons cliquables -------------------------------------------- */
+  btnSignal.addEventListener('click', function () {
+    if (enAnimation || indexCourant >= deck.length) return;
+    var top = pile.querySelector('.tc-active');
+    if (top) effectuerChoix(top, true, 1);
+  });
+
+  btnObjet.addEventListener('click', function () {
+    if (enAnimation || indexCourant >= deck.length) return;
+    var top = pile.querySelector('.tc-active');
+    if (top) effectuerChoix(top, false, -1);
+  });
+
+  btnRejouer.addEventListener('click', demarrer);
+
+  /* --- Lancement initial -------------------------------------------- */
+  demarrer();
+
+}());
+
+/* =====================================================================
+   Section Spectre — Visualiseur de fréquences (signal.html uniquement)
+
+   Sons synthétiques pour la démo (remplaçables par de vrais fichiers) :
+     btn-spectre-1 → sawtooth  100 Hz  (grave, barres à gauche)
+     btn-spectre-2 → sine     6500 Hz  (aigu,  barres à droite)
+     btn-spectre-3 → bruit blanc       (toutes les fréquences)
+
+   Pour utiliser de vrais fichiers audio à la place, remplacez la
+   fonction `creer` de chaque son par :
+     var a = new Audio('audio/mon-fichier.mp3');
+     a.loop = true;
+     var src = audioCtx.createMediaElementSource(a);
+     src.connect(gainNode);
+     a.play();
+     return src;   (et adaptez arreter() pour stopper l'élément audio)
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('canvas-spectre');
+  if (!canvas) return;
+
+  canvas.width  = 600;
+  canvas.height = 250;
+  var ctx = canvas.getContext('2d');
+
+  var audioCtx     = null;
+  var analyser     = null;
+  var gainNode     = null;
+  var sourceActive = null;
+  var animId       = null;
+  var idxActif     = -1;
+
+  var SONS = [
+    {
+      id: 'btn-spectre-1',
+      texte: 'Voix Grave (Basses)',
+      creer: function () {
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = 100;
+        return osc;
+      }
+    },
+    {
+      id: 'btn-spectre-2',
+      texte: 'Sifflement (Aigus)',
+      creer: function () {
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 6500;
+        return osc;
+      }
+    },
+    {
+      id: 'btn-spectre-3',
+      texte: 'Chut ! (Bruit complet)',
+      creer: function () {
+        var taille = audioCtx.sampleRate * 2;
+        var buf    = audioCtx.createBuffer(1, taille, audioCtx.sampleRate);
+        var data   = buf.getChannelData(0);
+        for (var i = 0; i < taille; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+        var src   = audioCtx.createBufferSource();
+        src.buffer = buf;
+        src.loop   = true;
+        return src;
+      }
+    }
+  ];
+
+  function initAudio() {
+    if (audioCtx) { audioCtx.resume(); return; }
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.82;
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.28;
+    gainNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  }
+
+  function arreter() {
+    if (sourceActive) {
+      try { sourceActive.stop(); } catch (e) {}
+      sourceActive.disconnect();
+      sourceActive = null;
+    }
+    cancelAnimationFrame(animId);
+    if (idxActif >= 0) {
+      var b = document.getElementById(SONS[idxActif].id);
+      if (b) { b.classList.remove('actif'); b.textContent = '▶ ' + SONS[idxActif].texte; }
+      idxActif = -1;
+    }
+  }
+
+  function jouer(idx) {
+    initAudio();
+    if (idx === idxActif) { arreter(); dessinerVide(); return; }
+    arreter();
+
+    idxActif = idx;
+
+    // Mémoriser ce bouton (le Set évite le double-comptage)
+    if (window._boutonsSectreCliques) {
+      window._boutonsSectreCliques.add(idx);
+      if (typeof window.verifierVictoireOndes === 'function') window.verifierVictoireOndes();
+    }
+
+    sourceActive = SONS[idx].creer();
+    sourceActive.connect(gainNode);
+    sourceActive.start();
+
+    var btn = document.getElementById(SONS[idx].id);
+    if (btn) { btn.classList.add('actif'); btn.textContent = '⏹ ' + SONS[idx].texte; }
+
+    lancerAnimation();
+  }
+
+  function lancerAnimation() {
+    cancelAnimationFrame(animId);
+    /* On affiche les 128 premières bins (0-11 kHz) sur les 256 disponibles */
+    var afficher = Math.floor(analyser.frequencyBinCount / 2);
+    var data     = new Uint8Array(analyser.frequencyBinCount);
+    var barreL   = canvas.width / afficher;
+    var zoneH    = canvas.height - 24;
+
+    function frame() {
+      animId = requestAnimationFrame(frame);
+      analyser.getByteFrequencyData(data);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (var i = 0; i < afficher; i++) {
+        var h     = (data[i] / 255) * zoneH;
+        var ratio = i / afficher;
+        /* Dégradé bleu électrique (#3B82F6) → violet sombre (#6D28D9) */
+        var r = Math.round(59  + ratio * 50);
+        var g = Math.round(130 - ratio * 90);
+        var b = Math.round(246 - ratio * 29);
+        ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+        ctx.fillRect(i * barreL, zoneH - h, barreL - 1, h);
+      }
+      dessinerLabels();
+    }
+    frame();
+  }
+
+  function dessinerLabels() {
+    ctx.fillStyle = '#64748b';
+    ctx.font      = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('← Graves (basses fréquences)', 6, canvas.height - 6);
+    ctx.textAlign = 'right';
+    ctx.fillText('Aigus (hautes fréquences) →', canvas.width - 6, canvas.height - 6);
+    ctx.textAlign = 'left';
+  }
+
+  function dessinerVide() {
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    /* Barres décoratives fantômes */
+    var nb = 64, bW = canvas.width / nb, zoneH = canvas.height - 24;
+    for (var i = 0; i < nb; i++) {
+      var h     = 3 + Math.abs(Math.sin(i * 0.4)) * 5;
+      var ratio = i / nb;
+      ctx.fillStyle = 'rgba(' + Math.round(59 + ratio * 50) + ',' +
+                                Math.round(130 - ratio * 90) + ',' +
+                                Math.round(246 - ratio * 29) + ',0.18)';
+      ctx.fillRect(i * bW, zoneH - h, bW - 1, h);
+    }
+    ctx.fillStyle = '#94a3b8';
+    ctx.font      = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('▶ Lance un son pour voir son spectre en direct !', canvas.width / 2, zoneH / 2 + 5);
+    ctx.textAlign = 'left';
+    dessinerLabels();
+  }
+
+  SONS.forEach(function (s, i) {
+    var btn = document.getElementById(s.id);
+    if (btn) btn.addEventListener('click', function () { jouer(i); });
+  });
+
+  dessinerVide();
+}());

@@ -51,6 +51,22 @@
 
 * { box-sizing: border-box; }
 
+/* --- Scrollbar personnalisée --- */
+::-webkit-scrollbar { width: 14px; }
+::-webkit-scrollbar-track {
+  background: #d9ebe3;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--signal);
+  border-radius: 999px;
+  border: 3px solid #fff;
+}
+::-webkit-scrollbar-thumb:hover { background: #07865c; }
+
+/* Firefox */
+* { scrollbar-width: auto; scrollbar-color: var(--signal) #d9ebe3; }
+
 body {
   margin: 0;
   font-family: var(--texte);
@@ -212,3 +228,639 @@ body {
 .compteur { font-family: var(--titre); font-weight: 700; color: var(--signal-fonce); margin: 0 0 10px; }
 .boutons-ligne { display: flex; gap: 10px; flex-wrap: wrap; }
 @media (max-width: 640px) { .cartes-choix { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   Système de progression gamifié — Badges & Diplôme
+   ===================================================================== */
+
+/* --- Section de progression sur l'index --- */
+.progression-section {
+  margin-top: 28px;
+  animation: apparait 0.6s ease both;
+  animation-delay: 0.15s;
+}
+.progression-section h2 {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin: 0 0 6px;
+  color: var(--encre);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progression-section .sous-titre {
+  color: var(--encre-doux);
+  font-size: 0.92rem;
+  margin: 0 0 16px;
+}
+
+/* --- Barre de progression --- */
+.barre-progression {
+  width: 100%;
+  height: 10px;
+  background: #e3e7e2;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  position: relative;
+}
+.barre-progression-remplissage {
+  height: 100%;
+  background: linear-gradient(90deg, var(--signal) 0%, #34d399 100%);
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+.barre-progression-remplissage::after {
+  content: "";
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  border-radius: 0 99px 99px 0;
+}
+.progression-compteur {
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--signal-fonce);
+  text-align: right;
+  margin-top: -4px;
+  margin-bottom: 14px;
+}
+
+/* --- Grille de badges --- */
+.badges-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.badge-carte {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--bord);
+  background: var(--carte);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.badge-carte::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+}
+.badge-carte.obtenu {
+  border-color: var(--signal);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+.badge-carte.obtenu::before {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(14, 159, 110, 0.03) 0%, rgba(52, 211, 153, 0.05) 100%);
+}
+.badge-carte.obtenu:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(14, 159, 110, 0.15);
+}
+.badge-carte.verrouille {
+  opacity: 0.55;
+}
+.badge-carte.verrouille .badge-icone {
+  filter: grayscale(1);
+}
+.badge-icone {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  background: #eef2ef;
+  transition: all 0.3s ease;
+}
+.badge-carte.obtenu .badge-icone {
+  background: linear-gradient(135deg, var(--signal) 0%, #34d399 100%);
+  box-shadow: 0 4px 12px rgba(14, 159, 110, 0.25);
+}
+.badge-info {
+  flex: 1;
+  min-width: 0;
+}
+.badge-nom {
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--encre);
+  display: block;
+  line-height: 1.3;
+}
+.badge-carte.verrouille .badge-nom {
+  color: var(--encre-doux);
+}
+.badge-etat {
+  font-size: 0.8rem;
+  color: var(--encre-doux);
+  display: block;
+  margin-top: 2px;
+}
+.badge-carte.obtenu .badge-etat {
+  color: var(--signal-fonce);
+  font-weight: 700;
+}
+
+/* Coche animée pour badge obtenu */
+.badge-coche {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--signal);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes pop-in {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* --- Zone diplôme (améliorée) --- */
+.diplome-zone {
+  margin-top: 30px;
+  padding: 0;
+  animation: apparait 0.8s ease both;
+}
+.diplome-carte {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--rayon);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+  border: 3px solid var(--signal);
+  text-align: center;
+  padding: 32px 26px;
+  box-shadow: 0 12px 40px rgba(14, 159, 110, 0.18);
+}
+.diplome-carte::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(14, 159, 110, 0.06) 60deg,
+    transparent 120deg,
+    rgba(14, 159, 110, 0.06) 180deg,
+    transparent 240deg,
+    rgba(14, 159, 110, 0.06) 300deg,
+    transparent 360deg
+  );
+  animation: rotation-lente 12s linear infinite;
+  pointer-events: none;
+}
+@keyframes rotation-lente {
+  to { transform: rotate(360deg); }
+}
+.diplome-emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 8px;
+  position: relative;
+  animation: rebond 2s ease-in-out infinite;
+}
+@keyframes rebond {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.diplome-titre {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--signal-fonce);
+  margin: 0 0 8px;
+  position: relative;
+}
+.diplome-sous-titre {
+  color: var(--encre-doux);
+  font-size: 1.05rem;
+  margin: 0 0 20px;
+  position: relative;
+}
+.diplome-cadre {
+  display: inline-block;
+  background: white;
+  border: 2px solid var(--signal);
+  padding: 18px 36px;
+  border-radius: 14px;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: #15803d;
+  box-shadow: 0 4px 16px rgba(14, 159, 110, 0.12);
+  position: relative;
+  letter-spacing: -0.01em;
+}
+.diplome-action {
+  margin-top: 20px;
+  position: relative;
+}
+.diplome-action p {
+  font-size: 0.92rem;
+  color: var(--signal-fonce);
+  margin: 0 0 14px;
+}
+.diplome-action .bouton-reset {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: var(--texte);
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+.diplome-action .bouton-reset:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Bouton "Obtenir mon diplôme" — apparaît avant la zone diplôme */
+.bouton-diplome {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  margin: 28px auto 0;
+  padding: 18px 28px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--signal) 0%, #34d399 50%, var(--signal-fonce) 100%);
+  background-size: 200% 200%;
+  animation: degrade-anime 3s ease infinite, apparait 0.6s ease both, pulsation 2s ease-in-out infinite;
+  color: white;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(14, 159, 110, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+.bouton-diplome:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(14, 159, 110, 0.45);
+}
+.bouton-diplome:active {
+  transform: translateY(0) scale(0.98);
+}
+@keyframes degrade-anime {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulsation {
+  0%, 100% { box-shadow: 0 8px 32px rgba(14, 159, 110, 0.35); }
+  50%      { box-shadow: 0 8px 32px rgba(14, 159, 110, 0.55), 0 0 0 8px rgba(14, 159, 110, 0.08); }
+}
+
+/* --- Toast de badge obtenu --- */
+#toast-badge {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  z-index: 10000;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+#toast-badge.toast-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+#toast-badge.toast-sortie {
+  transform: translateX(-50%) translateY(-120px);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+.toast-badge-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border: 2px solid var(--signal);
+  border-radius: 16px;
+  padding: 14px 22px;
+  box-shadow: 0 12px 40px rgba(14, 159, 110, 0.2), 0 4px 12px rgba(0,0,0,0.05);
+  min-width: 280px;
+  max-width: 90vw;
+}
+.toast-badge-icone {
+  font-size: 2rem;
+  flex: none;
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+.toast-badge-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toast-badge-texte strong {
+  font-family: var(--titre);
+  font-weight: 800;
+  color: var(--signal-fonce);
+  font-size: 0.95rem;
+}
+.toast-badge-texte span {
+  font-size: 0.88rem;
+  color: var(--encre-doux);
+}
+
+/* --- Responsive progression --- */
+@media (max-width: 640px) {
+  .badges-grille { grid-template-columns: 1fr; }
+  .diplome-cadre { font-size: 1.2rem; padding: 14px 20px; }
+  .diplome-titre { font-size: 1.3rem; }
+  .bouton-diplome { font-size: 1.05rem; padding: 16px 22px; }
+}
+
+/* =====================================================================
+   Mini-jeu Tinder — "Signal ou Objet ?" (signal.html)
+   ===================================================================== */
+
+/* Compteur de cartes */
+.tinder-compteur {
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--encre-doux);
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+/* Flèches directionnelles */
+.tinder-directions {
+  display: flex;
+  justify-content: space-between;
+  max-width: 320px;
+  margin: 0 auto 10px;
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.tinder-dir {
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+.dir-gauche { color: var(--battement); background: rgba(225, 29, 72, 0.08); }
+.dir-droite { color: var(--signal); background: rgba(14, 159, 110, 0.08); }
+
+/* Pile de cartes */
+.tinder-pile {
+  position: relative;
+  width: 280px;
+  height: 360px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* Carte individuelle */
+.tinder-carte {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border: 1px solid var(--bord);
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(22, 48, 42, 0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 20px 16px;
+  user-select: none;
+  touch-action: none;
+  will-change: transform;
+}
+
+/* Classes de position dans la pile */
+.tc-active {
+  z-index: 10;
+  cursor: grab;
+  transition: box-shadow 0.15s ease;
+}
+.tc-active:active { cursor: grabbing; }
+.tc-active:hover { box-shadow: 0 12px 36px rgba(22, 48, 42, 0.16); }
+
+.tc-dessous1 {
+  z-index: 9;
+  transform: translateY(8px) scale(0.96);
+  pointer-events: none;
+}
+.tc-dessous2 {
+  z-index: 8;
+  transform: translateY(16px) scale(0.92);
+  pointer-events: none;
+}
+
+/* Badges directionnels (visibles pendant le drag) */
+.tinder-badge {
+  position: absolute;
+  top: 18px;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 5px 12px;
+  border-radius: 9px;
+  border: 2.5px solid;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.06s ease;
+}
+.tinder-badge-signal {
+  right: 14px;
+  color: var(--signal);
+  border-color: var(--signal);
+  background: rgba(14, 159, 110, 0.10);
+}
+.tinder-badge-objet {
+  left: 14px;
+  color: var(--battement);
+  border-color: var(--battement);
+  background: rgba(225, 29, 72, 0.10);
+}
+
+/* Contenu interne de chaque carte */
+.tc-emoji {
+  font-size: 5.5rem;
+  line-height: 1;
+  pointer-events: none;
+  display: block;
+}
+.tc-nom {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--encre);
+  text-align: center;
+  pointer-events: none;
+  display: block;
+}
+.tc-sous {
+  font-size: 0.88rem;
+  color: var(--encre-doux);
+  text-align: center;
+  pointer-events: none;
+  font-style: italic;
+  display: block;
+}
+.tc-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  pointer-events: none;
+  display: block;
+  margin-top: 6px;
+}
+
+/* Boutons Signal / Objet */
+.tinder-boutons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  margin-top: 32px;
+}
+.tinder-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: #ffffff;
+  font-size: 1.55rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+.tinder-btn:hover { transform: scale(1.12); }
+.tinder-btn:active { transform: scale(0.94); }
+
+.tinder-btn-objet {
+  border-color: var(--battement);
+  color: var(--battement);
+}
+.tinder-btn-objet:hover {
+  background: rgba(225, 29, 72, 0.06);
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.22);
+}
+.tinder-btn-signal {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+.tinder-btn-signal:hover {
+  background: rgba(14, 159, 110, 0.06);
+  box-shadow: 0 6px 20px rgba(14, 159, 110, 0.22);
+}
+
+/* Notification flottante */
+.tinder-notif {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  z-index: 9999;
+  padding: 11px 22px;
+  border-radius: 14px;
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  text-align: center;
+  max-width: min(92vw, 380px);
+  line-height: 1.45;
+}
+.tinder-notif.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.tinder-notif.notif-ok {
+  background: linear-gradient(135deg, var(--signal) 0%, #059669 100%);
+  box-shadow: 0 8px 24px rgba(14, 159, 110, 0.40);
+}
+.tinder-notif.notif-ko {
+  background: linear-gradient(135deg, var(--battement) 0%, #be123c 100%);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.40);
+}
+
+/* Écran de résultat */
+.tinder-resultat {
+  text-align: center;
+  padding: 28px 16px;
+  animation: apparait 0.5s ease both;
+}
+.tinder-emoji-resultat {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+.tinder-score {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 3rem;
+  color: var(--encre);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.tinder-score-sur {
+  font-size: 1.3rem;
+  color: var(--encre-doux);
+}
+.tinder-commentaire {
+  font-size: 1rem;
+  color: var(--encre-doux);
+  margin: 12px auto 24px;
+  max-width: 360px;
+  line-height: 1.55;
+}
+.tinder-rejouer {
+  background: var(--signal);
+  color: #fff;
+  border: none;
+  padding: 13px 30px;
+  border-radius: 12px;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+  box-shadow: 0 6px 18px rgba(14, 159, 110, 0.28);
+}
+.tinder-rejouer:hover { background: var(--signal-fonce); transform: translateY(-2px); }
+.tinder-rejouer:active { transform: translateY(0); }
+
+/* Responsive mobile */
+@media (max-width: 640px) {
+  .tinder-pile { width: min(260px, 85vw); height: 320px; }
+  .tc-emoji { font-size: 4.5rem; }
+  .tc-nom { font-size: 1.15rem; }
+  .tinder-btn { width: 56px; height: 56px; font-size: 1.4rem; }
+  .tinder-boutons { gap: 28px; margin-top: 24px; }
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Test localStorage</title></head>
+<body>
+<h1>Test localStorage</h1>
+<pre id="log"></pre>
+<script>
+var log = document.getElementById("log");
+function l(msg) { log.textContent += msg + "\n"; console.log(msg); }
+
+// Test 1: localStorage disponible ?
+try {
+  localStorage.setItem("__test__", "ok");
+  var v = localStorage.getItem("__test__");
+  localStorage.removeItem("__test__");
+  l("1. localStorage disponible: " + (v === "ok" ? "OUI ✅" : "NON ❌ (lu: " + v + ")"));
+} catch(e) {
+  l("1. localStorage BLOQUÉ ❌: " + e.message);
+}
+
+// Test 2: Lire la clé de progression
+try {
+  var raw = localStorage.getItem("lisuncoeur_badges");
+  l("2. Clé 'lisuncoeur_badges': " + (raw === null ? "NULL (vide)" : raw));
+} catch(e) {
+  l("2. Erreur lecture: " + e.message);
+}
+
+// Test 3: Anciennes clés
+try {
+  var s = localStorage.getItem("module_signal");
+  var lb = localStorage.getItem("module_labo");
+  l("3. Ancienne clé 'module_signal': " + (s === null ? "NULL" : s));
+  l("   Ancienne clé 'module_labo': " + (lb === null ? "NULL" : lb));
+} catch(e) {
+  l("3. Erreur: " + e.message);
+}
+
+// Test 4: Écrire et relire
+try {
+  var testObj = { signal: { badge: "Test", date: new Date().toISOString() } };
+  localStorage.setItem("lisuncoeur_badges", JSON.stringify(testObj));
+  var relecture = localStorage.getItem("lisuncoeur_badges");
+  var parsed = JSON.parse(relecture);
+  l("4. Écriture+Relecture: " + (parsed.signal ? "OK ✅" : "ÉCHEC ❌"));
+  l("   Données relues: " + relecture);
+  // Nettoyage du test
+  localStorage.removeItem("lisuncoeur_badges");
+  l("   Nettoyage effectué");
+} catch(e) {
+  l("4. Erreur écriture/relecture: " + e.message);
+}
+
+// Test 5: Lister TOUTES les clés localStorage
+l("\n5. Toutes les clés localStorage:");
+for (var i = 0; i < localStorage.length; i++) {
+  var key = localStorage.key(i);
+  l("   - " + key + " = " + localStorage.getItem(key).substring(0, 100));
+}
+if (localStorage.length === 0) l("   (aucune clé)");
+
+// Test 6: Protocole
+l("\n6. Protocole: " + window.location.protocol);
+l("   Origin: " + window.location.origin);
+l("   URL: " + window.location.href);
+</script>
+</body>
+</html>

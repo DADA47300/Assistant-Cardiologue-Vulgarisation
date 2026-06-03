@@ -9,8 +9,8 @@
 <body>
 
   <nav class="barre">
-    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
-    <a class="lien" href="index.html">← Accueil</a>
+    <a class="marque" href="index.html?badge=labo">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html?badge=labo">← Accueil</a>
   </nav>
 
   <main class="page">
@@ -34,11 +34,9 @@
 
     <!-- DÉFI 1 : choisir le bon traitement -->
     <section class="carte etape" id="etape1">
-      <h2>Défi 1 — Choisis le bon nettoyage</h2>
-      <p class="explication">Le signal est pollué par deux choses : une <strong>ondulation lente</strong> (la
-        ligne de base qui monte et descend) et un <strong>grésillement</strong> (la courbe qui tremble).
-        Clique sur un traitement pour voir le résultat sur le graphe, puis valide ton choix.
-        Un seul est vraiment bon… et l'un d'eux est un piège !</p>
+      <h2>Défi 1 — Répare le signal !</h2>
+      <p class="explication">L'enregistrement est illisible. Le tracé <strong>tangue</strong>  de haut en bas et est plein de <strong>parasites</strong>. 
+        Teste les outils d'ingénieur ci-dessous pour nettoyer l'ECG.</p>
 
       <div class="cartes-choix">
         <button class="choix" data-id="gres">
@@ -107,9 +105,18 @@
       <button class="bouton secondaire" id="btnRecommencer">↻ Recommencer le labo</button>
     </section>
 
+    <!-- Bandeau de badge obtenu (caché par défaut, révélé par JS) -->
+    <section class="carte cache" id="badge-obtenu-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid var(--signal); text-align: center;">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🔬</div>
+      <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Technicien de Laboratoire !</h2>
+      <p style="color: var(--encre-doux); margin: 0 0 18px;">Tu as nettoyé le signal, trouvé le bon zoom et repéré les battements. Bravo !</p>
+      <a href="index.html?badge=labo" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
+    </section>
+
     <p class="pied">Réalisé par <strong>[vos prénoms]</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
   </main>
 
+  <script src="progression.js"></script>
   <script src="lib/plotly-basic.min.js"></script>
   <script src="signaux.js"></script>
 
@@ -322,6 +329,16 @@
       p.classList.add("faite"); p.classList.remove("active");
     });
     tracer(propre, "#0b7a55", [0, DUREE], [{ indices: picsVrais, couleur: "#e11d48", taille: 7 }]);
+    // ATTRIBUTION DU BADGE « Technicien de Laboratoire »
+    validerModule("labo");
+    // Afficher la section de célébration du badge
+    var badgeSection = document.getElementById('badge-obtenu-section');
+    if (badgeSection) {
+      badgeSection.classList.remove('cache');
+      setTimeout(function() {
+        badgeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 800);
+    }
   }
 
   /* ---------- 7) Branchements ---------- */
