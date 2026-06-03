@@ -27,7 +27,10 @@
         <span><strong>C'est quoi un signal ?</strong> — Joue avec l'amplitude, la fréquence et la période.</span>
       </a>
 
-      <div class="pastille"><span class="num">★</span><span>Le cœur et l'ECG <em>(à venir)</em></span></div>
+      <a class="pastille" id="lien-coeur" href="coeur.html" style="text-decoration:none;">
+        <span class="num" id="badge-coeur-ecg">★</span>
+        <span><strong>Le cœur et l'ECG</strong> — Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.</span>
+      </a>
 
       <a class="pastille" id="lien-labo" href="labo.html" style="text-decoration:none;">
         <span class="num" id="badge-labo">★</span>
@@ -116,6 +119,10 @@
     if (moduleValide("signal")) {
       var numSignal = document.getElementById("badge-signal");
       if (numSignal) { numSignal.style.background = "var(--signal)"; numSignal.style.color = "#fff"; }
+    }
+    if (moduleValide("coeur_ecg")) {
+      var numCoeur = document.getElementById("badge-coeur-ecg");
+      if (numCoeur) { numCoeur.style.background = "var(--signal)"; numCoeur.style.color = "#fff"; }
     }
     if (moduleValide("labo")) {
       var numLabo = document.getElementById("badge-labo");

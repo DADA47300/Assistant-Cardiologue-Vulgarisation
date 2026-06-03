@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le cœur et l'ECG — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ===== Styles spécifiques à coeur.html ===== */
+
+    /* Zones SVG du cœur */
+    .zone-oreil {
+      fill: #fde8e8; stroke: #e0a0a0; stroke-width: 2;
+      transition: fill 0.35s ease, stroke 0.35s ease;
+    }
+    .zone-ventr {
+      fill: #fca5a5; stroke: #c07070; stroke-width: 2;
+      transition: fill 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
+      transform-box: fill-box; transform-origin: center;
+    }
+    .zone-oreil.allumee          { fill: #fbbf24; stroke: #d97706; }
+    .zone-ventr.allumee          { fill: var(--battement); stroke: #9b1230; transform: scale(1.06); }
+    .zone-oreil.recharge         { fill: #bfdbfe; stroke: #3b82f6; }
+    .zone-ventr.recharge         { fill: #bfdbfe; stroke: #3b82f6; }
+
+    @keyframes clignoter-p {
+      0%, 100% { fill: #fbbf24; stroke: #d97706; }
+      50%      { fill: #fde68a; stroke: #f59e0b; }
+    }
+    .zone-oreil.pulse-p { animation: clignoter-p 0.5s ease-in-out infinite; }
+
+    /* Commentaire texte sous le cœur (Module 1) */
+    .coeur-note {
+      text-align: center; min-height: 2.4em; font-weight: 700;
+      color: var(--encre-doux); margin: 12px 0 4px; font-size: 0.97rem;
+    }
+    .boutons-anatomie {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 10px;
+    }
+
+    /* ECG cliquable — Module 2 */
+    .svg-ecg { display: block; width: 100%; max-width: 540px; margin: 0 auto; }
+    .onde-path {
+      stroke: var(--signal); stroke-width: 3; fill: none;
+      stroke-linecap: round; stroke-linejoin: round;
+      transition: stroke 0.2s, stroke-width 0.2s;
+    }
+    .onde-path.active { stroke-width: 4.5; }
+    .onde-path.active-p   { stroke: #d97706; }
+    .onde-path.active-qrs { stroke: var(--battement); }
+    .onde-path.active-t   { stroke: #3b82f6; }
+    .onde-label-svg {
+      font-family: var(--titre, sans-serif); font-weight: 700;
+      font-size: 13px; fill: var(--encre-doux);
+    }
+    .onde-label-svg.active-p   { fill: #d97706; }
+    .onde-label-svg.active-qrs { fill: var(--battement); }
+    .onde-label-svg.active-t   { fill: #3b82f6; }
+
+    .onde-desc {
+      border-radius: 12px; padding: 13px 17px; margin: 12px 0 6px;
+      font-weight: 700; color: var(--encre-doux); background: #f3f6f4;
+      border-left: 4px solid var(--bord); min-height: 3.2em;
+      transition: border-color 0.3s, background 0.3s, color 0.3s;
+    }
+    .onde-desc.active-p   { border-color: #d97706; background: #fffbeb; color: #92400e; }
+    .onde-desc.active-qrs { border-color: var(--battement); background: #fff1f2; color: #9b1230; }
+    .onde-desc.active-t   { border-color: #3b82f6; background: #eff6ff; color: #1e40af; }
+
+    /* Zone cliquable SVG */
+    .hit-zone { cursor: pointer; }
+    .hit-zone:focus { outline: 2px dashed var(--signal); outline-offset: 2px; }
+
+    /* Module 3 — Synchronisation */
+    .sync-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;
+      margin: 6px 0 14px;
+    }
+    @media (max-width: 600px) { .sync-layout { grid-template-columns: 1fr; } }
+
+    .svg-coeur-sync { display: block; max-width: 190px; margin: 0 auto; }
+    .svg-ecg-sync   { display: block; width: 100%; }
+
+    .phase-label {
+      text-align: center; font-family: var(--titre); font-weight: 700;
+      font-size: 1.02rem; color: var(--encre); min-height: 1.6em; margin: 6px 0 10px;
+    }
+    .sync-controls {
+      display: flex; align-items: center; gap: 14px; margin: 0 0 6px;
+    }
+    .sync-controls input[type=range] {
+      flex: 1; accent-color: var(--battement); height: 6px; cursor: pointer;
+    }
+    .btn-rouge {
+      background: var(--battement); box-shadow: 0 6px 16px rgba(225,29,72,.28);
+      white-space: nowrap;
+    }
+    .btn-rouge:hover { background: #be123c; }
+
+    /* Checklist de progression */
+    .checklist {
+      display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 20px;
+    }
+    .chk {
+      display: flex; align-items: center; gap: 6px; font-size: 0.84rem;
+      color: var(--encre-doux); background: #f3f6f4; padding: 5px 11px;
+      border-radius: 20px; border: 1px solid var(--bord); transition: all 0.3s;
+    }
+    .chk.fait {
+      background: #e6f8ef; color: var(--signal-fonce);
+      border-color: var(--signal); font-weight: 700;
+    }
+    .chk .ico { font-size: 0.88rem; }
+
+    /* Badge final */
+    .badge-coeur-carte {
+      background: linear-gradient(135deg, #fff1f2 0%, #fffbfb 100%);
+      border: 2px solid var(--battement); text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="barre">
+  <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+  <a class="lien" href="index.html?badge=coeur_ecg">← Accueil</a>
+</nav>
+
+<main class="page">
+
+  <header class="mission">
+    <h1>🫀 Le cœur et l'ECG</h1>
+    <p>Le cœur est une pompe électrique. Chaque étincelle électrique déclenche une contraction,
+       et chaque contraction trace une signature sur le papier ECG. Explore les trois modules
+       pour comprendre ce lien invisible.</p>
+  </header>
+
+  <!-- Checklist de progression -->
+  <div class="checklist" aria-label="Conditions pour obtenir le badge">
+    <span class="chk" id="chk-sup"><span class="ico">○</span> Étage supérieur</span>
+    <span class="chk" id="chk-pompe"><span class="ico">○</span> Pompe principale</span>
+    <span class="chk" id="chk-p"><span class="ico">○</span> Onde P</span>
+    <span class="chk" id="chk-qrs"><span class="ico">○</span> Onde QRS</span>
+    <span class="chk" id="chk-t"><span class="ico">○</span> Onde T</span>
+    <span class="chk" id="chk-cycle"><span class="ico">○</span> Cycle complet</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODULE 1 — ANATOMIE
+       ═══════════════════════════════════════════════ -->
+  <section class="carte" id="module-anatomie">
+    <h2>1. La machine — Anatomie simplifiée</h2>
+    <p class="explication">
+      Le cœur a deux étages : les <strong>oreillettes</strong> (collecteurs) en haut,
+      et les <strong>ventricules</strong> (pompes) en bas. Allume-les pour comprendre leur rôle.
+    </p>
+
+    <svg class="svg-coeur" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg"
+         style="display:block;margin:0 auto;max-width:240px;"
+         role="img" aria-label="Schéma anatomique simplifié du cœur avec oreillettes et ventricules">
+
+      <!-- Gros vaisseaux (décoratifs, non interactifs) -->
+      <g id="vaisseaux" fill="#d7b1bc" stroke="#b98a98" stroke-width="2.2" stroke-linejoin="round" pointer-events="none">
+        <path d="M128 84 C124 50 130 24 156 20 C182 16 198 36 190 58 C186 70 174 68 174 56 C178 42 169 36 159 39 C148 42 147 60 150 84 Z"/>
+        <path d="M106 86 C100 56 102 34 120 30 C132 27 141 35 140 46 L128 48 C122 46 120 56 122 70 C123 78 126 82 128 86 Z"/>
+        <path d="M174 98 L176 54 C176 42 186 38 194 42 C202 46 202 58 200 68 L198 98 Z"/>
+      </g>
+
+      <!-- Ventricules (zone basse, coloriable) -->
+      <g id="ventricules">
+        <path class="zone-ventr"
+              d="M92 284 C62 250 50 206 54 168 C57 138 66 110 90 94 C106 84 124 82 144 88 C176 97 200 110 206 140 C212 170 198 210 170 240 C146 266 116 282 92 284 Z"/>
+        <text x="86"  y="198" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">Ventricule</text>
+        <text x="86"  y="210" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">droit</text>
+        <text x="166" y="184" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">Ventricule</text>
+        <text x="166" y="196" text-anchor="middle" font-size="10" fill="#7a1c1c" pointer-events="none" font-family="sans-serif">gauche</text>
+      </g>
+
+      <!-- Oreillettes (coiffe haute, coloriable) -->
+      <g id="oreillettes">
+        <path class="zone-oreil"
+              d="M58 128 C46 116 44 96 60 86 C74 78 90 84 92 98 C96 90 104 92 116 88 C130 80 152 80 168 90 C190 102 196 122 188 138 C150 150 96 150 58 128 Z"/>
+        <text x="76"  y="104" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">Oreillette</text>
+        <text x="76"  y="116" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">droite</text>
+        <text x="152" y="102" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">Oreillette</text>
+        <text x="152" y="114" text-anchor="middle" font-size="10" fill="#8b4545" pointer-events="none" font-family="sans-serif">gauche</text>
+      </g>
+
+      <!-- Coronaires + sillons (décoratifs, jamais recoloriés) -->
+      <g fill="none" stroke="#c07070" stroke-linecap="round" pointer-events="none">
+        <path d="M124 132 C130 168 116 224 98 274" stroke-width="2.2" opacity="0.6"/>
+        <path d="M150 138 C172 158 178 188 168 214" stroke-width="1.6" opacity="0.4"/>
+        <path d="M58 128 C96 150 150 150 188 138" stroke-width="2" stroke-dasharray="3 5" opacity="0.35"/>
+      </g>
+    </svg>
+
+    <div class="coeur-note" id="note-anatomie" aria-live="polite">
+      Clique sur un bouton pour éclairer la zone correspondante.
+    </div>
+
+    <div class="boutons-anatomie">
+      <button class="bouton" id="btn-oreil" onclick="allumerOreillettes()">
+        Allumer l'étage supérieur
+      </button>
+      <button class="bouton" id="btn-ventr" onclick="allumerVentricules()">
+        Allumer la pompe principale
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       MODULE 2 — ONDES P-QRS-T
+       ═══════════════════════════════════════════════ -->
+  <section class="carte" id="module-ondes">
+    <h2>2. Le signal — Les ondes P, QRS et T</h2>
+    <p class="explication">
+      Chaque battement laisse une signature électrique sur l'ECG.
+      L'<strong>amplitude</strong> (hauteur) de chaque <strong>onde</strong> révèle la
+      puissance de la contraction. Clique sur chaque zone du tracé pour l'explorer.
+    </p>
+
+    <!-- ECG d'un battement complet -->
+    <svg class="svg-ecg" viewBox="0 0 500 115" xmlns="http://www.w3.org/2000/svg"
+         role="img" aria-label="Tracé ECG d'un battement — cliquer sur les ondes P, QRS et T pour les explorer">
+
+      <!-- Fond et ligne de base -->
+      <rect width="500" height="115" fill="#fffaf8" rx="8"/>
+      <line x1="0" y1="72" x2="500" y2="72" stroke="#e8ede8" stroke-width="1"/>
+
+      <!-- Tracé ECG — segments individuels pour colorisation -->
+      <path id="seg-base-g" class="onde-path" d="M0,72 L60,72"/>
+      <path id="seg-p"      class="onde-path" d="M60,72 Q78,46 96,72"/>
+      <path id="seg-pr"     class="onde-path" d="M96,72 L130,72"/>
+      <path id="seg-qrs"    class="onde-path" d="M130,72 L140,80 L152,7 L164,80 L172,72"/>
+      <path id="seg-st"     class="onde-path" d="M172,72 L196,72"/>
+      <path id="seg-t"      class="onde-path" d="M196,72 Q232,40 268,72"/>
+      <path id="seg-base-d" class="onde-path" d="M268,72 L500,72"/>
+
+      <!-- Annotation amplitude sur QRS -->
+      <line x1="176" y1="72" x2="176" y2="8" stroke="#e11d48" stroke-width="1"
+            stroke-dasharray="3,2" opacity="0.55" pointer-events="none"/>
+      <text x="179" y="42" font-size="9" fill="#e11d48" font-style="italic"
+            opacity="0.7" pointer-events="none" font-family="sans-serif">amplitude</text>
+
+      <!-- Labels des ondes (zone de label y=90-106) -->
+      <text id="lbl-p"   class="onde-label-svg" x="78"  y="97" text-anchor="middle">P</text>
+      <text id="lbl-qrs" class="onde-label-svg" x="152" y="97" text-anchor="middle">QRS</text>
+      <text id="lbl-t"   class="onde-label-svg" x="232" y="97" text-anchor="middle">T</text>
+
+      <!-- Lignes label → onde -->
+      <line x1="78"  y1="84" x2="78"  y2="50" stroke="#ccc" stroke-width="0.8" stroke-dasharray="3,2"/>
+      <line x1="152" y1="84" x2="152" y2="72" stroke="#ccc" stroke-width="0.8" stroke-dasharray="3,2"/>
+      <line x1="232" y1="84" x2="232" y2="43" stroke="#ccc" stroke-width="0.8" stroke-dasharray="3,2"/>
+
+      <!-- Highlights colorés (semi-transparents, activés par JS) -->
+      <rect id="hl-p"   x="48"  y="0" width="60"  height="83" rx="4" fill="#f59e0b" opacity="0" pointer-events="none"/>
+      <rect id="hl-qrs" x="118" y="0" width="68"  height="83" rx="4" fill="#e11d48" opacity="0" pointer-events="none"/>
+      <rect id="hl-t"   x="184" y="0" width="96"  height="83" rx="4" fill="#3b82f6" opacity="0" pointer-events="none"/>
+
+      <!-- Zones de clic (invisibles, par-dessus tout) -->
+      <rect class="hit-zone" x="48" y="0" width="60" height="115"
+            fill="transparent" tabindex="0" role="button"
+            aria-label="Explorer l'onde P"
+            onclick="explorerOnde('p')"
+            onkeydown="if(event.key==='Enter'||event.key===' '){explorerOnde('p')}"/>
+      <rect class="hit-zone" x="118" y="0" width="68" height="115"
+            fill="transparent" tabindex="0" role="button"
+            aria-label="Explorer le complexe QRS"
+            onclick="explorerOnde('qrs')"
+            onkeydown="if(event.key==='Enter'||event.key===' '){explorerOnde('qrs')}"/>
+      <rect class="hit-zone" x="184" y="0" width="96" height="115"
+            fill="transparent" tabindex="0" role="button"
+            aria-label="Explorer l'onde T"
+            onclick="explorerOnde('t')"
+            onkeydown="if(event.key==='Enter'||event.key===' '){explorerOnde('t')}"/>
+    </svg>
+
+    <div class="onde-desc" id="onde-desc" aria-live="polite">
+      Clique sur une onde du tracé pour en savoir plus.
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       MODULE 3 — SYNCHRONISATION
+       ═══════════════════════════════════════════════ -->
+  <section class="carte" id="module-sync">
+    <h2>3. La synchronisation — Le cœur et son ECG en direct</h2>
+    <p class="explication">
+      Déplace le curseur ou lance la lecture pour voir comment chaque phase
+      du tracé ECG correspond à un moment précis de l'activité du cœur.
+    </p>
+
+    <div class="sync-layout">
+
+      <!-- Cœur animé (gauche) -->
+      <div>
+        <svg class="svg-coeur-sync" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg"
+             role="img" aria-label="Cœur réagissant à la phase du cycle cardiaque">
+          <g id="vaisseaux-sync" fill="#d7b1bc" stroke="#b98a98" stroke-width="2.2" stroke-linejoin="round" pointer-events="none">
+            <path d="M128 84 C124 50 130 24 156 20 C182 16 198 36 190 58 C186 70 174 68 174 56 C178 42 169 36 159 39 C148 42 147 60 150 84 Z"/>
+            <path d="M106 86 C100 56 102 34 120 30 C132 27 141 35 140 46 L128 48 C122 46 120 56 122 70 C123 78 126 82 128 86 Z"/>
+            <path d="M174 98 L176 54 C176 42 186 38 194 42 C202 46 202 58 200 68 L198 98 Z"/>
+          </g>
+          <g id="s-ventricules">
+            <path id="s-ventr-path" class="zone-ventr"
+                  d="M92 284 C62 250 50 206 54 168 C57 138 66 110 90 94 C106 84 124 82 144 88 C176 97 200 110 206 140 C212 170 198 210 170 240 C146 266 116 282 92 284 Z"/>
+          </g>
+          <g id="s-oreillettes">
+            <path class="zone-oreil"
+                  d="M58 128 C46 116 44 96 60 86 C74 78 90 84 92 98 C96 90 104 92 116 88 C130 80 152 80 168 90 C190 102 196 122 188 138 C150 150 96 150 58 128 Z"/>
+          </g>
+          <g fill="none" stroke="#c07070" stroke-linecap="round" pointer-events="none">
+            <path d="M124 132 C130 168 116 224 98 274" stroke-width="2.2" opacity="0.6"/>
+            <path d="M58 128 C96 150 150 150 188 138" stroke-width="2" stroke-dasharray="3 5" opacity="0.3"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ECG avec point de lecture (droite) -->
+      <div>
+        <svg class="svg-ecg-sync" viewBox="0 0 320 90" xmlns="http://www.w3.org/2000/svg">
+          <rect width="320" height="90" fill="#fffaf8" rx="6"/>
+          <line x1="0" y1="62" x2="320" y2="62" stroke="#e8ede8" stroke-width="1"/>
+          <!-- Tracé sync (version compacte) -->
+          <path id="sync-trace"
+                d="M0,62 L40,62 Q50,48 60,62 L82,62 L90,68 L100,8 L110,68 L118,62 L132,62 Q152,44 172,62 L320,62"
+                stroke="var(--signal)" stroke-width="2.5" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Point de lecture -->
+          <circle id="sync-dot" cx="0" cy="62" r="5.5" fill="var(--battement)" opacity="0.9"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Phase courante -->
+    <div class="phase-label" id="phase-label" aria-live="polite">
+      Déplace le curseur pour commencer
+    </div>
+
+    <!-- Contrôles -->
+    <div class="sync-controls">
+      <input type="range" id="curseur-sync" min="0" max="100" value="0" step="1"
+             aria-label="Curseur temporel du cycle cardiaque (0 = début du cycle, 100 = fin)"/>
+      <button class="bouton btn-rouge" id="btn-lecture" onclick="toggleLecture()">▶ Lecture</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       BADGE OBTENU (caché par défaut)
+       ═══════════════════════════════════════════════ -->
+  <section class="carte cache badge-coeur-carte" id="badge-obtenu-section">
+    <div style="font-size:2.5rem;margin-bottom:8px;">🏅🫀</div>
+    <h2 style="color:var(--battement);margin:0 0 6px;">Badge obtenu : Explorateur Anatomique !</h2>
+    <p style="color:var(--encre-doux);margin:0 0 18px;">
+      Tu as exploré les deux étages du cœur, décrypté les ondes P, QRS et T,
+      et suivi un cycle cardiaque complet. Bravo !
+    </p>
+    <a href="index.html?badge=coeur_ecg" class="bouton"
+       style="display:inline-block;text-decoration:none;
+              background:var(--battement);box-shadow:0 6px 16px rgba(225,29,72,.28);">
+      ← Retour à l'accueil pour voir ton badge
+    </a>
+  </section>
+
+  <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+
+</main>
+
+<script src="progression.js"></script>
+<script>
+  /* =====================================================================
+     COEUR.HTML — Logique interactive
+     ===================================================================== */
+
+  // --- Suivi de progression ---
+  var progres = { sup: false, pompe: false, p: false, qrs: false, t: false, cycle: false };
+  var badgeObtenu = false;
+
+  function cocher(cle) {
+    if (progres[cle]) return;
+    progres[cle] = true;
+    var el = document.getElementById('chk-' + cle);
+    if (el) { el.classList.add('fait'); el.querySelector('.ico').textContent = '✓'; }
+    verifierCompletion();
+  }
+
+  function verifierCompletion() {
+    if (badgeObtenu) return;
+    var tout = Object.values(progres).every(Boolean);
+    if (!tout) return;
+    badgeObtenu = true;
+    validerModule('coeur_ecg');
+    var sec = document.getElementById('badge-obtenu-section');
+    sec.classList.remove('cache');
+    setTimeout(function() { sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 600);
+  }
+
+  // =========================================================
+  // MODULE 1 — Anatomie
+  // =========================================================
+  function allumerOreillettes() {
+    document.querySelectorAll('#oreillettes .zone-oreil').forEach(function(el) {
+      el.classList.remove('recharge'); el.classList.add('allumee');
+    });
+    document.querySelectorAll('#ventricules .zone-ventr').forEach(function(el) {
+      el.classList.remove('allumee', 'recharge');
+    });
+    document.getElementById('note-anatomie').textContent =
+      "C'est l'étincelle de départ.";
+    cocher('sup');
+  }
+
+  function allumerVentricules() {
+    document.querySelectorAll('#ventricules .zone-ventr').forEach(function(el) {
+      el.classList.remove('recharge'); el.classList.add('allumee');
+    });
+    document.querySelectorAll('#oreillettes .zone-oreil').forEach(function(el) {
+      el.classList.remove('allumee', 'recharge');
+    });
+    document.getElementById('note-anatomie').textContent =
+      "La grosse contraction qui propulse le sang.";
+    cocher('pompe');
+  }
+
+  // =========================================================
+  // MODULE 2 — Ondes P, QRS, T
+  // =========================================================
+  var ondeInfos = {
+    p: {
+      cls: 'active-p',
+      seg: 'seg-p', hl: 'hl-p', lbl: 'lbl-p',
+      titre: 'Onde P',
+      texte: "L'étincelle (ordre de préparation) — Les oreillettes reçoivent le signal électrique et se contractent légèrement. L'amplitude de cette onde est faible : c'est une petite pompe."
+    },
+    qrs: {
+      cls: 'active-qrs',
+      seg: 'seg-qrs', hl: 'hl-qrs', lbl: 'lbl-qrs',
+      titre: 'Complexe QRS',
+      texte: "Le grand choc (la pompe se contracte) — C'est le pic de plus haute amplitude sur tout le tracé : les ventricules se contractent avec force pour propulser le sang dans tout le corps."
+    },
+    t: {
+      cls: 'active-t',
+      seg: 'seg-t', hl: 'hl-t', lbl: 'lbl-t',
+      titre: 'Onde T',
+      texte: "La recharge (le cœur se repose) — Le muscle cardiaque se détend et ses cellules se rechargent électriquement pour le prochain battement. L'amplitude est modérée."
+    }
+  };
+
+  var ondeActive = null;
+
+  function explorerOnde(id) {
+    var info = ondeInfos[id];
+    if (!info) return;
+
+    // Réinitialiser l'onde précédente
+    if (ondeActive && ondeActive !== id) {
+      var prev = ondeInfos[ondeActive];
+      document.getElementById(prev.seg).classList.remove('active', prev.cls);
+      document.getElementById(prev.hl).setAttribute('opacity', '0');
+      document.getElementById(prev.lbl).classList.remove(prev.cls);
+    }
+    ondeActive = id;
+
+    // Activer
+    document.getElementById(info.seg).classList.add('active', info.cls);
+    document.getElementById(info.hl).setAttribute('opacity', '0.13');
+    document.getElementById(info.lbl).classList.add(info.cls);
+
+    var desc = document.getElementById('onde-desc');
+    desc.className = 'onde-desc ' + info.cls;
+    desc.textContent = info.titre + ' — ' + info.texte;
+
+    cocher(id);
+  }
+
+  // =========================================================
+  // MODULE 3 — Synchronisation
+  // =========================================================
+  // Tracé sync viewBox 0 0 320 90, baseline y=62
+  // Path: M0,62 L40,62 Q50,48 60,62 L82,62 L90,68 L100,8 L110,68 L118,62 L132,62 Q152,44 172,62 L320,62
+  // Points clés interpolés (incluant approximations Bézier) :
+  var syncPts = [
+    [0,62],[40,62],[50,55],[60,62],[82,62],
+    [90,68],[100,8],[110,68],[118,62],[132,62],
+    [152,53],[172,62],[320,62]
+  ];
+
+  function getY(x) {
+    for (var i = 0; i < syncPts.length - 1; i++) {
+      var x0 = syncPts[i][0], y0 = syncPts[i][1];
+      var x1 = syncPts[i+1][0], y1 = syncPts[i+1][1];
+      if (x >= x0 && x <= x1) return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+    }
+    return 62;
+  }
+
+  // Mapping curseur 0-100 → x dans le SVG 0-320
+  function valVersX(v) { return (v / 100) * 320; }
+
+  // Phases : seuils exprimés en valeur curseur (0-100)
+  // Repères x → val : P onde : x42-62 → val 13-19 ; QRS : x82-118 → val 26-37 ; T : x132-172 → val 41-54
+  function getPhase(v) {
+    if (v < 13)         return 'repos';
+    if (v < 20)         return 'p';
+    if (v < 26)         return 'pr';
+    if (v < 38)         return 'qrs';
+    if (v < 41)         return 'st';
+    if (v < 55)         return 't';
+    return 'diastole';
+  }
+
+  var phaseTextes = {
+    repos:    "Diastole — Le cœur est au repos, en attente du prochain signal.",
+    p:        "Onde P — Les oreillettes reçoivent l'étincelle et se contractent.",
+    pr:       "Segment PR — L'électricité descend vers les ventricules.",
+    qrs:      "Complexe QRS — Les ventricules se contractent ! La pompe bat fort.",
+    st:       "Segment ST — Le cœur reste contracté un bref instant.",
+    t:        "Onde T — Le muscle cardiaque se recharge pour le prochain battement.",
+    diastole: "Diastole — Repos complet. Le cœur attend le prochain cycle."
+  };
+
+  var curseur   = document.getElementById('curseur-sync');
+  var dot       = document.getElementById('sync-dot');
+  var phaseLabel = document.getElementById('phase-label');
+  var btnLecture = document.getElementById('btn-lecture');
+
+  function appliquerPhase(v) {
+    var x     = valVersX(v);
+    var y     = getY(x);
+    var phase = getPhase(v);
+
+    dot.setAttribute('cx', x.toFixed(1));
+    dot.setAttribute('cy', y.toFixed(1));
+    phaseLabel.textContent = phaseTextes[phase] || '';
+
+    var sOreil = document.querySelectorAll('#s-oreillettes .zone-oreil');
+    var sVentr = document.getElementById('s-ventr-path');
+
+    sOreil.forEach(function(el) {
+      el.classList.remove('pulse-p', 'allumee', 'recharge');
+    });
+    sVentr.classList.remove('allumee', 'recharge');
+
+    if (phase === 'p') {
+      sOreil.forEach(function(el) { el.classList.add('pulse-p'); });
+    } else if (phase === 'qrs') {
+      sVentr.classList.add('allumee');
+    } else if (phase === 't') {
+      sOreil.forEach(function(el) { el.classList.add('recharge'); });
+      sVentr.classList.add('recharge');
+    }
+
+    if (v >= 95) cocher('cycle');
+  }
+
+  curseur.addEventListener('input', function() {
+    animVal = parseFloat(curseur.value);
+    appliquerPhase(animVal);
+  });
+
+  var animActive = false;
+  var animId     = null;
+  var animVal    = 0;
+  var VITESSE    = 0.35; // val/frame ≈ 60fps → ~5s par cycle
+
+  function toggleLecture() {
+    if (animActive) {
+      animActive = false;
+      cancelAnimationFrame(animId);
+      btnLecture.textContent = '▶ Lecture';
+    } else {
+      animActive = true;
+      btnLecture.textContent = '⏸ Pause';
+      if (animVal >= 100) animVal = 0;
+      boucle();
+    }
+  }
+
+  function boucle() {
+    if (!animActive) return;
+    animVal += VITESSE;
+    if (animVal > 100) animVal = 0;
+    curseur.value = Math.round(animVal);
+    appliquerPhase(animVal);
+    animId = requestAnimationFrame(boucle);
+  }
+
+  // Vérifier si badge déjà obtenu (session précédente)
+  if (typeof moduleValide === 'function' && moduleValide('coeur_ecg')) {
+    document.getElementById('badge-obtenu-section').classList.remove('cache');
+    badgeObtenu = true;
+  }
+</script>
+</body>
+</html>
