@@ -116,7 +116,7 @@ Le site doit fonctionner **dans un simple navigateur, sans rien à installer**, 
 
 ## 👥 Auteurs
 
-Binôme d'étudiants de l'**ENSEIRB-MATMECA** — Département Télécommunications.
+Damien Belharet & Dima Husseini — Département Télécommunications.
 
 ---
 
