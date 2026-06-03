@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C'est quoi un signal ? — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Styles spécifiques pour les mini-jeux de cette page */
+    .zone-jeu {
+      background: #ffffff;
+      border: 2px solid var(--bord, #e5e7eb);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    canvas {
+      width: 100%;
+      max-width: 600px;
+      height: 250px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      margin: 0 auto;
+      display: block;
+    }
+    .panneau-controles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .controle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: var(--texte, sans-serif);
+    }
+    input[type="range"] {
+      width: 200px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .bouton-action {
+      background: var(--signal, #0e9f6e);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: transform 0.1s;
+    }
+    .bouton-action:hover {
+      transform: scale(1.05);
+    }
+    .bouton-action.inactif {
+      background: #64748b;
+    }
+    /* --- Spectre --- */
+    .spectre-boutons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .bouton-spectre {
+      background: #ffffff;
+      color: #2563eb;
+      border: 2px solid #2563eb;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 1px 4px rgba(37,99,235,0.12);
+    }
+    .bouton-spectre:hover {
+      background: #eff6ff;
+      transform: scale(1.04);
+      box-shadow: 0 4px 12px rgba(37,99,235,0.22);
+    }
+    .bouton-spectre.actif {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #1d4ed8;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.40);
+    }
+    #message-victoire {
+      color: var(--signal, #0e9f6e);
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 16px;
+      min-height: 36px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #message-victoire.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="barre">
+    <a class="marque" href="index.html?badge=signal">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html?badge=signal">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <!-- ═══════════════════════════════════════════════════════
+         MINI-JEU TINDER — Signal ou Objet ?
+         ═══════════════════════════════════════════════════════ -->
+    <section class="carte" id="jeu-tinder">
+      <h2>🃏 0. Signal ou Objet ? — Le test de reconnaissance</h2>
+      <p>Avant de plonger dans les ondes, teste tes instincts !
+         <strong>Swipe à droite</strong> (ou ✓) si l'objet transporte une information → c'est un signal.
+         <strong>Swipe à gauche</strong> (ou ✕) si ce n'est qu'un objet ordinaire.</p>
+
+      <!-- Zone active du jeu -->
+      <div id="tinder-jeu-zone">
+        <p class="tinder-compteur" id="tinder-compteur">Carte 1 / 10</p>
+        <div class="tinder-directions">
+          <span class="tinder-dir dir-gauche">✕ Objet</span>
+          <span class="tinder-dir dir-droite">Signal ✓</span>
+        </div>
+        <div class="tinder-pile" id="tinder-pile"></div>
+        <div class="tinder-boutons">
+          <button class="tinder-btn tinder-btn-objet" id="tinder-btn-objet" aria-label="C'est un objet">✕</button>
+          <button class="tinder-btn tinder-btn-signal" id="tinder-btn-signal" aria-label="C'est un signal">✓</button>
+        </div>
+      </div>
+
+      <!-- Écran de résultat -->
+      <div id="tinder-resultat" class="tinder-resultat cache">
+        <span class="tinder-emoji-resultat" id="tinder-resultat-emoji">🎉</span>
+        <div class="tinder-score">
+          <span id="tinder-score-valeur">0</span><span class="tinder-score-sur"> / 10</span>
+        </div>
+        <p class="tinder-commentaire" id="tinder-commentaire"></p>
+        <button class="tinder-rejouer" id="tinder-btn-rejouer">↩ Rejouer</button>
+      </div>
+
+      <!-- Notification flottante -->
+      <div id="tinder-notif" class="tinder-notif" role="status" aria-live="polite"></div>
+    </section>
+
+    <header class="mission">
+      <h1>🌊 C'est quoi un signal ?</h1>
+      <p>Avant de plonger dans le cœur humain, comprenons les bases ! Un signal, c'est comme une vague. 
+         Joue avec les curseurs pour comprendre comment l'<strong>Amplitude</strong> (la hauteur) et la <strong>Fréquence</strong> (la vitesse des vagues) modifient le signal... et le son !</p>
+    </header>
+
+    <section class="carte">
+      <h2>1. Le Bac à sable (Découverte)</h2>
+      <p>Modifie les paramètres et écoute le résultat. Plus la fréquence est élevée, plus le son est aigu !</p>
+      
+      <div class="zone-jeu">
+        <canvas id="canvas-bac-a-sable"></canvas>
+        
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Amplitude : <strong id="val-amp-bac">2.0</strong></label>
+            <input type="range" id="slide-amp-bac" min="0" max="4" step="0.1" value="2">
+          </div>
+          <div class="controle">
+            <label>Fréquence : <strong id="val-freq-bac">1.0</strong> Hz</label>
+            <input type="range" id="slide-freq-bac" min="0.5" max="5" step="0.1" value="1">
+          </div>
+        </div>
+        <button id="btn-son" class="bouton-action inactif">🔊 Activer le Son</button>
+      </div>
+    </section>
+
+    <section class="carte">
+      <h2>2. Le Défi de Synchronisation 🎯</h2>
+      <p>L'ordinateur a généré un signal cible (en pointillés gris). Utilise tes curseurs pour superposer exactement ton signal (en vert) sur le sien !</p>
+      
+      <div class="zone-jeu">
+        <canvas id="canvas-defi"></canvas>
+        
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Ton Amplitude</label>
+            <input type="range" id="slide-amp-defi" min="0.5" max="4" step="0.5" value="1">
+          </div>
+          <div class="controle">
+            <label>Ta Fréquence</label>
+            <input type="range" id="slide-freq-defi" min="0.5" max="4" step="0.5" value="1">
+          </div>
+        </div>
+        <div id="message-victoire">✨ Signal Synchronisé ! Bien joué ! ✨</div>
+        <button id="btn-nouvelle-cible" class="bouton-action">Générer une nouvelle cible</button>
+      </div>
+    </section>
+
+    <section class="carte">
+      <h2>3. Le Défi de la Période ⏱️</h2>
+      <p>La **Période (T)** est le temps (en secondes) que met la vague pour faire un motif complet. 
+         Regarde la grille : chaque grande ligne verticale vaut 0.5 seconde. Ajuste ton curseur pour atteindre la période demandée !</p>
+      
+      <div class="zone-jeu">
+        <h3 style="margin-bottom: 12px; color: var(--encre);">Objectif : Atteindre une période <span id="cible-periode-texte" style="color: #057a55; font-weight: bold;">2.0</span> s</h3>
+        <canvas id="canvas-periode"></canvas>
+        
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Ta Période (T) : <strong id="val-per-defi">1.0</strong> s</label>
+            <input type="range" id="slide-per-defi" min="0.5" max="2.5" step="0.5" value="1">
+          </div>
+        </div>
+        <div id="message-victoire-periode" style="color: var(--signal, #0e9f6e); font-size: 1.5rem; font-weight: bold; margin-top: 16px; min-height: 36px; display: none;">✨ Période exacte !</div>
+        <button id="btn-nouvelle-periode" class="bouton-action">Autre période cible</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         LE SPECTRE — Visualiseur de fréquences
+         ═══════════════════════════════════════════════════════ -->
+    <section class="carte" id="section-spectre">
+      <h2>4. Le Spectre : La recette secrète du signal</h2>
+      <p>Un signal complexe (comme une voix) est un <strong>mélange de plusieurs ondes simples</strong>.
+         Le spectre permet de séparer les <strong>graves (à gauche)</strong> des <strong>aigus (à droite)</strong>
+         pour voir exactement de quoi le son est composé.</p>
+
+      <div class="zone-jeu">
+        <canvas id="canvas-spectre"></canvas>
+        <div class="spectre-boutons">
+          <button class="bouton-spectre" id="btn-spectre-1">▶ Voix Grave (Basses)</button>
+          <button class="bouton-spectre" id="btn-spectre-2">▶ Sifflement (Aigus)</button>
+          <button class="bouton-spectre" id="btn-spectre-3">▶ Chut ! (Bruit complet)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bandeau de badge obtenu (caché par défaut, révélé par JS) -->
+    <section class="carte cache" id="badge-obtenu-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid var(--signal); text-align: center;">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🌊</div>
+      <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Maître des Ondes !</h2>
+      <p style="color: var(--encre-doux); margin: 0 0 18px;">Tu as compris l'amplitude, la fréquence et la période. Bravo !</p>
+      <a href="index.html?badge=signal" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
+    </section>
+
+  </main>
+
+  <script src="progression.js"></script>
+  <script src="signaux.js"></script>
+  <script>
+    /* =====================================================================
+       MOTEUR DE DESSIN (Canvas) ET JEUX INTERACTIFS
+       ===================================================================== */
+    
+    // --- PARTIE 1 : BAC À SABLE & AUDIO ---
+    const canvasBac = document.getElementById('canvas-bac-a-sable');
+    const ctxBac = canvasBac.getContext('2d');
+    const slideAmpBac = document.getElementById('slide-amp-bac');
+    const slideFreqBac = document.getElementById('slide-freq-bac');
+    const valAmpBac = document.getElementById('val-amp-bac');
+    const valFreqBac = document.getElementById('val-freq-bac');
+    const btnSon = document.getElementById('btn-son');
+
+    // Fixer la résolution interne des canvas pour qu'ils soient nets
+    canvasBac.width = 600; canvasBac.height = 250;
+    
+    let temps = 0;
+    
+    // Variables pour l'API Web Audio
+    let contexteAudio = null;
+    let oscillateur = null;
+    let controleVolume = null;
+    let sonActif = false;
+
+    // Fonction pour dessiner la courbe du bac à sable
+    function dessinerBacASable() {
+      const amp = parseFloat(slideAmpBac.value);
+      const freq = parseFloat(slideFreqBac.value);
+      
+      // Mise à jour de l'affichage du texte
+      valAmpBac.textContent = amp.toFixed(1);
+      valFreqBac.textContent = freq.toFixed(1) + " Hz";
+
+      // Mise à jour de l'audio si activé
+      if (sonActif && oscillateur) {
+        // On convertit la fréquence visuelle (0.5-5Hz) en fréquence audible (ex: 200-600Hz)
+        oscillateur.frequency.value = 200 + (freq * 80); 
+        controleVolume.gain.value = (amp / 4) * 0.5; // Le volume max est limité pour les oreilles !
+      }
+
+      // Nettoyage de la zone de dessin
+      ctxBac.clearRect(0, 0, canvasBac.width, canvasBac.height);
+      
+      // Ligne centrale (Axe du temps)
+      ctxBac.beginPath();
+      ctxBac.strokeStyle = '#cbd5e1';
+      ctxBac.lineWidth = 1;
+      ctxBac.moveTo(0, canvasBac.height / 2);
+      ctxBac.lineTo(canvasBac.width, canvasBac.height / 2);
+      ctxBac.stroke();
+
+      // Dessin de l'onde sinusoïdale
+      ctxBac.beginPath();
+      ctxBac.strokeStyle = '#0e9f6e'; // Vert "signal"
+      ctxBac.lineWidth = 4;
+      
+      for (let x = 0; x < canvasBac.width; x++) {
+        // Conversion de x (pixels) en temps
+        const t = (x / canvasBac.width) * 2; 
+        // Formule mathématique : y = A * sin(2 * PI * f * t + phase)
+        const y = amp * 25 * Math.sin(2 * Math.PI * freq * t - temps * 3);
+        
+        const posY = (canvasBac.height / 2) - y;
+        if (x === 0) ctxBac.moveTo(x, posY);
+        else ctxBac.lineTo(x, posY);
+      }
+      ctxBac.stroke();
+    }
+
+    // Gestion du bouton son
+    btnSon.addEventListener('click', () => {
+      if (!contexteAudio) {
+        contexteAudio = new (window.AudioContext || window.webkitAudioContext)();
+        oscillateur = contexteAudio.createOscillator();
+        controleVolume = contexteAudio.createGain();
+        
+        oscillateur.type = 'sine';
+        oscillateur.connect(controleVolume);
+        controleVolume.connect(contexteAudio.destination);
+        oscillateur.start();
+      }
+
+      sonActif = !sonActif;
+      if (sonActif) {
+        contexteAudio.resume();
+        btnSon.textContent = "🔇 Couper le Son";
+        btnSon.classList.remove('inactif');
+      } else {
+        contexteAudio.suspend();
+        btnSon.textContent = "🔊 Activer le Son";
+        btnSon.classList.add('inactif');
+      }
+    });
+
+    // --- PARTIE 2 : LE DÉFI DE SYNCHRONISATION ---
+    const canvasDefi = document.getElementById('canvas-defi');
+    const ctxDefi = canvasDefi.getContext('2d');
+    canvasDefi.width = 600; canvasDefi.height = 250;
+
+    const slideAmpDefi = document.getElementById('slide-amp-defi');
+    const slideFreqDefi = document.getElementById('slide-freq-defi');
+    const msgVictoire = document.getElementById('message-victoire');
+    
+    let cibleAmp = 2;
+    let cibleFreq = 2;
+
+    function genererNouvelleCible() {
+      // Choisit des valeurs aléatoires tombant pile sur les "crans" des curseurs (0.5 en 0.5)
+      const valeursPossibles = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
+      cibleAmp = valeursPossibles[Math.floor(Math.random() * valeursPossibles.length)];
+      cibleFreq = valeursPossibles[Math.floor(Math.random() * valeursPossibles.length)];
+      msgVictoire.classList.remove('visible');
+    }
+
+    function dessinerDefi() {
+      const userAmp = parseFloat(slideAmpDefi.value);
+      const userFreq = parseFloat(slideFreqDefi.value);
+
+      ctxDefi.clearRect(0, 0, canvasDefi.width, canvasDefi.height);
+
+      // Fonction utilitaire pour tracer une onde
+      function tracerOnde(ctx, amp, freq, couleur, tirets, epaisseur) {
+        ctx.beginPath();
+        ctx.strokeStyle = couleur;
+        ctx.lineWidth = epaisseur;
+        ctx.setLineDash(tirets);
+        for (let x = 0; x < canvasDefi.width; x++) {
+          const t = (x / canvasDefi.width) * 2; 
+          const y = amp * 25 * Math.sin(2 * Math.PI * freq * t - temps * 3);
+          const posY = (canvasDefi.height / 2) - y;
+          if (x === 0) ctx.moveTo(x, posY);
+          else ctx.lineTo(x, posY);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset des tirets
+      }
+
+      // 1. Trace la cible (en gris pointillé)
+      tracerOnde(ctxDefi, cibleAmp, cibleFreq, '#94a3b8', [5, 5], 3);
+      
+      // 2. Trace l'onde de l'utilisateur (en vert)
+      tracerOnde(ctxDefi, userAmp, userFreq, '#0e9f6e', [], 3);
+
+      // Vérification de la victoire
+      if (userAmp === cibleAmp && userFreq === cibleFreq) {
+        msgVictoire.classList.add('visible');
+      } else {
+        msgVictoire.classList.remove('visible');
+      }
+    }
+
+    document.getElementById('btn-nouvelle-cible').addEventListener('click', genererNouvelleCible);
+
+    // --- MOTEUR D'ANIMATION GLOBAL ---
+    // Cette fonction tourne en boucle à la vitesse de l'écran (ex: 60 fois par seconde)
+    function animer() {
+      temps += 0.01; // Fait défiler le temps pour faire avancer la vague
+      dessinerBacASable();
+      dessinerDefi();
+      requestAnimationFrame(animer); // Demande au navigateur de relancer la boucle
+    }
+
+    // Initialisation
+    genererNouvelleCible();
+    animer();
+
+    // --- PARTIE 3 : LE DÉFI DE LA PÉRIODE ---
+    const canvasPer = document.getElementById('canvas-periode');
+    const ctxPer = canvasPer.getContext('2d');
+    canvasPer.width = 600; canvasPer.height = 250;
+
+    const slidePerDefi = document.getElementById('slide-per-defi');
+    const valPerDefi = document.getElementById('val-per-defi');
+    const msgVictoirePeriode = document.getElementById('message-victoire-periode');
+    const ciblePeriodeTexte = document.getElementById('cible-periode-texte');
+    
+    let ciblePeriode = 1.5;
+
+    // Suivi des deux conditions pour le badge final
+    window._periodeGagnee = false;
+    window._boutonsSectreCliques = new Set();
+
+    function verifierVictoireOndes() {
+      if (window._periodeGagnee && window._boutonsSectreCliques.size >= 3 && !window._badgeSignalObtenu) {
+        window._badgeSignalObtenu = true;
+        validerModule("signal");
+        var badgeSection = document.getElementById('badge-obtenu-section');
+        if (badgeSection) {
+          badgeSection.classList.remove('cache');
+          setTimeout(function() {
+            badgeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 600);
+        }
+      }
+    }
+
+    function genererNouvellePeriode() {
+      const periodesPossibles = [0.5, 1.0, 1.5, 2.0, 2.5];
+      ciblePeriode = periodesPossibles[Math.floor(Math.random() * periodesPossibles.length)];
+      ciblePeriodeTexte.textContent = ciblePeriode.toFixed(1);
+      msgVictoirePeriode.style.display = 'none';
+    }
+
+    function dessinerPeriode() {
+      const userPeriode = parseFloat(slidePerDefi.value);
+      valPerDefi.textContent = userPeriode.toFixed(1);
+
+      ctxPer.clearRect(0, 0, canvasPer.width, canvasPer.height);
+
+      // 1. Dessiner la grille temporelle (lignes verticales toutes les 0.25s, soit toutes les 1/8eme de l'écran)
+      ctxPer.strokeStyle = '#e2e8f0';
+      ctxPer.lineWidth = 1;
+      for (let x = 0; x <= canvasPer.width; x += 75) { // 75 pixels = 0.25 seconde
+        ctxPer.beginPath();
+        ctxPer.moveTo(x, 0);
+        ctxPer.lineTo(x, canvasPer.height);
+        ctxPer.stroke();
+        
+        // Légende du temps en bas
+        if (x % 150 === 0) { // Toutes les 0.5s
+          ctxPer.fillStyle = '#94a3b8';
+          ctxPer.font = '10px sans-serif';
+          ctxPer.fillText((x / 300).toFixed(1) + "s", x + 4, canvasPer.height - 6);
+        }
+      }
+
+      // Ligne centrale
+      ctxPer.beginPath();
+      ctxPer.strokeStyle = '#cbd5e1';
+      ctxPer.moveTo(0, canvasPer.height / 2);
+      ctxPer.lineTo(canvasPer.width, canvasPer.height / 2);
+      ctxPer.stroke();
+
+      // 2. Dessiner l'onde de l'élève
+      // f = 1 / T
+      const userFreq = 1 / userPeriode;
+
+      ctxPer.beginPath();
+      ctxPer.strokeStyle = '#0e9f6e';
+      ctxPer.lineWidth = 4;
+      for (let x = 0; x < canvasPer.width; x++) {
+        const t = (x / canvasPer.width) * 2; // L'écran total fait 2 secondes
+        const y = 2 * 25 * Math.sin(2 * Math.PI * userFreq * t - temps * 3);
+        const posY = (canvasPer.height / 2) - y;
+        if (x === 0) ctxPer.moveTo(x, posY);
+        else ctxPer.lineTo(x, posY);
+      }
+      ctxPer.stroke();
+
+      // Vérification de la réussite
+      if (userPeriode === ciblePeriode) {
+        msgVictoirePeriode.style.display = 'block';
+        if (!window._periodeGagnee) {
+          window._periodeGagnee = true;
+          verifierVictoireOndes();
+        }
+      }
+    }
+
+    document.getElementById('btn-nouvelle-periode').addEventListener('click', genererNouvellePeriode);
+    genererNouvellePeriode();
+
+    // Modifier la fonction animer existante pour inclure le dessin du 3eme jeu
+    const ancienneAnimation = animer;
+    animer = function() {
+      temps += 0.01;
+      dessinerBacASable();
+      dessinerDefi();
+      dessinerPeriode(); // Nouveau
+      requestAnimationFrame(animer);
+    };
+  </script>
+</body>
+</html>

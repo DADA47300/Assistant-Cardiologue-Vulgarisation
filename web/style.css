@@ -1,0 +1,866 @@
+/* =====================================================================
+   style.css — l'habillage commun à toutes les pages du site
+   Thème : "papier d'électrocardiogramme" (fond quadrillé léger),
+   couleurs : encre sombre, vert "signal", rouge "battement".
+   ===================================================================== */
+
+/* --- Nos polices, stockées dans le dossier fonts/ (marchent hors-ligne) --- */
+@font-face {
+  font-family: "Bricolage"; font-style: normal; font-weight: 400;
+  src: url("fonts/bricolage-grotesque-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bricolage"; font-style: normal; font-weight: 700;
+  src: url("fonts/bricolage-grotesque-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bricolage"; font-style: normal; font-weight: 800;
+  src: url("fonts/bricolage-grotesque-latin-800-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson"; font-style: normal; font-weight: 400;
+  src: url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson"; font-style: normal; font-weight: 700;
+  src: url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* --- Les couleurs et réglages du site, au même endroit --- */
+:root {
+  --papier: #fbfaf6;
+  --encre: #16302a;
+  --encre-doux: #4b6058;
+  --signal: #0e9f6e;
+  --signal-fonce: #0b7a55;
+  --battement: #e11d48;
+  --carte: #ffffff;
+  --bord: #e3e7e2;
+  --ok: #0e9f6e;
+  --attention: #d97706;
+  --titre: "Bricolage", "Trebuchet MS", sans-serif;
+  --texte: "Atkinson", "Segoe UI", sans-serif;
+  --rayon: 16px;
+  --ombre: 0 10px 30px rgba(22, 48, 42, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+/* --- Scrollbar personnalisée --- */
+::-webkit-scrollbar { width: 14px; }
+::-webkit-scrollbar-track {
+  background: #d9ebe3;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--signal);
+  border-radius: 999px;
+  border: 3px solid #fff;
+}
+::-webkit-scrollbar-thumb:hover { background: #07865c; }
+
+/* Firefox */
+* { scrollbar-width: auto; scrollbar-color: var(--signal) #d9ebe3; }
+
+body {
+  margin: 0;
+  font-family: var(--texte);
+  color: var(--encre);
+  background-color: var(--papier);
+  /* quadrillage façon papier ECG, très léger */
+  background-image:
+    linear-gradient(rgba(225, 29, 72, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 29, 72, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(225, 29, 72, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(225, 29, 72, 0.09) 1px, transparent 1px);
+  background-size: 12px 12px, 12px 12px, 60px 60px, 60px 60px;
+  line-height: 1.5;
+}
+
+/* --- Barre du haut --- */
+.barre {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--carte);
+  border-bottom: 1px solid var(--bord);
+  position: sticky; top: 0; z-index: 10;
+}
+.barre .marque {
+  font-family: var(--titre); font-weight: 800; font-size: 1.25rem;
+  color: var(--encre); text-decoration: none; letter-spacing: -0.02em;
+}
+.barre .marque span { color: var(--battement); }
+.barre a.lien { color: var(--signal-fonce); text-decoration: none; font-weight: 700; }
+.barre a.lien:hover { text-decoration: underline; }
+
+/* --- Conteneur central --- */
+.page { max-width: 980px; margin: 0 auto; padding: 28px 22px 60px; }
+
+/* --- Bandeau de mission (le role-play) --- */
+.mission {
+  background: linear-gradient(135deg, #0e9f6e 0%, #0b7a55 100%);
+  color: #eafff5;
+  border-radius: var(--rayon);
+  padding: 22px 26px;
+  box-shadow: var(--ombre);
+  margin-bottom: 26px;
+}
+.mission h1 {
+  font-family: var(--titre); font-weight: 800; font-size: 1.7rem;
+  margin: 0 0 6px; letter-spacing: -0.02em;
+}
+.mission p { margin: 0; opacity: 0.95; }
+
+/* --- Indicateur d'étapes --- */
+.etapes { display: flex; gap: 10px; margin: 0 0 22px; flex-wrap: wrap; }
+.etapes .pastille {
+  flex: 1; min-width: 120px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 12px;
+  background: var(--carte); border: 1px solid var(--bord);
+  font-size: 0.92rem; color: var(--encre-doux);
+}
+.etapes .pastille .num {
+  width: 26px; height: 26px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-family: var(--titre);
+  font-weight: 700; background: #eef2ef; color: var(--encre-doux);
+}
+.etapes .pastille.active { border-color: var(--signal); color: var(--encre); font-weight: 700; }
+.etapes .pastille.active .num { background: var(--signal); color: #fff; }
+.etapes .pastille.faite .num { background: var(--encre); color: #fff; }
+
+/* --- Cartes --- */
+.carte {
+  background: var(--carte); border: 1px solid var(--bord);
+  border-radius: var(--rayon); box-shadow: var(--ombre);
+  padding: 20px 22px; margin-bottom: 22px;
+}
+.graphe { padding: 10px; }
+#graphe { width: 100%; height: 360px; }
+
+.carte h2 {
+  font-family: var(--titre); font-weight: 700; font-size: 1.25rem;
+  margin: 0 0 6px; color: var(--encre);
+}
+.carte .explication { color: var(--encre-doux); margin: 0 0 16px; }
+
+/* --- Boutons --- */
+.bouton {
+  font-family: var(--titre); font-weight: 700; font-size: 1.02rem;
+  border: none; cursor: pointer; border-radius: 12px;
+  padding: 13px 22px; background: var(--signal); color: #fff;
+  transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 16px rgba(14, 159, 110, 0.28);
+}
+.bouton:hover { background: var(--signal-fonce); transform: translateY(-1px); }
+.bouton:active { transform: translateY(1px); }
+.bouton:disabled { background: #cdd6d1; color: #fff; cursor: not-allowed; box-shadow: none; transform: none; }
+.bouton.secondaire {
+  background: transparent; color: var(--signal-fonce);
+  box-shadow: none; border: 2px solid var(--signal); padding: 11px 20px;
+}
+.bouton.secondaire:hover { background: #eafaf3; }
+
+/* --- Curseur du zoom --- */
+.zoom-ligne { display: flex; align-items: center; gap: 14px; margin: 6px 0 14px; }
+.zoom-ligne input[type=range] { flex: 1; accent-color: var(--signal); height: 6px; }
+.zoom-ligne .valeur { font-family: var(--titre); font-weight: 700; min-width: 70px; text-align: right; }
+
+/* --- Zone de message qui réagit --- */
+.message {
+  border-radius: 12px; padding: 12px 16px; margin: 4px 0 14px;
+  font-weight: 700; background: #f3f6f4; color: var(--encre-doux);
+}
+.message.bon { background: #e6f8ef; color: var(--signal-fonce); }
+.message.pas-encore { background: #fff4e5; color: var(--attention); }
+
+/* --- Verdict final --- */
+.verdict { text-align: center; padding: 26px; }
+.verdict .bpm {
+  font-family: var(--titre); font-weight: 800; font-size: 3.4rem;
+  color: var(--battement); line-height: 1; letter-spacing: -0.03em;
+}
+.verdict .unite { font-size: 1.1rem; color: var(--encre-doux); }
+.verdict .etat { font-family: var(--titre); font-weight: 700; font-size: 1.4rem; margin-top: 10px; }
+.verdict .etat.vert { color: var(--signal-fonce); }
+.verdict .etat.orange { color: var(--attention); }
+.verdict .etat.rouge { color: var(--battement); }
+.verdict .felicitations { margin-top: 12px; color: var(--encre-doux); }
+
+/* --- Petit utilitaire pour cacher/montrer --- */
+.cache { display: none !important; }
+
+/* --- Pied de page --- */
+.pied { text-align: center; color: var(--encre-doux); font-size: 0.88rem; padding: 10px 0 0; }
+
+/* --- Petite animation d'arrivée --- */
+@keyframes apparait { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.mission, .etapes, .carte { animation: apparait 0.5s ease both; }
+.etapes { animation-delay: 0.06s; }
+.graphe { animation-delay: 0.12s; }
+
+/* --- Responsive (petits écrans) --- */
+@media (max-width: 640px) {
+  .mission h1 { font-size: 1.4rem; }
+  #graphe { height: 300px; }
+  .etapes .pastille { min-width: 100%; }
+}
+
+/* =====================================================================
+   Éléments de jeu (ajoutés pour la version interactive du Labo)
+   ===================================================================== */
+.cartes-choix { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 6px 0 14px; }
+.choix {
+  text-align: left; padding: 14px 16px; border: 2px solid var(--bord);
+  border-radius: 12px; background: #fff; cursor: pointer;
+  font-family: var(--texte); color: var(--encre);
+  transition: border-color .12s ease, transform .08s ease, box-shadow .12s ease;
+}
+.choix:hover { border-color: var(--signal); transform: translateY(-1px); }
+.choix.selectionne { border-color: var(--signal); box-shadow: 0 6px 16px rgba(14,159,110,.20); background: #f3fbf8; }
+.choix .opt-titre { font-family: var(--titre); font-weight: 700; display: block; margin-bottom: 3px; }
+.choix .opt-sous { font-size: .88rem; color: var(--encre-doux); }
+.compteur { font-family: var(--titre); font-weight: 700; color: var(--signal-fonce); margin: 0 0 10px; }
+.boutons-ligne { display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 640px) { .cartes-choix { grid-template-columns: 1fr; } }
+
+/* =====================================================================
+   Système de progression gamifié — Badges & Diplôme
+   ===================================================================== */
+
+/* --- Section de progression sur l'index --- */
+.progression-section {
+  margin-top: 28px;
+  animation: apparait 0.6s ease both;
+  animation-delay: 0.15s;
+}
+.progression-section h2 {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin: 0 0 6px;
+  color: var(--encre);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progression-section .sous-titre {
+  color: var(--encre-doux);
+  font-size: 0.92rem;
+  margin: 0 0 16px;
+}
+
+/* --- Barre de progression --- */
+.barre-progression {
+  width: 100%;
+  height: 10px;
+  background: #e3e7e2;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  position: relative;
+}
+.barre-progression-remplissage {
+  height: 100%;
+  background: linear-gradient(90deg, var(--signal) 0%, #34d399 100%);
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+.barre-progression-remplissage::after {
+  content: "";
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  border-radius: 0 99px 99px 0;
+}
+.progression-compteur {
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--signal-fonce);
+  text-align: right;
+  margin-top: -4px;
+  margin-bottom: 14px;
+}
+
+/* --- Grille de badges --- */
+.badges-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.badge-carte {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--bord);
+  background: var(--carte);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.badge-carte::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+}
+.badge-carte.obtenu {
+  border-color: var(--signal);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+.badge-carte.obtenu::before {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(14, 159, 110, 0.03) 0%, rgba(52, 211, 153, 0.05) 100%);
+}
+.badge-carte.obtenu:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(14, 159, 110, 0.15);
+}
+.badge-carte.verrouille {
+  opacity: 0.55;
+}
+.badge-carte.verrouille .badge-icone {
+  filter: grayscale(1);
+}
+.badge-icone {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  background: #eef2ef;
+  transition: all 0.3s ease;
+}
+.badge-carte.obtenu .badge-icone {
+  background: linear-gradient(135deg, var(--signal) 0%, #34d399 100%);
+  box-shadow: 0 4px 12px rgba(14, 159, 110, 0.25);
+}
+.badge-info {
+  flex: 1;
+  min-width: 0;
+}
+.badge-nom {
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--encre);
+  display: block;
+  line-height: 1.3;
+}
+.badge-carte.verrouille .badge-nom {
+  color: var(--encre-doux);
+}
+.badge-etat {
+  font-size: 0.8rem;
+  color: var(--encre-doux);
+  display: block;
+  margin-top: 2px;
+}
+.badge-carte.obtenu .badge-etat {
+  color: var(--signal-fonce);
+  font-weight: 700;
+}
+
+/* Coche animée pour badge obtenu */
+.badge-coche {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--signal);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes pop-in {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* --- Zone diplôme (améliorée) --- */
+.diplome-zone {
+  margin-top: 30px;
+  padding: 0;
+  animation: apparait 0.8s ease both;
+}
+.diplome-carte {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--rayon);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+  border: 3px solid var(--signal);
+  text-align: center;
+  padding: 32px 26px;
+  box-shadow: 0 12px 40px rgba(14, 159, 110, 0.18);
+}
+.diplome-carte::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(14, 159, 110, 0.06) 60deg,
+    transparent 120deg,
+    rgba(14, 159, 110, 0.06) 180deg,
+    transparent 240deg,
+    rgba(14, 159, 110, 0.06) 300deg,
+    transparent 360deg
+  );
+  animation: rotation-lente 12s linear infinite;
+  pointer-events: none;
+}
+@keyframes rotation-lente {
+  to { transform: rotate(360deg); }
+}
+.diplome-emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 8px;
+  position: relative;
+  animation: rebond 2s ease-in-out infinite;
+}
+@keyframes rebond {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.diplome-titre {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--signal-fonce);
+  margin: 0 0 8px;
+  position: relative;
+}
+.diplome-sous-titre {
+  color: var(--encre-doux);
+  font-size: 1.05rem;
+  margin: 0 0 20px;
+  position: relative;
+}
+.diplome-cadre {
+  display: inline-block;
+  background: white;
+  border: 2px solid var(--signal);
+  padding: 18px 36px;
+  border-radius: 14px;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: #15803d;
+  box-shadow: 0 4px 16px rgba(14, 159, 110, 0.12);
+  position: relative;
+  letter-spacing: -0.01em;
+}
+.diplome-action {
+  margin-top: 20px;
+  position: relative;
+}
+.diplome-action p {
+  font-size: 0.92rem;
+  color: var(--signal-fonce);
+  margin: 0 0 14px;
+}
+.diplome-action .bouton-reset {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: var(--texte);
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+.diplome-action .bouton-reset:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Bouton "Obtenir mon diplôme" — apparaît avant la zone diplôme */
+.bouton-diplome {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  margin: 28px auto 0;
+  padding: 18px 28px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--signal) 0%, #34d399 50%, var(--signal-fonce) 100%);
+  background-size: 200% 200%;
+  animation: degrade-anime 3s ease infinite, apparait 0.6s ease both, pulsation 2s ease-in-out infinite;
+  color: white;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(14, 159, 110, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+.bouton-diplome:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(14, 159, 110, 0.45);
+}
+.bouton-diplome:active {
+  transform: translateY(0) scale(0.98);
+}
+@keyframes degrade-anime {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulsation {
+  0%, 100% { box-shadow: 0 8px 32px rgba(14, 159, 110, 0.35); }
+  50%      { box-shadow: 0 8px 32px rgba(14, 159, 110, 0.55), 0 0 0 8px rgba(14, 159, 110, 0.08); }
+}
+
+/* --- Toast de badge obtenu --- */
+#toast-badge {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  z-index: 10000;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  opacity: 0;
+}
+#toast-badge.toast-visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+#toast-badge.toast-sortie {
+  transform: translateX(-50%) translateY(-120px);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+.toast-badge-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border: 2px solid var(--signal);
+  border-radius: 16px;
+  padding: 14px 22px;
+  box-shadow: 0 12px 40px rgba(14, 159, 110, 0.2), 0 4px 12px rgba(0,0,0,0.05);
+  min-width: 280px;
+  max-width: 90vw;
+}
+.toast-badge-icone {
+  font-size: 2rem;
+  flex: none;
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+.toast-badge-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toast-badge-texte strong {
+  font-family: var(--titre);
+  font-weight: 800;
+  color: var(--signal-fonce);
+  font-size: 0.95rem;
+}
+.toast-badge-texte span {
+  font-size: 0.88rem;
+  color: var(--encre-doux);
+}
+
+/* --- Responsive progression --- */
+@media (max-width: 640px) {
+  .badges-grille { grid-template-columns: 1fr; }
+  .diplome-cadre { font-size: 1.2rem; padding: 14px 20px; }
+  .diplome-titre { font-size: 1.3rem; }
+  .bouton-diplome { font-size: 1.05rem; padding: 16px 22px; }
+}
+
+/* =====================================================================
+   Mini-jeu Tinder — "Signal ou Objet ?" (signal.html)
+   ===================================================================== */
+
+/* Compteur de cartes */
+.tinder-compteur {
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--encre-doux);
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+/* Flèches directionnelles */
+.tinder-directions {
+  display: flex;
+  justify-content: space-between;
+  max-width: 320px;
+  margin: 0 auto 10px;
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.tinder-dir {
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+.dir-gauche { color: var(--battement); background: rgba(225, 29, 72, 0.08); }
+.dir-droite { color: var(--signal); background: rgba(14, 159, 110, 0.08); }
+
+/* Pile de cartes */
+.tinder-pile {
+  position: relative;
+  width: 280px;
+  height: 360px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* Carte individuelle */
+.tinder-carte {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border: 1px solid var(--bord);
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(22, 48, 42, 0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 20px 16px;
+  user-select: none;
+  touch-action: none;
+  will-change: transform;
+}
+
+/* Classes de position dans la pile */
+.tc-active {
+  z-index: 10;
+  cursor: grab;
+  transition: box-shadow 0.15s ease;
+}
+.tc-active:active { cursor: grabbing; }
+.tc-active:hover { box-shadow: 0 12px 36px rgba(22, 48, 42, 0.16); }
+
+.tc-dessous1 {
+  z-index: 9;
+  transform: translateY(8px) scale(0.96);
+  pointer-events: none;
+}
+.tc-dessous2 {
+  z-index: 8;
+  transform: translateY(16px) scale(0.92);
+  pointer-events: none;
+}
+
+/* Badges directionnels (visibles pendant le drag) */
+.tinder-badge {
+  position: absolute;
+  top: 18px;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 5px 12px;
+  border-radius: 9px;
+  border: 2.5px solid;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.06s ease;
+}
+.tinder-badge-signal {
+  right: 14px;
+  color: var(--signal);
+  border-color: var(--signal);
+  background: rgba(14, 159, 110, 0.10);
+}
+.tinder-badge-objet {
+  left: 14px;
+  color: var(--battement);
+  border-color: var(--battement);
+  background: rgba(225, 29, 72, 0.10);
+}
+
+/* Contenu interne de chaque carte */
+.tc-emoji {
+  font-size: 5.5rem;
+  line-height: 1;
+  pointer-events: none;
+  display: block;
+}
+.tc-nom {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--encre);
+  text-align: center;
+  pointer-events: none;
+  display: block;
+}
+.tc-sous {
+  font-size: 0.88rem;
+  color: var(--encre-doux);
+  text-align: center;
+  pointer-events: none;
+  font-style: italic;
+  display: block;
+}
+.tc-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  pointer-events: none;
+  display: block;
+  margin-top: 6px;
+}
+
+/* Boutons Signal / Objet */
+.tinder-boutons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  margin-top: 32px;
+}
+.tinder-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid;
+  background: #ffffff;
+  font-size: 1.55rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+.tinder-btn:hover { transform: scale(1.12); }
+.tinder-btn:active { transform: scale(0.94); }
+
+.tinder-btn-objet {
+  border-color: var(--battement);
+  color: var(--battement);
+}
+.tinder-btn-objet:hover {
+  background: rgba(225, 29, 72, 0.06);
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.22);
+}
+.tinder-btn-signal {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+.tinder-btn-signal:hover {
+  background: rgba(14, 159, 110, 0.06);
+  box-shadow: 0 6px 20px rgba(14, 159, 110, 0.22);
+}
+
+/* Notification flottante */
+.tinder-notif {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  z-index: 9999;
+  padding: 11px 22px;
+  border-radius: 14px;
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  text-align: center;
+  max-width: min(92vw, 380px);
+  line-height: 1.45;
+}
+.tinder-notif.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.tinder-notif.notif-ok {
+  background: linear-gradient(135deg, var(--signal) 0%, #059669 100%);
+  box-shadow: 0 8px 24px rgba(14, 159, 110, 0.40);
+}
+.tinder-notif.notif-ko {
+  background: linear-gradient(135deg, var(--battement) 0%, #be123c 100%);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.40);
+}
+
+/* Écran de résultat */
+.tinder-resultat {
+  text-align: center;
+  padding: 28px 16px;
+  animation: apparait 0.5s ease both;
+}
+.tinder-emoji-resultat {
+  font-size: 3.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+.tinder-score {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 3rem;
+  color: var(--encre);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.tinder-score-sur {
+  font-size: 1.3rem;
+  color: var(--encre-doux);
+}
+.tinder-commentaire {
+  font-size: 1rem;
+  color: var(--encre-doux);
+  margin: 12px auto 24px;
+  max-width: 360px;
+  line-height: 1.55;
+}
+.tinder-rejouer {
+  background: var(--signal);
+  color: #fff;
+  border: none;
+  padding: 13px 30px;
+  border-radius: 12px;
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+  box-shadow: 0 6px 18px rgba(14, 159, 110, 0.28);
+}
+.tinder-rejouer:hover { background: var(--signal-fonce); transform: translateY(-2px); }
+.tinder-rejouer:active { transform: translateY(0); }
+
+/* Responsive mobile */
+@media (max-width: 640px) {
+  .tinder-pile { width: min(260px, 85vw); height: 320px; }
+  .tc-emoji { font-size: 4.5rem; }
+  .tc-nom { font-size: 1.15rem; }
+  .tinder-btn { width: 56px; height: 56px; font-size: 1.4rem; }
+  .tinder-boutons { gap: 28px; margin-top: 24px; }
+}

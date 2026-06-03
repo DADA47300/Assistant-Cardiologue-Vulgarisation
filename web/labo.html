@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Labo ECG — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav class="barre">
+    <a class="marque" href="index.html?badge=labo">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html?badge=labo">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <header class="mission">
+      <h1>🩺 Labo ECG — à toi de jouer, ingénieur !</h1>
+      <p>Le cardiologue t'envoie l'enregistrement du cœur d'un patient… mais le signal est sale et illisible.
+         Ta mission : choisir le bon nettoyage, régler ta vue, et repérer toi-même les battements.
+         Attention : on peut se tromper — il faudra réfléchir !</p>
+    </header>
+
+    <div class="etapes" id="etapes">
+      <div class="pastille active" data-etape="1"><span class="num">1</span> Nettoyer</div>
+      <div class="pastille" data-etape="2"><span class="num">2</span> Zoomer</div>
+      <div class="pastille" data-etape="3"><span class="num">3</span> Repérer</div>
+    </div>
+
+    <section class="carte graphe">
+      <div id="graphe"></div>
+    </section>
+
+    <!-- DÉFI 1 : choisir le bon traitement -->
+    <section class="carte etape" id="etape1">
+      <h2>Défi 1 — Répare le signal !</h2>
+      <p class="explication">L'enregistrement est illisible. Le tracé <strong>tangue</strong>  de haut en bas et est plein de <strong>parasites</strong>. 
+        Teste les outils d'ingénieur ci-dessous pour nettoyer l'ECG.</p>
+
+      <div class="cartes-choix">
+        <button class="choix" data-id="gres">
+          <span class="opt-titre">Enlever seulement le grésillement</span>
+          <span class="opt-sous">Lisse la courbe, mais ne touche pas à l'ondulation lente.</span>
+        </button>
+        <button class="choix" data-id="fort">
+          <span class="opt-titre">Tout lisser au maximum</span>
+          <span class="opt-sous">Écrase fortement la courbe pour supprimer tout ce qui dépasse.</span>
+        </button>
+        <button class="choix" data-id="bon">
+          <span class="opt-titre">Enlever l'ondulation ET le grésillement</span>
+          <span class="opt-sous">Stabilise la ligne de base et gomme le bruit fin.</span>
+        </button>
+        <button class="choix" data-id="derive">
+          <span class="opt-titre">Enlever seulement l'ondulation lente</span>
+          <span class="opt-sous">Stabilise la ligne de base, mais garde le bruit fin.</span>
+        </button>
+      </div>
+
+      <div class="message cache" id="messageFiltre"></div>
+      <div class="boutons-ligne">
+        <button class="bouton" id="btnValiderFiltre" disabled>Valider mon choix</button>
+        <button class="bouton cache" id="btnVersZoom">Passer au zoom →</button>
+      </div>
+    </section>
+
+    <!-- DÉFI 2 : trouver le bon zoom -->
+    <section class="carte etape cache" id="etape2">
+      <h2>Défi 2 — Trouve le bon zoom</h2>
+      <p class="explication">L'enregistrement dure 24 secondes : tout est tassé. Déplace le curseur pour choisir
+        la largeur affichée. Trop large, on ne distingue rien ; trop serré, on perd la vue d'ensemble.</p>
+      <div class="zoom-ligne">
+        <span>Large</span>
+        <input type="range" id="curseurZoom" min="1.5" max="24" step="0.5" value="24">
+        <span>Serré</span>
+        <span class="valeur" id="valeurZoom">24 s</span>
+      </div>
+      <div class="message" id="messageZoom">Affiche tout l'enregistrement pour l'instant…</div>
+      <button class="bouton" id="btnVersClic" disabled>Continuer →</button>
+    </section>
+
+    <!-- DÉFI 3 : repérer soi-même les battements -->
+    <section class="carte etape cache" id="etape3">
+      <h2>Défi 3 — Repère les battements toi-même</h2>
+      <p class="explication">À toi de jouer comme un cardiologue : <strong>clique sur le graphe</strong>, sur chaque
+        grand pic (onde R) que tu repères. Reclique sur un point pour l'enlever. Quand tu as terminé, vérifie
+        si tu as trouvé les bons !</p>
+      <p class="compteur" id="compteur">Points placés : 0</p>
+      <div class="message" id="messageClic">Clique sur les grands pics (ondes R).</div>
+      <div class="boutons-ligne">
+        <button class="bouton" id="btnVerifier" disabled>Vérifier mes battements</button>
+        <button class="bouton secondaire" id="btnEffacer">Effacer mes points</button>
+        <button class="bouton cache" id="btnFinir">Laisser l'ordinateur finir →</button>
+      </div>
+    </section>
+
+    <!-- Verdict final -->
+    <section class="carte verdict cache" id="verdict">
+      <div><span class="bpm" id="bpmValeur">–</span></div>
+      <div class="unite">battements par minute</div>
+      <div class="etat" id="etatTexte"></div>
+      <p class="felicitations">L'ordinateur a repéré <strong>tous</strong> les battements de l'enregistrement
+        en un instant — bien plus vite que toi ! C'est exactement pour ça qu'on <em>programme</em> la détection :
+        pour qu'une machine fasse, en une seconde et sans se fatiguer, ce que tu viens de faire à la main.</p>
+      <button class="bouton secondaire" id="btnRecommencer">↻ Recommencer le labo</button>
+    </section>
+
+    <!-- Bandeau de badge obtenu (caché par défaut, révélé par JS) -->
+    <section class="carte cache" id="badge-obtenu-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid var(--signal); text-align: center;">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🔬</div>
+      <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Technicien de Laboratoire !</h2>
+      <p style="color: var(--encre-doux); margin: 0 0 18px;">Tu as nettoyé le signal, trouvé le bon zoom et repéré les battements. Bravo !</p>
+      <a href="index.html?badge=labo" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
+    </section>
+
+    <p class="pied">Réalisé par <strong>[vos prénoms]</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <script src="progression.js"></script>
+  <script src="lib/plotly-basic.min.js"></script>
+  <script src="signaux.js"></script>
+
+  <script>
+  /* ---------- 1) Préparation des signaux ---------- */
+  const FE = 200;
+  const ecg = genererECG({ bpm: 72, duree: 24, fe: FE, graine: 7 });
+  const brut = ajouterBruit(ecg, {});
+  const DUREE = ecg.t[ecg.t.length - 1];
+  const CENTRE = DUREE / 2;
+
+  // Les 4 traitements possibles (1 bon, 3 imparfaits/piège)
+  const variants = {
+    gres:   { opt: { derive: false, lissage: "leger" },
+              mauvais: "Le grésillement est parti, mais la courbe ondule encore vers le haut et le bas : la dérive lente est toujours là, la ligne de base n'est pas stable." },
+    fort:   { opt: { derive: true,  lissage: "fort" },
+              mauvais: "Trop lissé ! En écrasant le bruit, tu as aussi écrasé les pics R. Sans pics nets, impossible de compter les battements." },
+    bon:    { opt: { derive: true,  lissage: "leger" }, bon: true },
+    derive: { opt: { derive: true,  lissage: "aucun" },
+              mauvais: "Bien vu pour l'ondulation lente, mais il reste le grésillement : la courbe tremble encore, ce n'est pas assez propre." }
+  };
+  Object.keys(variants).forEach(function (k) { variants[k].y = filtrer(brut, FE, variants[k].opt); });
+
+  // État du jeu
+  let etapeActuelle = 1;
+  let plageActuelle = [0, DUREE];
+  let choixFiltre = null;
+  let propre = null;       // sera la version nettoyée validée
+  let picsChoisis = [];    // les clics de l'élève
+  let picsVrais = [];      // les vrais pics (détectés par le programme)
+  let modeClicActif = false;
+
+  /* ---------- 2) Dessin du graphe ---------- */
+  function tracer(valeurs, couleur, plage, marqueurs) {
+    const courbes = [{
+      x: ecg.t, y: valeurs, type: "scatter", mode: "lines",
+      line: { color: couleur, width: 1.6 }, hoverinfo: "none"
+    }];
+    (marqueurs || []).forEach(function (m) {
+      courbes.push({
+        x: m.indices.map(function (i) { return ecg.t[i]; }),
+        y: m.indices.map(function (i) { return valeurs[i]; }),
+        type: "scatter", mode: "markers",
+        marker: { color: m.couleur, size: m.taille || 11, line: { color: "#fff", width: 1.5 } },
+        hoverinfo: "none"
+      });
+    });
+    const mise = {
+      margin: { l: 24, r: 14, t: 8, b: 38 },
+      xaxis: { title: "temps (secondes)", range: plage, fixedrange: true, gridcolor: "#eef2ef", zeroline: false },
+      yaxis: { fixedrange: true, showticklabels: false, gridcolor: "#f3f6f4", zeroline: false },
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "Atkinson, sans-serif", color: "#4b6058", size: 12 },
+      showlegend: false, dragmode: false
+    };
+    Plotly.react("graphe", courbes, mise, { displayModeBar: false, responsive: true });
+  }
+
+  /* ---------- 3) Navigation entre les défis ---------- */
+  function allerEtape(n) {
+    etapeActuelle = n; modeClicActif = false;
+    document.getElementById("graphe").style.cursor = (n === 3) ? "crosshair" : "default";
+    for (let i = 1; i <= 3; i++) document.getElementById("etape" + i).classList.toggle("cache", i !== n);
+    document.getElementById("verdict").classList.add("cache");
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      const e = Number(p.dataset.etape);
+      p.classList.toggle("active", e === n);
+      p.classList.toggle("faite", e < n);
+    });
+    if (n === 1) tracer(brut, "#b45309", [0, DUREE]);
+    if (n === 2) appliquerZoom();
+    if (n === 3) lancerClic();
+  }
+
+  /* ---------- 4) Défi 1 : le choix du filtre ---------- */
+  function previsualiser(id) {
+    choixFiltre = id;
+    document.querySelectorAll(".choix").forEach(function (c) {
+      c.classList.toggle("selectionne", c.dataset.id === id);
+    });
+    tracer(variants[id].y, "#0b7a55", [0, DUREE]);
+    document.getElementById("btnValiderFiltre").disabled = false;
+  }
+  function validerFiltre() {
+    const msg = document.getElementById("messageFiltre");
+    msg.className = "message";
+    if (choixFiltre === "bon") {
+      propre = variants.bon.y;
+      msg.classList.add("bon");
+      msg.textContent = "✅ Parfait : ligne de base stable et pics bien visibles. Signal exploitable !";
+      document.getElementById("btnVersZoom").classList.remove("cache");
+      document.getElementById("btnValiderFiltre").disabled = true;
+    } else {
+      msg.classList.add("pas-encore");
+      msg.textContent = "❌ " + variants[choixFiltre].mauvais + " Essaie un autre traitement.";
+      document.getElementById("btnVersZoom").classList.add("cache");
+    }
+  }
+
+  /* ---------- 5) Défi 2 : le zoom ---------- */
+  function appliquerZoom() {
+    const largeur = Number(document.getElementById("curseurZoom").value);
+    document.getElementById("valeurZoom").textContent = largeur + " s";
+    let x0 = CENTRE - largeur / 2, x1 = CENTRE + largeur / 2;
+    if (x0 < 0) { x1 -= x0; x0 = 0; }
+    if (x1 > DUREE) { x0 -= (x1 - DUREE); x1 = DUREE; if (x0 < 0) x0 = 0; }
+    plageActuelle = [x0, x1];
+    tracer(propre, "#0b7a55", plageActuelle);
+
+    const msg = document.getElementById("messageZoom");
+    const btn = document.getElementById("btnVersClic");
+    msg.className = "message";
+    if (largeur > 13) {
+      msg.classList.add("pas-encore");
+      msg.textContent = "🔭 Trop large : les battements sont tassés, on ne les distingue pas.";
+      btn.disabled = true;
+    } else if (largeur < 2.5) {
+      msg.classList.add("pas-encore");
+      msg.textContent = "🔬 Trop serré : tu ne vois qu'un ou deux battements, tu perds la vue d'ensemble.";
+      btn.disabled = true;
+    } else if (largeur >= 3 && largeur <= 8) {
+      msg.classList.add("bon");
+      msg.textContent = "✅ Parfait : on voit bien chaque battement. Continue !";
+      btn.disabled = false;
+    } else {
+      msg.textContent = "Presque… ajuste encore un peu le curseur.";
+      btn.disabled = true;
+    }
+  }
+
+  /* ---------- 6) Défi 3 : repérer les battements à la main ---------- */
+  function lancerClic() {
+    picsChoisis = [];
+    picsVrais = detecterPicsR(propre, FE);
+    modeClicActif = true;
+    document.getElementById("btnFinir").classList.add("cache");
+    document.getElementById("btnVerifier").classList.remove("cache");
+    document.getElementById("btnEffacer").classList.remove("cache");
+    const msg = document.getElementById("messageClic");
+    msg.className = "message";
+    msg.textContent = "Clique sur les grands pics (ondes R). Reclique sur un point pour l'enlever.";
+    majCompteur();
+    tracer(propre, "#0b7a55", plageActuelle, [{ indices: picsChoisis, couleur: "#f59e0b" }]);
+  }
+  function majCompteur() {
+    document.getElementById("compteur").textContent = "Points placés : " + picsChoisis.length;
+    document.getElementById("btnVerifier").disabled = picsChoisis.length === 0;
+  }
+  function surClicGraphe(e) {
+    if (etapeActuelle !== 3 || !modeClicActif) return;
+    const gd = document.getElementById("graphe");
+    const xa = gd._fullLayout && gd._fullLayout.xaxis;
+    if (!xa) return;
+    // On convertit la position du clic (en pixels) en "temps" (secondes),
+    // grâce aux repères internes de Plotly : _offset (début de la zone) et p2d (pixel -> donnée).
+    const rect = gd.getBoundingClientRect();
+    const pixelDansZone = (e.clientX - rect.left) - xa._offset;
+    if (pixelDansZone < 0 || pixelDansZone > xa._length) return; // clic en dehors de la courbe
+    const temps = xa.p2d(pixelDansZone);
+    let idx = Math.round(temps * FE);
+    if (idx < 0 || idx >= propre.length) return;
+    idx = trouverSommetProche(propre, idx, Math.round(0.12 * FE)); // on aimante vers le sommet le plus proche
+    const seuilProche = Math.round(0.20 * FE);
+    const dejaLa = picsChoisis.findIndex(function (p) { return Math.abs(p - idx) < seuilProche; });
+    if (dejaLa >= 0) picsChoisis.splice(dejaLa, 1); else picsChoisis.push(idx); // reclic = on enlève le point
+    majCompteur();
+    tracer(propre, "#0b7a55", plageActuelle, [{ indices: picsChoisis, couleur: "#f59e0b" }]);
+  }
+  function verifier() {
+    const vraisFenetre = picsVrais.filter(function (i) {
+      return ecg.t[i] >= plageActuelle[0] && ecg.t[i] <= plageActuelle[1];
+    });
+    const r = evaluerSelection(vraisFenetre, picsChoisis, FE, 0.15);
+    const msg = document.getElementById("messageClic");
+    msg.className = "message";
+    const reussi = (r.total > 0) && (r.trouves >= r.total - 1) && (r.faux <= 1);
+    if (reussi) {
+      modeClicActif = false;
+      msg.classList.add("bon");
+      msg.textContent = "✅ Bien joué ! Tu as trouvé " + r.trouves + " battements sur " + r.total +
+        (r.faux ? " (avec " + r.faux + " petite erreur)" : "") + ". Tu as l'œil d'un cardiologue !";
+      tracer(propre, "#0b7a55", plageActuelle, [
+        { indices: picsChoisis, couleur: "#f59e0b", taille: 9 },
+        { indices: vraisFenetre, couleur: "#e11d48", taille: 13 }
+      ]);
+      document.getElementById("btnVerifier").classList.add("cache");
+      document.getElementById("btnEffacer").classList.add("cache");
+      document.getElementById("btnFinir").classList.remove("cache");
+    } else {
+      msg.classList.add("pas-encore");
+      msg.textContent = "❌ Pas encore : " + r.trouves + " bon(s), " + r.manques + " oublié(s), " +
+        r.faux + " erreur(s). Indice : un pic R, c'est les pics les PLUS HAUTS et bien réguliers. Réessaie !";
+    }
+  }
+  function effacer() {
+    picsChoisis = [];
+    majCompteur();
+    tracer(propre, "#0b7a55", plageActuelle, [{ indices: [], couleur: "#f59e0b" }]);
+  }
+  function finir() {
+    const bpm = calculerBPM(picsVrais, FE);
+    const diag = diagnostiquer(bpm);
+    document.getElementById("bpmValeur").textContent = bpm;
+    const etat = document.getElementById("etatTexte");
+    etat.textContent = diag.etat + " — " + diag.texte;
+    etat.className = "etat " + diag.couleur;
+    document.getElementById("etape3").classList.add("cache");
+    document.getElementById("verdict").classList.remove("cache");
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      p.classList.add("faite"); p.classList.remove("active");
+    });
+    tracer(propre, "#0b7a55", [0, DUREE], [{ indices: picsVrais, couleur: "#e11d48", taille: 7 }]);
+    // ATTRIBUTION DU BADGE « Technicien de Laboratoire »
+    validerModule("labo");
+    // Afficher la section de célébration du badge
+    var badgeSection = document.getElementById('badge-obtenu-section');
+    if (badgeSection) {
+      badgeSection.classList.remove('cache');
+      setTimeout(function() {
+        badgeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 800);
+    }
+  }
+
+  /* ---------- 7) Branchements ---------- */
+  document.querySelectorAll(".choix").forEach(function (c) {
+    c.addEventListener("click", function () { previsualiser(c.dataset.id); });
+  });
+  document.getElementById("btnValiderFiltre").addEventListener("click", validerFiltre);
+  document.getElementById("btnVersZoom").addEventListener("click", function () { allerEtape(2); });
+  document.getElementById("curseurZoom").addEventListener("input", appliquerZoom);
+  document.getElementById("btnVersClic").addEventListener("click", function () { allerEtape(3); });
+  document.getElementById("btnVerifier").addEventListener("click", verifier);
+  document.getElementById("btnEffacer").addEventListener("click", effacer);
+  document.getElementById("btnFinir").addEventListener("click", finir);
+  document.getElementById("btnRecommencer").addEventListener("click", function () {
+    choixFiltre = null; propre = null;
+    document.getElementById("curseurZoom").value = 24;
+    document.querySelectorAll(".choix").forEach(function (c) { c.classList.remove("selectionne"); });
+    document.getElementById("btnValiderFiltre").disabled = true;
+    document.getElementById("btnVersZoom").classList.add("cache");
+    const mf = document.getElementById("messageFiltre"); mf.textContent = ""; mf.className = "message cache";
+    allerEtape(1);
+  });
+
+  /* ---------- 8) Démarrage ---------- */
+  allerEtape(1);
+  document.getElementById("graphe").addEventListener("click", surClicGraphe); // clic n'importe où dans le graphe
+  </script>
+</body>
+</html>
