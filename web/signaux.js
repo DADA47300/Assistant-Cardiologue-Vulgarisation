@@ -242,16 +242,16 @@ if (typeof module !== "undefined" && module.exports) {
 
   /* --- Les 10 cartes ------------------------------------------------- */
   var CARTES = [
-    { emoji: "🚦", nom: "Feu tricolore",      sous: "Signal visuel",             estSignal: true  },
-    { emoji: "🪨", nom: "Un caillou",          sous: "Matière morte",             estSignal: false },
-    { emoji: "📡", nom: "Box Wi-Fi",           sous: "Signal électromagnétique",  estSignal: true  },
-    { emoji: "🪑", nom: "Une chaise en bois",  sous: "Objet inerte",              estSignal: false },
-    { emoji: "❤️", nom: "Cœur qui bat",        sous: "Signal électrique",         estSignal: true  },
-    { emoji: "💧", nom: "Une bouteille d'eau", sous: "Objet",                     estSignal: false },
-    { emoji: "📻", nom: "Talkie-Walkie",       sous: "Signal radio",              estSignal: true  },
-    { emoji: "🍎", nom: "Une pomme",           sous: "Nourriture",                estSignal: false },
-    { emoji: "🎇", nom: "Fibre optique",       sous: "Signal lumineux",           estSignal: true  },
-    { emoji: "☕", nom: "Tasse de café",       sous: "Objet",                     estSignal: false },
+    { emoji: "🚦", nom: "Feu tricolore",      sous: '',             estSignal: true  },
+    { emoji: "🪨", nom: "Un caillou",          sous: '',             estSignal: false },
+    { emoji: "📡", nom: "Box Wi-Fi",           sous: '',  estSignal: true  },
+    { emoji: "🪑", nom: "Une chaise en bois",  sous: '',              estSignal: false },
+    { emoji: "❤️", nom: "Cœur qui bat",        sous: '',         estSignal: true  },
+    { emoji: "💧", nom: "Une bouteille d'eau", sous: '',                     estSignal: false },
+    { emoji: "📻", nom: "Talkie-Walkie",       sous: '',              estSignal: true  },
+    { emoji: "🍎", nom: "Une pomme",           sous: '',                estSignal: false },
+    { emoji: "🎇", nom: "Fibre optique",       sous: '',           estSignal: true  },
+    { emoji: "☕", nom: "Tasse de café",       sous: '',                     estSignal: false },
   ];
 
   /* --- Garde : ne s'exécute que si la pile existe dans la page ------- */
