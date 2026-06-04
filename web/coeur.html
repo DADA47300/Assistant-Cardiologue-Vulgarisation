@@ -117,6 +117,83 @@
       background: linear-gradient(135deg, #fff1f2 0%, #fffbfb 100%);
       border: 2px solid var(--battement); text-align: center;
     }
+
+    /* ===== MODULE 0 — CARTE DES 4 CAVITÉS ===== */
+
+    /* Conteneur image + SVG superposé */
+    .cavites-conteneur {
+      position: relative;
+      width: 100%;
+      max-width: 580px;
+      margin: 0 auto 16px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(22,48,42,0.12);
+    }
+    .cavites-image { display: block; width: 100%; height: auto; }
+    .cavites-svg {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+
+    /* Zones cliquables — invisibles par défaut */
+    .zone-cavite {
+      fill: transparent;
+      stroke: transparent;
+      cursor: pointer;
+      pointer-events: all;
+      transition: fill 0.25s ease, filter 0.25s ease;
+    }
+    .zone-cavite:hover { fill: rgba(255,255,255,0.14); }
+    .zone-cavite:focus { outline: none; fill: rgba(255,255,255,0.18); }
+
+    /* États actifs — un halo coloré par cavité */
+    .zone-cavite.active-od { fill: rgba(59,130,246,0.35); filter: drop-shadow(0 0 12px rgba(59,130,246,0.85)); }
+    .zone-cavite.active-og { fill: rgba(245,158,11,0.38); filter: drop-shadow(0 0 12px rgba(245,158,11,0.85)); }
+    .zone-cavite.active-vd { fill: rgba(99,102,241,0.38); filter: drop-shadow(0 0 14px rgba(99,102,241,0.85)); }
+    .zone-cavite.active-vg { fill: rgba(225,29,72,0.38);  filter: drop-shadow(0 0 14px rgba(225,29,72,0.85)); }
+
+    /* Pastilles de légende (double entrée : image ET légende) */
+    .cavites-legende {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 14px;
+    }
+    .legende-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px; border-radius: 10px;
+      border: 1.5px solid var(--bord); background: var(--carte);
+      cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.1s;
+      font-size: 0.86rem;
+    }
+    .legende-item:hover { transform: translateY(-1px); }
+    .legende-item.active { font-weight: 700; }
+    .legende-item.active.od { border-color: #3b82f6; background: #eff6ff; color: #1e40af; }
+    .legende-item.active.og { border-color: #f59e0b; background: #fffbeb; color: #78350f; }
+    .legende-item.active.vd { border-color: #6366f1; background: #eef2ff; color: #312e81; }
+    .legende-item.active.vg { border-color: var(--battement); background: #fff1f2; color: #9b1230; }
+    .legende-puce { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+    .legende-puce.od { background: #3b82f6; }
+    .legende-puce.og { background: #f59e0b; }
+    .legende-puce.vd { background: #6366f1; }
+    .legende-puce.vg { background: var(--battement); }
+    .legende-texte { flex: 1; }
+    .legende-nom { font-family: var(--titre); font-weight: 700; font-size: 0.88rem; display: block; }
+    .legende-role { font-size: 0.76rem; color: var(--encre-doux); }
+
+    /* Bandeau d'info détaillé sous le schéma */
+    .cavite-info-box {
+      border-radius: 12px; padding: 14px 18px; margin: 4px 0 10px;
+      font-size: 0.9rem; font-weight: 700; min-height: 3em;
+      transition: background 0.3s, border-color 0.3s, color 0.3s;
+      background: #f3f6f4; color: var(--encre-doux);
+      border-left: 4px solid var(--bord);
+    }
+    .cavite-info-box.od { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
+    .cavite-info-box.og { background: #fffbeb; color: #78350f; border-left-color: #f59e0b; }
+    .cavite-info-box.vd { background: #eef2ff; color: #312e81; border-left-color: #6366f1; }
+    .cavite-info-box.vg { background: #fff1f2; color: #9b1230; border-left-color: var(--battement); }
+
+    @media (max-width: 480px) { .cavites-legende { grid-template-columns: 1fr; } }
+
     /* ===== LA SUPERPOSITION DE L'IMAGE REALISTE ===== */
 .conteneur-coeur-interactif {
   position: relative;
@@ -196,6 +273,7 @@
 
   <!-- Checklist de progression -->
   <div class="checklist" aria-label="Conditions pour obtenir le badge">
+    <span class="chk" id="chk-cavites"><span class="ico">○</span> 4 cavités explorées</span>
     <span class="chk" id="chk-sup"><span class="ico">○</span> Étage supérieur</span>
     <span class="chk" id="chk-pompe"><span class="ico">○</span> Pompe principale</span>
     <span class="chk" id="chk-p"><span class="ico">○</span> Onde P</span>
@@ -203,6 +281,112 @@
     <span class="chk" id="chk-t"><span class="ico">○</span> Onde T</span>
     <span class="chk" id="chk-cycle"><span class="ico">○</span> Cycle complet</span>
   </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODULE 0 — LES 4 CAVITÉS
+       ═══════════════════════════════════════════════ -->
+  <section class="carte" id="module-cavites">
+    <h2>0. Les 4 cavités du cœur — la carte avant tout</h2>
+    <p class="explication">
+      Avant de comprendre le signal électrique, il faut connaître la
+      <strong>géographie</strong> du cœur. Il est divisé en <strong>4 cavités</strong> :
+      deux <strong>oreillettes</strong> en haut (les collecteurs) et deux
+      <strong>ventricules</strong> en bas (les pompes).
+      <strong>Clique sur chaque cavité</strong> de l'image — ou sur une case de la légende —
+      pour découvrir son rôle.
+    </p>
+
+    <!-- Image anatomique + zones cliquables SVG superposées.
+         viewBox calé sur les dimensions réelles de l'image : 1288 × 952 px.
+         Les 4 tracés ont été positionnés sur chaque cavité de l'illustration. -->
+    <div class="cavites-conteneur" id="cavites-conteneur">
+      <img src="cavites_coeur.jpg" alt="Coupe anatomique du cœur montrant les 4 cavités" class="cavites-image" id="cavites-img">
+
+      <svg class="cavites-svg" viewBox="0 0 1288 952" xmlns="http://www.w3.org/2000/svg"
+           id="cavites-svg" role="group" aria-label="Zones interactives des 4 cavités du cœur">
+
+        <!-- OREILLETTE DROITE (chambre lavande, à gauche de l'image) -->
+        <path id="zone-od" class="zone-cavite"
+          d="M354,456 L333,528 L340,668 L438,681 L518,654 L539,616 L540,568 L508,481 L442,444 Z"
+          tabindex="0" role="button" aria-label="Oreillette droite"
+          onclick="activerCavite('od')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('od');}"/>
+
+        <!-- VENTRICULE DROIT (chambre bleu marine, au centre / bas) -->
+        <path id="zone-vd" class="zone-cavite"
+          d="M806,811 L762,724 L688,647 L592,658 L589,685 L641,699 L511,717 L483,742 L488,761 L578,809 L629,799 L745,829 Z"
+          tabindex="0" role="button" aria-label="Ventricule droit"
+          onclick="activerCavite('vd')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('vd');}"/>
+
+        <!-- OREILLETTE GAUCHE (chambre saumon, en haut à droite) -->
+        <path id="zone-og" class="zone-cavite"
+          d="M660,345 L663,403 L730,470 L837,475 L871,453 L887,390 L850,349 L723,314 Z"
+          tabindex="0" role="button" aria-label="Oreillette gauche"
+          onclick="activerCavite('og')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('og');}"/>
+
+        <!-- VENTRICULE GAUCHE (chambre rouge sombre, à droite / bas) -->
+        <path id="zone-vg" class="zone-cavite"
+          d="M856,496 L732,595 L768,641 L903,723 L909,583 L883,512 Z"
+          tabindex="0" role="button" aria-label="Ventricule gauche"
+          onclick="activerCavite('vg')"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('vg');}"/>
+      </svg>
+    </div>
+
+    <!-- Légende interactive (cliquable elle aussi) -->
+    <div class="cavites-legende">
+      <div class="legende-item od" id="leg-od" tabindex="0" role="button"
+           onclick="activerCavite('od')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('od');}">
+        <div class="legende-puce od"></div>
+        <div class="legende-texte">
+          <span class="legende-nom">Oreillette droite</span>
+          <span class="legende-role">Reçoit le sang pauvre en oxygène venu du corps</span>
+        </div>
+      </div>
+      <div class="legende-item og" id="leg-og" tabindex="0" role="button"
+           onclick="activerCavite('og')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('og');}">
+        <div class="legende-puce og"></div>
+        <div class="legende-texte">
+          <span class="legende-nom">Oreillette gauche</span>
+          <span class="legende-role">Reçoit le sang oxygéné venu des poumons</span>
+        </div>
+      </div>
+      <div class="legende-item vd" id="leg-vd" tabindex="0" role="button"
+           onclick="activerCavite('vd')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('vd');}">
+        <div class="legende-puce vd"></div>
+        <div class="legende-texte">
+          <span class="legende-nom">Ventricule droit</span>
+          <span class="legende-role">Envoie le sang vers les poumons</span>
+        </div>
+      </div>
+      <div class="legende-item vg" id="leg-vg" tabindex="0" role="button"
+           onclick="activerCavite('vg')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();activerCavite('vg');}">
+        <div class="legende-puce vg"></div>
+        <div class="legende-texte">
+          <span class="legende-nom">Ventricule gauche</span>
+          <span class="legende-role">Propulse le sang oxygéné dans tout le corps</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bandeau d'info détaillée -->
+    <div class="cavite-info-box" id="cavite-info-box">
+      👆 Clique sur une cavité du schéma (ou sur une case de légende) pour découvrir son rôle.
+    </div>
+
+    <p style="font-size:0.85rem;color:var(--encre-doux);margin:6px 0 0;">
+      💡 Le cœur droit <strong>(oreillette + ventricule droits)</strong> gère la circulation
+      vers les <strong>poumons</strong> (sang à recharger en oxygène). Le cœur gauche
+      <strong>(oreillette + ventricule gauches)</strong> gère la circulation vers
+      <strong>tout le corps</strong> (sang déjà oxygéné).
+    </p>
+  </section>
 
   <!-- ═══════════════════════════════════════════════
        MODULE 1 — ANATOMIE
@@ -405,7 +589,7 @@
      ===================================================================== */
 
   // --- Suivi de progression ---
-  var progres = { sup: false, pompe: false, p: false, qrs: false, t: false, cycle: false };
+  var progres = { cavites: false, sup: false, pompe: false, p: false, qrs: false, t: false, cycle: false };
   var badgeObtenu = false;
 
   function cocher(cle) {
@@ -425,6 +609,48 @@
     var sec = document.getElementById('badge-obtenu-section');
     sec.classList.remove('cache');
     setTimeout(function() { sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 600);
+  }
+
+  // =========================================================
+  // MODULE 0 — Les 4 cavités
+  // =========================================================
+  var infosCavites = {
+    od: { cls: 'od',
+          detail: "Oreillette droite — Elle collecte le sang « usé » (pauvre en oxygène) qui revient de tout le corps par les grosses veines, puis le déverse dans le ventricule droit, juste en dessous." },
+    og: { cls: 'og',
+          detail: "Oreillette gauche — Elle récupère le sang fraîchement rechargé en oxygène par les poumons, puis le transmet au ventricule gauche." },
+    vd: { cls: 'vd',
+          detail: "Ventricule droit — La pompe qui propulse le sang pauvre en oxygène vers les poumons pour qu'il s'y recharge. Son effort reste modéré : les poumons sont tout proches." },
+    vg: { cls: 'vg',
+          detail: "Ventricule gauche — La pompe la plus puissante du cœur : elle envoie le sang riche en oxygène dans tout l'organisme. C'est pourquoi sa paroi musculaire est la plus épaisse." }
+  };
+
+  var cavitesVisitees = {};
+
+  function activerCavite(id) {
+    var info = infosCavites[id];
+    if (!info) return;
+
+    // 1. Zones SVG : on éteint tout, on allume la cible
+    document.querySelectorAll('#cavites-svg .zone-cavite').forEach(function (z) {
+      z.classList.remove('active-od', 'active-og', 'active-vd', 'active-vg');
+    });
+    var zone = document.getElementById('zone-' + id);
+    if (zone) zone.classList.add('active-' + id);
+
+    // 2. Légende : on surligne la case correspondante
+    document.querySelectorAll('.legende-item').forEach(function (l) { l.classList.remove('active'); });
+    var leg = document.getElementById('leg-' + id);
+    if (leg) leg.classList.add('active');
+
+    // 3. Bandeau d'info détaillé
+    var box = document.getElementById('cavite-info-box');
+    box.className = 'cavite-info-box ' + info.cls;
+    box.textContent = info.detail;
+
+    // 4. Progression : badge « 4 cavités explorées » une fois les 4 vues
+    cavitesVisitees[id] = true;
+    if (Object.keys(cavitesVisitees).length === 4) cocher('cavites');
   }
 
   // =========================================================
