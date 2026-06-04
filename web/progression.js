@@ -13,8 +13,15 @@ var BADGES = {
   signal:      { nom: "Maître des Ondes",           icone: "🌊" },
   coeur_ecg:   { nom: "Explorateur Anatomique",     icone: "🫀" },
   labo:        { nom: "Technicien de Laboratoire",   icone: "🔬" },
-  pathologies: { nom: "Expert Diagnostic",           icone: "🩺" }
+  pathologies: { nom: "Expert Diagnostic",           icone: "🩺" },
+  curieux:     { nom: "Esprit Curieux",              icone: "📸" }
 };
+
+/** Badges obligatoires pour le diplôme (le badge bonus n'en fait pas partie) */
+var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "labo", "pathologies"];
+
+/** Badges bonus (récompenses supplémentaires, non requis pour le diplôme) */
+var BADGES_BONUS = ["curieux"];
 
 /** Clé sessionStorage pour stocker les badges */
 var CLE_PROGRESSION = "lisuncoeur_badges";
@@ -136,12 +143,24 @@ function modulesValides() {
 }
 
 /**
- * Vérifie si tous les badges ont été obtenus.
+ * Vérifie si tous les badges OBLIGATOIRES ont été obtenus (diplôme).
+ * Les badges bonus ne comptent pas.
  * @returns {boolean}
  */
 function tousLesBadges() {
   var valides = modulesValides();
-  return valides.length === Object.keys(BADGES).length;
+  return BADGES_OBLIGATOIRES.every(function (id) {
+    return valides.indexOf(id) !== -1;
+  });
+}
+
+/**
+ * Vérifie si un badge est un badge bonus.
+ * @param {string} idModule
+ * @returns {boolean}
+ */
+function estBadgeBonus(idModule) {
+  return BADGES_BONUS.indexOf(idModule) !== -1;
 }
 
 /**

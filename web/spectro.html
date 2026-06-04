@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La photo du son (bonus) — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Spécifique à la page spectrogramme ───────────────────────── */
+    .photo-zone {
+      background: #060d10;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .photo-zone canvas { display: block; width: 100%; }
+
+    /* Repères d'axes simples */
+    .axe-bas {
+      display: flex; justify-content: space-between;
+      font-size: .78rem; color: var(--encre-doux);
+      margin: 6px 4px 0;
+    }
+    .axe-gauche {
+      position: absolute; left: 8px; top: 8px; bottom: 8px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      font-size: .72rem; color: rgba(255,255,255,.55);
+      font-family: var(--titre); font-weight: 700; pointer-events: none;
+    }
+
+    /* Légende couleur */
+    .colorbar { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; }
+    .colorbar .grad {
+      flex: 1; height: 14px; border-radius: 99px;
+      background: linear-gradient(90deg,#060d10,#0d4f6e,#0e9f6e,#f59e0b,#e11d48);
+    }
+    .colorbar span { font-family: var(--titre); font-weight: 700; font-size: .78rem; color: var(--encre-doux); }
+
+    /* Boutons de son */
+    .sons-grille { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 4px 0 16px; }
+    .son-btn {
+      border: 2.5px solid var(--bord); border-radius: 16px; background: var(--carte);
+      cursor: pointer; padding: 16px 10px; display: flex; flex-direction: column;
+      align-items: center; gap: 6px; transition: border-color .15s, transform .1s, box-shadow .15s;
+      font-family: var(--texte); -webkit-tap-highlight-color: transparent;
+    }
+    .son-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+    .son-btn:active { transform: scale(.97); }
+    .son-btn.actif { border-color: var(--signal); background: #f3fbf8; }
+    .son-btn .em { font-size: 2rem; line-height: 1; }
+    .son-btn .ti { font-family: var(--titre); font-weight: 700; font-size: .9rem; color: var(--encre); }
+    .son-btn .so { font-size: .74rem; color: var(--encre-doux); text-align: center; }
+
+    .def-box {
+      background: #f3f6f4; border-left: 3px solid var(--signal);
+      border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 4px 0 16px;
+      font-size: .92rem; color: var(--encre-doux);
+    }
+
+    /* Toggle filtre */
+    .filtre-ligne { display: flex; align-items: center; gap: 14px; margin: 14px 0 0; flex-wrap: wrap; }
+
+    /* Zone de jeu */
+    #photo-jeu { cursor: crosshair; }
+    .jeu-result {
+      border-radius: 12px; padding: 12px 16px; margin: 12px 0 0; font-weight: 700;
+      background: #f3f6f4; color: var(--encre-doux); min-height: 1.4em;
+    }
+    .jeu-result.bon { background: #e6f8ef; color: var(--signal-fonce); }
+    .jeu-result.rate { background: #fff4e5; color: var(--attention); }
+
+    @media (max-width: 600px) { .sons-grille { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <nav class="barre">
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <header class="mission">
+      <h1>📸 La photo du son <span style="opacity:.8;font-size:1rem;">(bonus)</span></h1>
+      <p>Tu sais reconnaître une musique à l'oreille. Un ordinateur, lui, en fait une <strong>photo</strong>.
+         Apprends à la lire, puis deviens détective : repère le parasite caché dedans. C'est exactement ce
+         qu'un ingénieur regarde avant de choisir son filtre.</p>
+    </header>
+
+    <!-- ── 1. Lire la photo ─────────────────────────────────────── -->
+    <section class="carte">
+      <h2>1. Comment lire une « photo du son » ?</h2>
+      <div class="def-box">
+        Sur cette photo : <strong>de gauche à droite = le temps</strong> qui passe ·
+        <strong>de bas en haut = du grave vers l'aigu</strong> ·
+        <strong>la couleur = la force</strong> (sombre = silence, rouge = ça crie fort).
+        Clique sur un son pour l'écouter <em>et</em> voir sa photo se dessiner.
+      </div>
+
+      <div class="sons-grille">
+        <button class="son-btn" id="son-grave" type="button">
+          <span class="em">🔈</span><span class="ti">Note grave</span><span class="so">une barre tout en bas</span>
+        </button>
+        <button class="son-btn" id="son-aigu" type="button">
+          <span class="em">🔊</span><span class="ti">Note aiguë</span><span class="so">une barre tout en haut</span>
+        </button>
+        <button class="son-btn" id="son-sirene" type="button">
+          <span class="em">🚨</span><span class="ti">Sirène qui monte</span><span class="so">une ligne qui grimpe</span>
+        </button>
+      </div>
+
+      <div class="photo-zone">
+        <canvas id="photo-demo" height="240"></canvas>
+        <div class="axe-gauche"><span>aigu</span><span>grave</span></div>
+      </div>
+      <div class="axe-bas"><span>← début</span><span>temps →</span></div>
+      <div class="colorbar"><span>silence</span><div class="grad"></div><span>fort</span></div>
+    </section>
+
+    <!-- ── 2. La signature du bruit ─────────────────────────────── -->
+    <section class="carte">
+      <h2>2. Le bruit laisse une signature</h2>
+      <p class="explication">
+        Voici la photo d'un cœur (les <strong>barres verticales</strong> = les battements, bien réguliers).
+        Mais regarde : une <strong>ligne horizontale brillante</strong> traverse toute la photo. Elle n'a rien à
+        faire là — c'est le <strong>parasite électrique des prises murales</strong> (le fameux « 50 Hz »).
+        Il est toujours à la même hauteur : c'est sa signature.
+      </p>
+
+      <div class="photo-zone">
+        <canvas id="photo-signature" height="240"></canvas>
+        <div class="axe-gauche"><span>aigu</span><span>grave</span></div>
+      </div>
+      <div class="axe-bas"><span>← début</span><span>temps →</span></div>
+
+      <div class="filtre-ligne">
+        <button class="bouton" id="btn-filtre" type="button">🧽 Brancher le filtre</button>
+        <span id="filtre-txt" style="color:var(--encre-doux);font-size:.92rem;">
+          Le filtre, c'est un feutre qui efface <strong>une seule ligne</strong> sur la photo : celle du parasite.
+        </span>
+      </div>
+    </section>
+
+    <!-- ── 3. Le jeu de l'intrus ────────────────────────────────── -->
+    <section class="carte">
+      <h2>3. 🕵️ Trouve l'intrus !</h2>
+      <p class="explication">
+        Un parasite se cache dans cette photo. Sa signature, tu la connais maintenant :
+        une <strong>ligne horizontale</strong> qui ne devrait pas être là.
+        <strong>Clique dessus.</strong>
+      </p>
+
+      <div class="photo-zone" id="photo-jeu-zone">
+        <canvas id="photo-jeu" height="240"></canvas>
+        <div class="axe-gauche"><span>aigu</span><span>grave</span></div>
+      </div>
+      <div class="axe-bas"><span>← début</span><span>temps →</span></div>
+
+      <div class="jeu-result" id="jeu-result">En attente de ton clic…</div>
+      <div class="boutons-ligne" style="margin-top:12px;">
+        <button class="bouton" id="btn-nouveau" type="button">🎲 Nouvelle photo</button>
+        <button class="bouton secondaire" id="btn-indice" type="button">💡 Indice</button>
+      </div>
+    </section>
+
+    <!-- ── Bravo & Badge (apparaît après avoir trouvé l'intrus) ──── -->
+    <section class="carte cache" id="section-bravo">
+      <div style="text-align:center;padding:10px 0 6px;">
+        <span style="font-size:2.6rem;display:block;margin-bottom:6px;">📸</span>
+        <h2 style="color:var(--attention);">Badge Bonus : Esprit Curieux&nbsp;!</h2>
+        <p class="explication" style="margin:8px 0 18px;">Tu sais lire la photo d'un son et y traquer un parasite.
+           C'est exactement ce que fait un ingénieur avant de choisir son filtre. Bravo&nbsp;!</p>
+        <a class="bouton" href="index.html?badge=curieux" style="text-decoration:none;display:inline-block;">
+          ← Retour à l'accueil pour voir ton badge
+        </a>
+      </div>
+    </section>
+
+    <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <!-- Progression manager -->
+  <script src="progression.js"></script>
+
+<script>
+/* =====================================================================
+   La photo du son — version simplifiée pour des secondes.
+   On NE calcule PAS de vraie FFT : on DESSINE directement la photo à partir
+   de ce qu'on sait y trouver (une ligne = un son continu, des barres = des
+   battements, une diagonale = une note qui monte). Plus simple, plus clair,
+   et 100 % contrôlable.
+   ===================================================================== */
+
+/* ── Palette de couleurs (sombre → bleu → vert → orange → rouge) ── */
+function couleur(t) {
+  t = Math.max(0, Math.min(1, t));
+  var pal = [[0,[6,13,16]],[0.20,[13,79,110]],[0.45,[14,159,110]],[0.72,[245,158,11]],[1,[225,29,72]]];
+  var i = 0;
+  while (i < pal.length - 2 && pal[i + 1][0] < t) i++;
+  var t0 = pal[i][0], c0 = pal[i][1], t1 = pal[i + 1][0], c1 = pal[i + 1][1];
+  var a = (t - t0) / (t1 - t0);
+  return 'rgb(' + Math.round(c0[0] + a * (c1[0] - c0[0])) + ',' +
+                  Math.round(c0[1] + a * (c1[1] - c0[1])) + ',' +
+                  Math.round(c0[2] + a * (c1[2] - c0[2])) + ')';
+}
+
+/* ── Intensité d'une cellule (tRel, fRel ∈ [0,1]) selon un modèle ──
+   fRel = 0 → grave (bas), fRel = 1 → aigu (haut). */
+function intensite(modele, tRel, fRel) {
+  var v = 0.04 + Math.random() * 0.02; // léger fond
+  for (var k = 0; k < modele.length; k++) {
+    var c = modele[k];
+    if (c.type === 'note') {                       // son continu → ligne horizontale
+      v = Math.max(v, c.force * Math.exp(-Math.pow((fRel - c.f) / 0.04, 2)));
+    } else if (c.type === 'ligne') {               // parasite → ligne horizontale nette
+      v = Math.max(v, c.force * Math.exp(-Math.pow((fRel - c.f) / 0.028, 2)));
+    } else if (c.type === 'montee') {              // note qui monte → diagonale
+      var cible = c.f0 + (c.f1 - c.f0) * tRel;
+      v = Math.max(v, c.force * Math.exp(-Math.pow((fRel - cible) / 0.045, 2)));
+    } else if (c.type === 'battements') {          // cœur → barres verticales
+      var phase = tRel / c.periode;
+      var d = Math.abs(phase - Math.round(phase)) * c.periode;
+      var bar = Math.exp(-Math.pow(d / 0.010, 2));
+      var env = 0.5 + 0.5 * Math.exp(-Math.pow((fRel - 0.22) / 0.32, 2));
+      v = Math.max(v, c.force * bar * env);
+    }
+  }
+  return Math.min(1, v);
+}
+
+/* ── Dessin d'une photo sur un canvas ──
+   options.reveal ∈ [0,1] : fraction révélée (animation gauche→droite). */
+var NX = 150, NY = 80;
+function dessiner(canvas, modele, reveal) {
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width = canvas.offsetWidth || 700;
+  var H = canvas.height;
+  ctx.fillStyle = '#060d10'; ctx.fillRect(0, 0, W, H);
+  var cw = W / NX, ch = H / NY;
+  var colMax = Math.floor((reveal == null ? 1 : reveal) * NX);
+  for (var ix = 0; ix < colMax; ix++) {
+    var tRel = (ix + 0.5) / NX;
+    for (var iy = 0; iy < NY; iy++) {
+      var fRel = (iy + 0.5) / NY;
+      var y = H - (iy + 1) * ch;          // bas = grave
+      ctx.fillStyle = couleur(intensite(modele, tRel, fRel));
+      ctx.fillRect(ix * cw, y, cw + 1, ch + 1);
+    }
+  }
+}
+
+/* ── Animation de révélation gauche → droite ── */
+function animerPhoto(canvas, modele, duree, fini) {
+  var debut = null;
+  function frame(ts) {
+    if (!debut) debut = ts;
+    var p = Math.min((ts - debut) / (duree || 1100), 1);
+    dessiner(canvas, modele, p);
+    if (p < 1) requestAnimationFrame(frame);
+    else if (fini) fini();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* =====================================================================
+   AUDIO — petits sons synthétiques (oscillateur Web Audio)
+   ===================================================================== */
+var actx = null;
+function audio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function jouerTon(freq, duree) {
+  var a = audio(); if (!a) return;
+  var o = a.createOscillator(), g = a.createGain();
+  o.type = 'sine'; o.frequency.value = freq;
+  o.connect(g); g.connect(a.destination);
+  var t0 = a.currentTime;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.03);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+  o.start(t0); o.stop(t0 + duree + 0.05);
+}
+function jouerSirene(f0, f1, duree) {
+  var a = audio(); if (!a) return;
+  var o = a.createOscillator(), g = a.createGain();
+  o.type = 'sine';
+  var t0 = a.currentTime;
+  o.frequency.setValueAtTime(f0, t0);
+  o.frequency.linearRampToValueAtTime(f1, t0 + duree);
+  o.connect(g); g.connect(a.destination);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.20, t0 + 0.04);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+  o.start(t0); o.stop(t0 + duree + 0.05);
+}
+
+/* =====================================================================
+   SECTION 1 — la photo du son (démo)
+   ===================================================================== */
+var canDemo = document.getElementById('photo-demo');
+var btnsSon = { grave: document.getElementById('son-grave'),
+                aigu: document.getElementById('son-aigu'),
+                sirene: document.getElementById('son-sirene') };
+
+var MODELES_SON = {
+  grave:  [{ type: 'note', f: 0.18, force: 1 }],
+  aigu:   [{ type: 'note', f: 0.82, force: 1 }],
+  sirene: [{ type: 'montee', f0: 0.18, f1: 0.9, force: 1 }]
+};
+
+function activerBtn(nom) {
+  for (var k in btnsSon) btnsSon[k].classList.toggle('actif', k === nom);
+}
+function lancerSon(nom) {
+  activerBtn(nom);
+  animerPhoto(canDemo, MODELES_SON[nom], 1100);
+  if (nom === 'grave')  jouerTon(180, 1.1);
+  if (nom === 'aigu')   jouerTon(900, 1.1);
+  if (nom === 'sirene') jouerSirene(200, 1500, 1.1);
+}
+btnsSon.grave.addEventListener('click',  function () { lancerSon('grave'); });
+btnsSon.aigu.addEventListener('click',   function () { lancerSon('aigu'); });
+btnsSon.sirene.addEventListener('click', function () { lancerSon('sirene'); });
+// Photo de départ : la note grave
+dessiner(canDemo, MODELES_SON.grave, 1);
+
+/* =====================================================================
+   SECTION 2 — la signature du bruit (avec / sans filtre)
+   ===================================================================== */
+var canSig = document.getElementById('photo-signature');
+var F_PARASITE = 0.62;            // hauteur de la ligne du 50 Hz sur la photo
+var modeleCoeur  = [{ type: 'battements', periode: 0.16, force: 0.95 }];
+var modeleAvecParasite = modeleCoeur.concat([{ type: 'ligne', f: F_PARASITE, force: 0.95 }]);
+var filtreOn = false;
+function dessinerSignature() {
+  dessiner(canSig, filtreOn ? modeleCoeur : modeleAvecParasite, 1);
+}
+document.getElementById('btn-filtre').addEventListener('click', function () {
+  filtreOn = !filtreOn;
+  this.textContent = filtreOn ? '↩️ Couper le filtre' : '🧽 Brancher le filtre';
+  document.getElementById('filtre-txt').innerHTML = filtreOn
+    ? '✅ La ligne du parasite a disparu : il ne reste que les battements. Signal propre !'
+    : 'Le filtre, c\'est un feutre qui efface <strong>une seule ligne</strong> sur la photo : celle du parasite.';
+  dessinerSignature();
+});
+dessinerSignature();
+
+/* =====================================================================
+   SECTION 3 — le jeu de l'intrus
+   ===================================================================== */
+var canJeu = document.getElementById('photo-jeu');
+var resJeu = document.getElementById('jeu-result');
+var fIntrus = 0.6, trouve = false, reussites = 0;
+
+function nouvellePhoto() {
+  trouve = false;
+  fIntrus = 0.30 + Math.random() * 0.55;     // hauteur aléatoire de l'intrus
+  var per = 0.13 + Math.random() * 0.06;     // rythme cardiaque varié
+  var modele = [{ type: 'battements', periode: per, force: 0.92 },
+                { type: 'ligne', f: fIntrus, force: 0.9 }];
+  // on garde le modèle pour le redessin (sans le hasard de fond qui bouge)
+  canJeu._modele = modele;
+  animerPhoto(canJeu, modele, 900);
+  resJeu.className = 'jeu-result';
+  resJeu.textContent = 'Repère la ligne horizontale anormale et clique dessus.';
+}
+function clicJeu(ev) {
+  if (trouve) return;
+  var r = canJeu.getBoundingClientRect();
+  var fRelClic = 1 - (ev.clientY - r.top) / r.height;   // bas = grave
+  if (Math.abs(fRelClic - fIntrus) < 0.06) {
+    trouve = true; reussites++;
+    resJeu.className = 'jeu-result bon';
+    resJeu.textContent = '🎯 Trouvé ! C\'est la signature du parasite. Un filtre n\'aurait plus qu\'à effacer cette ligne — et le signal du cœur redevient lisible.'
+      + (reussites >= 2 ? ' Tu as l\'œil d\'un vrai analyste 🔬 !' : '');
+    // --- Badge Curieux : attribution au premier succès ---
+    if (reussites === 1) {
+      var sectionBravo = document.getElementById('section-bravo');
+      if (sectionBravo) {
+        sectionBravo.classList.remove('cache');
+        sectionBravo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      if (typeof validerModule === 'function') {
+        validerModule('curieux');
+      }
+    }
+    // surligner la ligne trouvée
+    var ctx = canJeu.getContext('2d'), H = canJeu.height, W = canJeu.width;
+    var y = H - fIntrus * H;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    resJeu.className = 'jeu-result rate';
+    resJeu.textContent = '❌ Pas tout à fait. Cherche une ligne BIEN HORIZONTALE qui traverse toute la photo (pas les barres verticales : ça, ce sont les battements).';
+  }
+}
+function indice() {
+  resJeu.className = 'jeu-result';
+  resJeu.textContent = fIntrus > 0.55
+    ? '💡 L\'intrus est plutôt vers le HAUT de la photo (côté aigu).'
+    : '💡 L\'intrus est plutôt vers le BAS de la photo (côté grave).';
+}
+canJeu.addEventListener('click', clicJeu);
+document.getElementById('btn-nouveau').addEventListener('click', nouvellePhoto);
+document.getElementById('btn-indice').addEventListener('click', indice);
+nouvellePhoto();
+
+/* Redessiner proprement si la fenêtre change de taille */
+window.addEventListener('resize', function () {
+  dessiner(canDemo, MODELES_SON.grave, 1);
+  dessinerSignature();
+  if (canJeu._modele) dessiner(canJeu, canJeu._modele, 1);
+});
+</script>
+</body>
+</html>

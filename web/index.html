@@ -48,6 +48,11 @@
         </div>
       </div>
 
+      <a class="pastille" id="lien-spectro" href="spectro.html" style="text-decoration:none;">
+        <span class="num" id="badge-curieux">★</span>
+        <span><strong>La photo du son</strong> <em>(bonus)</em> — Lis un spectrogramme et traque le parasite caché.</span>
+      </a>
+
       <div class="pastille"><span class="num">★</span><span>Détective des pathologies <em>(à venir)</em></span></div>
     </div>
 
@@ -90,6 +95,7 @@
     { id: "signal",      module: "C'est quoi un signal ?" },
     { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
     { id: "labo",        module: "Le Labo ECG" },
+    { id: "curieux",     module: "La photo du son (bonus)", bonus: true },
     { id: "pathologies", module: "Détective des pathologies" }
   ];
 
@@ -98,19 +104,26 @@
     var grille = document.getElementById("badges-grille");
     grille.innerHTML = "";
     var valides = modulesValides();
-    var nbValides = valides.length;
+    var nbObligatoires = BADGES_OBLIGATOIRES.length;
+    var nbObligatoiresValides = 0;
 
     ORDRE_MODULES.forEach(function (m) {
       var badge = BADGES[m.id];
       var estObtenu = valides.indexOf(m.id) !== -1;
+      var estBonus = !!m.bonus;
+
+      if (!estBonus && estObtenu) nbObligatoiresValides++;
 
       var carte = document.createElement("div");
-      carte.className = "badge-carte " + (estObtenu ? "obtenu" : "verrouille");
+      carte.className = "badge-carte " + (estObtenu ? "obtenu" : "verrouille")
+        + (estBonus ? " bonus" : "");
 
       carte.innerHTML =
         '<div class="badge-icone">' + badge.icone + '</div>' +
         '<div class="badge-info">' +
-          '<span class="badge-nom">' + badge.nom + '</span>' +
+          '<span class="badge-nom">' + badge.nom +
+            (estBonus ? ' <span class="badge-tag-bonus">★ bonus</span>' : '') +
+          '</span>' +
           '<span class="badge-etat">' +
             (estObtenu ? "✅ Obtenu" : "🔒 " + m.module) +
           '</span>' +
@@ -120,11 +133,11 @@
       grille.appendChild(carte);
     });
 
-    // Barre de progression
-    var pourcent = (nbValides / 4) * 100;
+    // Barre de progression (uniquement les badges obligatoires)
+    var pourcent = (nbObligatoiresValides / nbObligatoires) * 100;
     document.getElementById("barre-remplissage").style.width = pourcent + "%";
     document.getElementById("progression-compteur").textContent =
-      nbValides + " / 4 badge" + (nbValides > 1 ? "s" : "");
+      nbObligatoiresValides + " / " + nbObligatoires + " badge" + (nbObligatoiresValides > 1 ? "s" : "");
 
     // Marquer les modules complétés dans la liste des étapes
     if (moduleValide("signal")) {
@@ -138,6 +151,10 @@
     if (moduleValide("labo")) {
       var numLabo = document.getElementById("badge-labo");
       if (numLabo) { numLabo.style.background = "var(--signal)"; numLabo.style.color = "#fff"; }
+    }
+    if (moduleValide("curieux")) {
+      var numCurieux = document.getElementById("badge-curieux");
+      if (numCurieux) { numCurieux.style.background = "var(--attention)"; numCurieux.style.color = "#fff"; }
     }
   }
 
