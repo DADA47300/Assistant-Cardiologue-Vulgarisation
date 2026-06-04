@@ -931,3 +931,18 @@ body {
   transition: background 0.12s ease, color 0.12s ease;
 }
 .sous-item:hover .si-num { background: var(--signal); color: #fff; }
+
+/* Sous-élément verrouillé (étape pas encore débloquée) */
+.sous-item.verrou {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--encre-doux);
+}
+.sous-item.verrou:hover {
+  background: transparent;
+  padding-left: 18px;
+  color: var(--encre-doux);
+}
+.sous-item.verrou .si-num { background: #e5e7eb; color: #9aa6a0; }
+.sous-item.verrou:hover .si-num { background: #e5e7eb; color: #9aa6a0; }
+.sous-item.verrou::after { content: "🔒"; margin-left: auto; font-size: 0.82rem; }

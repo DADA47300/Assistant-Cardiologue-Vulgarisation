@@ -276,8 +276,13 @@
     #etape0 .acq-suite { display: flex; justify-content: flex-end; margin-top: 18px; }
 
     /* Rendre les pastilles d'étapes cliquables */
-    #etapes .pastille { cursor: pointer; user-select: none; transition: border-color .15s, background .15s; }
+    #etapes .pastille { cursor: pointer; user-select: none; transition: border-color .15s, background .15s, opacity .15s; }
     #etapes .pastille:hover { border-color: var(--signal); }
+    /* Étape verrouillée : grisée, non cliquable, petit cadenas */
+    #etapes .pastille.verrou { opacity: .45; cursor: not-allowed; }
+    #etapes .pastille.verrou:hover { border-color: var(--bord); background: var(--carte); }
+    #etapes .pastille.verrou .num { background: #e5e7eb; color: #9aa6a0; }
+    #etapes .pastille.verrou::after { content: "🔒"; margin-left: auto; font-size: .82rem; }
 
     @media (max-width: 640px) {
       #etape0 .acq-noise-grid { grid-template-columns: 1fr; }
@@ -488,7 +493,7 @@
       <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🔬</div>
       <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Technicien de Laboratoire !</h2>
       <p style="color: var(--encre-doux); margin: 0 0 18px;">Tu as nettoyé le signal, trouvé le bon zoom et repéré les battements. Bravo !</p>
-      <a href="index.html" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
+      <a href="index.html?badge=labo" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
     </section>
 
     <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
@@ -515,7 +520,9 @@
   const sig_fort   = filtrer(brut, FE, { derive: true,  lissage: "fort"  }); // sur-lissé (pics détruits)
 
   // État du jeu
-  let etapeActuelle  = 1;
+  let etapeActuelle  = 0;
+  let etapeMax       = 0;     // étape la plus avancée débloquée (verrouillage)
+  let filtreValide   = false; // le nettoyage a-t-il été validé ?
   let plageActuelle  = [0, DUREE];
   let propre         = null;
   let picsChoisis    = [];
@@ -753,13 +760,18 @@
       txt.style.color = '#4b6058';
     }
 
-    // Bouton valider (n'apparaît que dans la sweet spot)
+    // Bouton valider (n'apparaît que dans la sweet spot, et tant qu'on n'a
+    // pas encore validé — sinon il reste caché)
     const btnVal = document.getElementById('btnValiderFiltre');
-    const wasHidden = btnVal.classList.contains('cache');
-    btnVal.classList.toggle('cache', !sweetSpot);
-    if (sweetSpot && wasHidden) {
-      btnVal.classList.add('sweet-spot-apparait');
-      setTimeout(function () { btnVal.classList.remove('sweet-spot-apparait'); }, 500);
+    if (filtreValide) {
+      btnVal.classList.add('cache');
+    } else {
+      const wasHidden = btnVal.classList.contains('cache');
+      btnVal.classList.toggle('cache', !sweetSpot);
+      if (sweetSpot && wasHidden) {
+        btnVal.classList.add('sweet-spot-apparait');
+        setTimeout(function () { btnVal.classList.remove('sweet-spot-apparait'); }, 500);
+      }
     }
   }
 
@@ -767,13 +779,19 @@
     const s1 = Number(document.getElementById('sliderDrive').value);
     const s2 = Number(document.getElementById('sliderSmooth').value);
     propre = computeSliderSignal(s1, s2);
+    filtreValide = true;
 
     const msg = document.getElementById('messageFiltre');
     msg.className = 'message bon';
     msg.textContent = "✅ Signal nettoyé ! Ligne de base stable et pics bien visibles. Signal exploitable !";
 
-    document.getElementById('btnValiderFiltre').disabled = true;
+    // Le bouton « Valider » disparaît : il ne reste que « Passer au zoom »
+    document.getElementById('btnValiderFiltre').classList.add('cache');
     document.getElementById('btnVersZoom').classList.remove('cache');
+
+    // Débloquer l'étape Zoom
+    etapeMax = Math.max(etapeMax, 2);
+    majPastilles();
   }
 
   document.getElementById('sliderDrive').addEventListener('input',  mettreAJourFiltre);
@@ -784,7 +802,19 @@
   /* ================================================================
      6) Navigation entre les défis
      ================================================================ */
+  function majPastilles() {
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      const e = Number(p.dataset.etape);
+      p.classList.toggle("active", e === etapeActuelle);
+      p.classList.toggle("verrou", e > etapeMax);                 // pas encore débloquée
+      p.classList.toggle("faite",  e < etapeMax && e !== etapeActuelle); // déjà faite
+    });
+  }
+
   function allerEtape(n) {
+    // Verrouillage : impossible d'aller à une étape non encore débloquée
+    if (n > etapeMax) { majPastilles(); return; }
+
     etapeActuelle = n; modeClicActif = false;
     document.getElementById("graphe").style.cursor = (n === 3) ? "crosshair" : "default";
 
@@ -805,27 +835,19 @@
       else         { __oscillo.stop(); }
     }
 
-    // Pastilles (état actif / fait)
-    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
-      const e = Number(p.dataset.etape);
-      p.classList.toggle("active", e === n);
-      p.classList.toggle("faite", e < n);
-    });
+    majPastilles();
 
-    // Prérequis : permettre de sauter directement à une étape (lien d'accueil
-    // ou clic sur une pastille) sans avoir fait les précédentes.
-    if (n >= 2 && !propre) {
-      propre = sig_bon.slice();
-      document.getElementById('sliderDrive').value  = 50;
-      document.getElementById('sliderSmooth').value = 50;
-    }
-    if (n === 3 && (plageActuelle[1] - plageActuelle[0]) > 9) {
+    // Filet de sécurité pour le mode « révision » (badge déjà obtenu) : si on
+    // arrive à une étape avancée sans signal nettoyé en mémoire, on en fournit un.
+    if (n >= 2 && !propre) propre = sig_bon.slice();
+    if (n === 3 && (plageActuelle[1] - plageActuelle[0]) > 12) {
       plageActuelle = [Math.max(0, CENTRE - 2.5), Math.min(DUREE, CENTRE + 2.5)];
     }
 
     if (n === 1) {
       // Réinitialiser la zone de nettoyage…
       if (animAcqFrame) { cancelAnimationFrame(animAcqFrame); animAcqFrame = null; }
+      filtreValide = false;
       document.getElementById('phase-acquisition').classList.remove('cache');
       document.getElementById('console-filtrage').classList.add('cache');
       document.getElementById('btnValiderFiltre').disabled = false;
@@ -841,10 +863,17 @@
     if (n === 3) lancerClic();
   }
 
-  // Le bouton « Envoyer au labo » de l'étape 0 et les pastilles cliquables
-  document.getElementById('btnVersNettoyage').addEventListener('click', function () { allerEtape(1); });
+  // Le bouton « Envoyer au labo » débloque l'étape Nettoyer
+  document.getElementById('btnVersNettoyage').addEventListener('click', function () {
+    etapeMax = Math.max(etapeMax, 1);
+    allerEtape(1);
+  });
+  // Pastilles cliquables (seulement si débloquées)
   document.querySelectorAll('#etapes .pastille').forEach(function (p) {
-    p.addEventListener('click', function () { allerEtape(Number(p.dataset.etape)); });
+    p.addEventListener('click', function () {
+      var n = Number(p.dataset.etape);
+      if (n <= etapeMax) allerEtape(n);
+    });
   });
 
   /* ================================================================
@@ -881,7 +910,10 @@
   }
 
   document.getElementById("curseurZoom").addEventListener("input", appliquerZoom);
-  document.getElementById("btnVersClic").addEventListener("click", function () { allerEtape(3); });
+  document.getElementById("btnVersClic").addEventListener("click", function () {
+    etapeMax = Math.max(etapeMax, 3);
+    allerEtape(3);
+  });
 
   /* ================================================================
      8) Étape 4 : repérer les battements à la main
@@ -987,6 +1019,8 @@
 
   document.getElementById("btnRecommencer").addEventListener("click", function () {
     propre = null;
+    etapeMax = 0;
+    filtreValide = false;
     if (animAcqFrame) { cancelAnimationFrame(animAcqFrame); animAcqFrame = null; }
     document.getElementById("curseurZoom").value = 24;
     document.getElementById('sliderDrive').value  = 0;
@@ -1132,9 +1166,13 @@
      10) Démarrage — étape 0 par défaut, ou ?etape=N pour un lien direct
      ================================================================ */
   (function demarrer() {
+    // Si le badge du Labo est déjà obtenu, tout est déverrouillé (mode révision).
+    if (typeof moduleValide === "function" && moduleValide("labo")) etapeMax = 3;
+
     var params = new URLSearchParams(window.location.search);
     var e = parseInt(params.get('etape'), 10);
     if (isNaN(e) || e < 0 || e > 3) e = 0;
+    if (e > etapeMax) e = etapeMax;   // on ne saute pas une étape verrouillée
     allerEtape(e);
   })();
   </script>

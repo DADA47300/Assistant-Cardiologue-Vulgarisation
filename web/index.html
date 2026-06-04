@@ -191,10 +191,23 @@
       '</div>';
   }
 
+  /* --- Verrouillage des sous-listes ---
+     Tant qu'un module n'est pas terminé (badge non obtenu), seule la 1ʳᵉ
+     sous-étape est accessible : on doit commencer par le début.
+     Une fois le badge obtenu, tout est déverrouillé (révision libre). */
+  function majSousListes() {
+    var laboFait = (typeof moduleValide === "function") && moduleValide("labo");
+    document.querySelectorAll("#sous-liste-labo .sous-item").forEach(function (a, i) {
+      var verrou = (i > 0) && !laboFait; // i===0 (« Capter ») toujours ouvert
+      a.classList.toggle("verrou", verrou);
+    });
+  }
+
   /* --- Initialisation --- */
   function mettreAJour() {
     console.log("[Index] 🔄 Mise à jour de l'affichage des badges...");
     construireBadges();
+    majSousListes();
     gererDiplome();
   }
 
@@ -217,6 +230,13 @@
     tete.addEventListener("click", function () {
       var parent = tete.closest(".pastille-expandable");
       if (parent) parent.classList.toggle("ouvert");
+    });
+  });
+
+  // Bloquer le clic sur une sous-étape verrouillée
+  document.querySelectorAll(".sous-item").forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      if (a.classList.contains("verrou")) ev.preventDefault();
     });
   });
 
