@@ -32,10 +32,21 @@
         <span><strong>Le cœur et l'ECG</strong> — Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.</span>
       </a>
 
-      <a class="pastille" id="lien-labo" href="labo.html" style="text-decoration:none;">
-        <span class="num" id="badge-labo">★</span>
-        <span><strong>Le Labo ECG</strong> — Nettoie le signal, règle ton zoom, puis repère les battements.</span>
-      </a>
+      <div class="pastille pastille-expandable" id="lien-labo">
+        <div class="pastille-tete">
+          <span class="num" id="badge-labo">★</span>
+          <span class="pastille-texte"><strong>Le Labo ECG</strong> — Capter, nettoyer, zoomer, puis repérer les battements.</span>
+          <span class="pastille-chevron">▾</span>
+        </div>
+        <div class="sous-liste" id="sous-liste-labo">
+          <div class="sous-liste-inner">
+            <a class="sous-item" href="labo.html?etape=0"><span class="si-num">1</span> Capter le signal</a>
+            <a class="sous-item" href="labo.html?etape=1"><span class="si-num">2</span> Nettoyer le signal</a>
+            <a class="sous-item" href="labo.html?etape=2"><span class="si-num">3</span> Trouver le bon zoom</a>
+            <a class="sous-item" href="labo.html?etape=3"><span class="si-num">4</span> Repérer les battements</a>
+          </div>
+        </div>
+      </div>
 
       <div class="pastille"><span class="num">★</span><span>Détective des pathologies <em>(à venir)</em></span></div>
     </div>
@@ -199,6 +210,15 @@
       window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
     }
   }
+
+  // Dépliage des pastilles à sous-liste (réutilisable : tout .pastille-tete
+  // ouvre/ferme son .pastille-expandable parent)
+  document.querySelectorAll(".pastille-tete").forEach(function (tete) {
+    tete.addEventListener("click", function () {
+      var parent = tete.closest(".pastille-expandable");
+      if (parent) parent.classList.toggle("ouvert");
+    });
+  });
 
   // Exécution immédiate au chargement
   mettreAJour();

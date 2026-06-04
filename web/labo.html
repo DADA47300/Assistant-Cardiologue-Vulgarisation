@@ -177,6 +177,112 @@
       font-size: 0.9rem;
       margin: 12px 0 0;
     }
+
+    /* =================================================================
+       ÉTAPE 0 — Acquisition (oscilloscope + capteur + machine à bruit)
+       Tout est scopé sous #etape0 pour ne rien casser ailleurs.
+       ================================================================= */
+    #etape0 .acq-intro { color: var(--encre-doux); margin: 0 0 18px; }
+
+    #etape0 .acq-bloc { margin: 0 0 20px; }
+    #etape0 .acq-bloc:last-child { margin-bottom: 0; }
+    #etape0 .acq-label {
+      font-family: var(--titre); font-weight: 700; font-size: 0.78rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--encre-doux); margin: 0 0 12px;
+    }
+
+    /* --- Sélecteur de capteur (interrupteur) --- */
+    #etape0 .acq-sensor { display: flex; align-items: center; justify-content: center; gap: 20px; }
+    #etape0 .acq-sensor-lab {
+      font-family: var(--titre); font-weight: 700; font-size: 0.95rem;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: opacity .3s; text-align: center;
+    }
+    #etape0 .acq-sensor-lab .ic { font-size: 2rem; }
+    #etape0 .acq-sensor-lab .nm { font-size: 0.78rem; color: var(--encre-doux); }
+    #etape0 .acq-sensor-lab.off .ic { filter: grayscale(1); opacity: .35; }
+    #etape0 .acq-sensor-lab.off .nm { opacity: .35; }
+    #etape0 .acq-track {
+      position: relative; width: 80px; height: 44px; border-radius: 999px;
+      background: var(--signal); cursor: pointer; transition: background .3s;
+      flex-shrink: 0; box-shadow: inset 0 2px 6px rgba(0,0,0,.2);
+    }
+    #etape0 .acq-track.sport { background: #6366f1; }
+    #etape0 .acq-thumb {
+      position: absolute; top: 4px; left: 4px; width: 36px; height: 36px;
+      border-radius: 50%; background: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.25);
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    #etape0 .acq-track.sport .acq-thumb { transform: translateX(36px); }
+
+    /* --- Oscilloscope (écran sombre + canvas) --- */
+    #etape0 .acq-screen {
+      background: #0a1a14; border-radius: 12px; overflow: hidden; position: relative;
+    }
+    #etape0 #osc-canvas { display: block; width: 100%; }
+
+    /* --- Jauge de qualité --- */
+    #etape0 .acq-quality { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+    #etape0 .acq-q-emoji { font-size: 2rem; width: 2.4rem; text-align: center; flex-shrink: 0; transition: all .4s; }
+    #etape0 .acq-q-track { flex: 1; height: 22px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+    #etape0 .acq-q-fill { height: 100%; border-radius: 999px; width: 100%; background: var(--signal);
+      transition: width .5s ease, background-color .5s ease; }
+    #etape0 .acq-q-label {
+      font-family: var(--titre); font-weight: 700; font-size: 0.78rem;
+      min-width: 130px; text-align: right; color: var(--encre-doux); transition: color .4s;
+    }
+
+    /* --- Machine à bruit --- */
+    #etape0 .acq-noise-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    #etape0 .acq-noise-btn {
+      border: 2.5px solid var(--bord); border-radius: 18px; background: var(--carte);
+      cursor: pointer; display: flex; flex-direction: column; align-items: center;
+      gap: 6px; padding: 16px 10px 12px; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color .2s, background .2s, transform .1s, box-shadow .2s;
+    }
+    #etape0 .acq-noise-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+    #etape0 .acq-noise-btn:active { transform: scale(.96); }
+    #etape0 .acq-noise-btn .em { font-size: 2.4rem; line-height: 1; }
+    #etape0 .acq-noise-btn .ti { font-family: var(--titre); font-weight: 700; font-size: 0.82rem; color: var(--encre); text-align: center; }
+    #etape0 .acq-noise-btn .ca { font-size: 0.72rem; color: var(--encre-doux); text-align: center; line-height: 1.25; }
+    #etape0 .acq-noise-btn.on-breath { border-color: #06b6d4; background: #f0fdff; }
+    #etape0 .acq-noise-btn.on-move   { border-color: var(--battement); background: #fff1f3; }
+    #etape0 .acq-noise-btn.on-elec   { border-color: #a855f7; background: #faf5ff; }
+
+    @keyframes acq-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+    #etape0 .on-breath .em { animation: acq-breathe 2.2s ease-in-out infinite; }
+    @keyframes acq-shake {
+      0%,100% { transform: translate(0,0) rotate(0); }
+      25% { transform: translate(-3px,2px) rotate(-4deg); }
+      50% { transform: translate(3px,-2px) rotate(3deg); }
+      75% { transform: translate(-2px,3px) rotate(-2deg); }
+    }
+    #etape0 .on-move .em { animation: acq-shake .45s linear infinite; }
+    @keyframes acq-zap {
+      0%,100% { opacity: 1; filter: drop-shadow(0 0 0 #a855f7); }
+      25% { opacity: .3; filter: drop-shadow(0 0 8px #a855f7); }
+      50% { opacity: 1; filter: drop-shadow(0 0 14px #e879f9); }
+      75% { opacity: .5; filter: drop-shadow(0 0 4px #a855f7); }
+    }
+    #etape0 .on-elec .em { animation: acq-zap .7s linear infinite; }
+
+    #etape0 .acq-note {
+      background: #f3f6f4; border-left: 3px solid var(--signal);
+      border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 18px 0 0;
+      font-size: 0.9rem; color: var(--encre-doux);
+    }
+    #etape0 .acq-suite { display: flex; justify-content: flex-end; margin-top: 18px; }
+
+    /* Rendre les pastilles d'étapes cliquables */
+    #etapes .pastille { cursor: pointer; user-select: none; transition: border-color .15s, background .15s; }
+    #etapes .pastille:hover { border-color: var(--signal); }
+
+    @media (max-width: 640px) {
+      #etape0 .acq-noise-grid { grid-template-columns: 1fr; }
+      #etape0 .acq-q-label { min-width: 90px; }
+    }
   </style>
 </head>
 <body>
@@ -190,33 +296,105 @@
 
     <header class="mission">
       <h1>🩺 Labo ECG — à toi de jouer, ingénieur !</h1>
-      <p>Le cardiologue t'envoie l'enregistrement du cœur d'un patient… mais le signal est sale et illisible.
-         Ta mission : choisir le bon nettoyage, régler ta vue, et repérer toi-même les battements.
-         Attention : on peut se tromper — il faudra réfléchir !</p>
+      <p>Le cardiologue t'envoie l'enregistrement du cœur d'un patient. Ta mission, en 4 étapes :
+         <strong>capter</strong> le signal, le <strong>nettoyer</strong>, régler ton <strong>zoom</strong>,
+         puis <strong>repérer</strong> toi-même les battements. Attention : on peut se tromper — il faudra réfléchir !</p>
     </header>
 
     <div class="etapes" id="etapes">
-      <div class="pastille active" data-etape="1"><span class="num">1</span> Nettoyer</div>
-      <div class="pastille" data-etape="2"><span class="num">2</span> Zoomer</div>
-      <div class="pastille" data-etape="3"><span class="num">3</span> Repérer</div>
+      <div class="pastille active" data-etape="0"><span class="num">1</span> Capter</div>
+      <div class="pastille" data-etape="1"><span class="num">2</span> Nettoyer</div>
+      <div class="pastille" data-etape="2"><span class="num">3</span> Zoomer</div>
+      <div class="pastille" data-etape="3"><span class="num">4</span> Repérer</div>
     </div>
 
-    <section class="carte graphe" style="position: relative;">
+    <section class="carte graphe cache" id="carte-graphe" style="position: relative;">
       <button id="btnSon" title="Activer / couper le son des bips">🔊</button>
       <div id="graphe"></div>
     </section>
 
-    <!-- DÉFI 1 : Acquisition + Console de filtrage -->
-    <section class="carte etape" id="etape1">
-      <h2>Défi 1 — Répare le signal !</h2>
-      <p class="explication">L'enregistrement est illisible. Le tracé <strong>tangue</strong> de haut en bas
-        et est plein de <strong>parasites</strong>. Lance d'abord le capteur, puis utilise la console pour
-        trouver le bon réglage des filtres.</p>
+    <!-- ÉTAPE 0 : Acquisition — capter le signal et voir d'où vient la saleté -->
+    <section class="carte etape" id="etape0">
+      <h2>Étape 1 — Capte le signal</h2>
+      <p class="acq-intro">Avant de nettoyer quoi que ce soit, il faut <strong>capter</strong> le signal du cœur.
+        Un capteur transforme l'activité électrique du cœur en une courbe qui défile à l'écran — exactement comme
+        un micro transforme un son en signal. Mais dès qu'on capte dans la vraie vie, le signal se <strong>salit</strong>.
+        Ci-dessous, choisis ta source, puis allume les « perturbateurs » pour voir <em>d'où vient la saleté</em>.</p>
 
-      <!-- Phase A : bouton de lancement -->
+      <!-- Source du signal -->
+      <div class="acq-bloc">
+        <p class="acq-label">① Source du signal</p>
+        <div class="acq-sensor">
+          <div class="acq-sensor-lab" id="acq-lab-hosp">
+            <span class="ic">🏥</span>
+            <span class="nm">Hôpital<br>Électrodes</span>
+          </div>
+          <div class="acq-track" id="acq-track"><div class="acq-thumb"></div></div>
+          <div class="acq-sensor-lab off" id="acq-lab-sport">
+            <span class="ic">⌚</span>
+            <span class="nm">Sport<br>Montre connectée</span>
+          </div>
+        </div>
+        <p class="acq-intro" style="margin:12px 0 0; text-align:center; font-size:0.86rem;">
+          Les électrodes de l'hôpital captent un signal très propre ; une montre de sport, portée au poignet,
+          capte un signal un peu plus bruité. Le compromis confort / précision, c'est déjà un choix d'ingénieur.</p>
+      </div>
+
+      <!-- Oscilloscope -->
+      <div class="acq-bloc">
+        <p class="acq-label">② Oscilloscope — le signal en direct</p>
+        <div class="acq-screen"><canvas id="osc-canvas" height="180"></canvas></div>
+        <div class="acq-quality">
+          <span class="acq-q-emoji" id="acq-q-emoji">😎</span>
+          <div class="acq-q-track"><div class="acq-q-fill" id="acq-q-fill"></div></div>
+          <span class="acq-q-label" id="acq-q-label">Signal propre</span>
+        </div>
+      </div>
+
+      <!-- Machine à bruit -->
+      <div class="acq-bloc">
+        <p class="acq-label">③ Machine à bruit — allume / éteins les perturbateurs</p>
+        <div class="acq-noise-grid">
+          <button class="acq-noise-btn" id="acq-btn-breath" type="button">
+            <span class="em">🫁</span>
+            <span class="ti">Respiration</span>
+            <span class="ca">la ligne ondule lentement de haut en bas</span>
+          </button>
+          <button class="acq-noise-btn" id="acq-btn-move" type="button">
+            <span class="em">💪</span>
+            <span class="ti">Mouvement</span>
+            <span class="ca">des sursauts brusques abîment le tracé</span>
+          </button>
+          <button class="acq-noise-btn" id="acq-btn-elec" type="button">
+            <span class="em">🔌</span>
+            <span class="ti">Secteur 50 Hz</span>
+            <span class="ca">le courant des murs ajoute un fin grésillement</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="acq-note">
+        💡 Tu vois ? Plus on ajoute de perturbations, plus la jauge de qualité chute et plus le tracé devient
+        illisible. L'enregistrement que tu vas envoyer au labo contient justement ce genre de parasites —
+        et ton job à l'étape suivante sera de les <strong>retirer</strong> avec des filtres.
+      </div>
+
+      <div class="acq-suite">
+        <button class="bouton" id="btnVersNettoyage">📤 Envoyer l'enregistrement au labo →</button>
+      </div>
+    </section>
+
+    <!-- DÉFI 1 : Acquisition + Console de filtrage -->
+    <section class="carte etape cache" id="etape1">
+      <h2>Étape 2 — Nettoie le signal</h2>
+      <p class="explication">Voilà l'enregistrement reçu du capteur : il <strong>tangue</strong> de haut en bas
+        (la respiration) et il est plein de <strong>parasites</strong> (le secteur, le capteur). Utilise la console
+        pour trouver le bon réglage des deux filtres et rendre le tracé exploitable.</p>
+
+      <!-- Phase A : réception de l'enregistrement (auto-jouée en arrivant) -->
       <div id="phase-acquisition">
-        <button class="bouton-capteur" id="btnLancerCapteur">🔴 Lancer le capteur</button>
-        <p>Clique pour démarrer l'acquisition du signal en temps réel.</p>
+        <button class="bouton-capteur" id="btnLancerCapteur">▶️ Recevoir l'enregistrement</button>
+        <p>Réception du signal capté à l'étape précédente…</p>
       </div>
 
       <!-- Phase B : console de filtrage (cachée jusqu'à fin d'acquisition) -->
@@ -266,7 +444,7 @@
 
     <!-- DÉFI 2 : trouver le bon zoom -->
     <section class="carte etape cache" id="etape2">
-      <h2>Défi 2 — Trouve le bon zoom</h2>
+      <h2>Étape 3 — Trouve le bon zoom</h2>
       <p class="explication">L'enregistrement dure 24 secondes : tout est tassé. Déplace le curseur pour choisir
         la largeur affichée. Trop large, on ne distingue rien ; trop serré, on perd la vue d'ensemble.</p>
       <div class="zoom-ligne">
@@ -281,7 +459,7 @@
 
     <!-- DÉFI 3 : repérer soi-même les battements -->
     <section class="carte etape cache" id="etape3">
-      <h2>Défi 3 — Repère les battements toi-même</h2>
+      <h2>Étape 4 — Repère les battements toi-même</h2>
       <p class="explication">À toi de jouer comme un cardiologue : <strong>clique sur le graphe</strong>, sur chaque
         grand pic (onde R) que tu repères. Reclique sur un point pour l'enlever. Quand tu as terminé, vérifie
         si tu as trouvé les bons !</p>
@@ -609,15 +787,44 @@
   function allerEtape(n) {
     etapeActuelle = n; modeClicActif = false;
     document.getElementById("graphe").style.cursor = (n === 3) ? "crosshair" : "default";
-    for (let i = 1; i <= 3; i++) document.getElementById("etape" + i).classList.toggle("cache", i !== n);
+
+    // Afficher/cacher chaque section d'étape (0 à 3)
+    [0, 1, 2, 3].forEach(function (i) {
+      var sec = document.getElementById("etape" + i);
+      if (sec) sec.classList.toggle("cache", i !== n);
+    });
     document.getElementById("verdict").classList.add("cache");
+
+    // Le graphe Plotly partagé est masqué pendant l'acquisition :
+    // l'étape 0 a son propre oscilloscope.
+    document.getElementById("carte-graphe").classList.toggle("cache", n === 0);
+
+    // Oscilloscope : actif uniquement à l'étape 0
+    if (window.__oscillo) {
+      if (n === 0) { __oscillo.resize(); __oscillo.start(); }
+      else         { __oscillo.stop(); }
+    }
+
+    // Pastilles (état actif / fait)
     document.querySelectorAll("#etapes .pastille").forEach(function (p) {
       const e = Number(p.dataset.etape);
       p.classList.toggle("active", e === n);
       p.classList.toggle("faite", e < n);
     });
+
+    // Prérequis : permettre de sauter directement à une étape (lien d'accueil
+    // ou clic sur une pastille) sans avoir fait les précédentes.
+    if (n >= 2 && !propre) {
+      propre = sig_bon.slice();
+      document.getElementById('sliderDrive').value  = 50;
+      document.getElementById('sliderSmooth').value = 50;
+    }
+    if (n === 3 && (plageActuelle[1] - plageActuelle[0]) > 9) {
+      plageActuelle = [Math.max(0, CENTRE - 2.5), Math.min(DUREE, CENTRE + 2.5)];
+    }
+
     if (n === 1) {
-      // Réinitialiser la phase d'acquisition
+      // Réinitialiser la zone de nettoyage…
       if (animAcqFrame) { cancelAnimationFrame(animAcqFrame); animAcqFrame = null; }
       document.getElementById('phase-acquisition').classList.remove('cache');
       document.getElementById('console-filtrage').classList.add('cache');
@@ -627,13 +834,21 @@
       const mf = document.getElementById('messageFiltre');
       mf.textContent = ''; mf.className = 'message cache';
       tracerVide();
+      // … puis recevoir automatiquement l'enregistrement (tracé en direct).
+      setTimeout(lancerAcquisition, 350);
     }
     if (n === 2) appliquerZoom();
     if (n === 3) lancerClic();
   }
 
+  // Le bouton « Envoyer au labo » de l'étape 0 et les pastilles cliquables
+  document.getElementById('btnVersNettoyage').addEventListener('click', function () { allerEtape(1); });
+  document.querySelectorAll('#etapes .pastille').forEach(function (p) {
+    p.addEventListener('click', function () { allerEtape(Number(p.dataset.etape)); });
+  });
+
   /* ================================================================
-     7) Défi 2 : le zoom
+     7) Étape 3 : le zoom
      ================================================================ */
   function appliquerZoom() {
     const largeur = Number(document.getElementById("curseurZoom").value);
@@ -669,7 +884,7 @@
   document.getElementById("btnVersClic").addEventListener("click", function () { allerEtape(3); });
 
   /* ================================================================
-     8) Défi 3 : repérer les battements à la main
+     8) Étape 4 : repérer les battements à la main
      ================================================================ */
   function lancerClic() {
     picsChoisis = [];
@@ -779,13 +994,149 @@
     document.getElementById('valDrive').textContent  = '0';
     document.getElementById('valSmooth').textContent = '0';
     document.getElementById('btnValiderFiltre').disabled = false;
-    allerEtape(1);
+    allerEtape(0);
   });
 
   /* ================================================================
-     9) Démarrage
+     9) Oscilloscope de l'étape 0 (acquisition)
+        Isolé dans sa propre portée : aucun conflit avec le reste.
+        Expose window.__oscillo = { start, stop, resize }.
      ================================================================ */
-  allerEtape(1);
+  (function () {
+    var canvas = document.getElementById('osc-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    var st = { sport: false, noise: { breath: false, move: false, elec: false } };
+    var SPEED = 120, HISTORY = [];
+    var lastTime = null, xCursor = 0, tSignal = 0, rafId = null, running = false;
+
+    function ecgSample(t) {
+      var phase = (t * (72 / 60)) % 1, v = 0;
+      v += 0.15 * Math.exp(-Math.pow((phase - 0.15) / 0.040, 2)); // P
+      v -= 0.10 * Math.exp(-Math.pow((phase - 0.29) / 0.015, 2)); // Q
+      v += 1.00 * Math.exp(-Math.pow((phase - 0.32) / 0.012, 2)); // R
+      v -= 0.20 * Math.exp(-Math.pow((phase - 0.35) / 0.015, 2)); // S
+      v += 0.30 * Math.exp(-Math.pow((phase - 0.50) / 0.060, 2)); // T
+      return v;
+    }
+
+    function resize() { canvas.width = canvas.offsetWidth || 600; }
+    window.addEventListener('resize', function () { if (running) resize(); });
+
+    function signalValue(dt) {
+      tSignal += dt;
+      var v = ecgSample(tSignal);
+      if (st.sport)        v += (Math.random() - 0.5) * 0.12;
+      if (st.noise.breath) v += 0.4 * Math.sin(tSignal * 0.4 * Math.PI);
+      if (st.noise.move)   v += (Math.random() - 0.5) * (Math.random() < 0.06 ? 6 : 0.6);
+      if (st.noise.elec)   v += 0.35 * Math.sin(tSignal * 2 * Math.PI * 50);
+      return v;
+    }
+
+    function quality() {
+      var q = 1.0;
+      if (st.sport)        q -= 0.15;
+      if (st.noise.breath) q -= 0.25;
+      if (st.noise.move)   q -= 0.45;
+      if (st.noise.elec)   q -= 0.35;
+      return Math.max(0, q);
+    }
+
+    function updateQuality() {
+      var q = quality();
+      var fill = document.getElementById('acq-q-fill');
+      var emoji = document.getElementById('acq-q-emoji');
+      var label = document.getElementById('acq-q-label');
+      fill.style.width = (q * 100) + '%';
+      if (q >= 0.75) { fill.style.backgroundColor = '#0e9f6e'; emoji.textContent = '😎'; label.textContent = 'Signal propre'; label.style.color = '#0e9f6e'; }
+      else if (q >= 0.40) { fill.style.backgroundColor = '#d97706'; emoji.textContent = '🤨'; label.textContent = 'Difficile à lire'; label.style.color = '#d97706'; }
+      else { fill.style.backgroundColor = '#e11d48'; emoji.textContent = '😵'; label.textContent = 'Besoin de filtrage !'; label.style.color = '#e11d48'; }
+    }
+
+    function draw(ts) {
+      if (!running) return;
+      if (!lastTime) lastTime = ts;
+      var dt = Math.min((ts - lastTime) / 1000, 0.05);
+      lastTime = ts;
+
+      var W = canvas.width, H = canvas.height, mid = H / 2, amp = H * 0.34;
+      var pxStep = SPEED * dt, samples = Math.ceil(pxStep) + 1;
+
+      for (var i = 0; i < samples; i++) {
+        HISTORY.push({ x: xCursor + (i / samples) * pxStep, y: signalValue(dt / samples) });
+      }
+      xCursor += pxStep;
+      while (HISTORY.length > 0 && HISTORY[0].x < xCursor - W - 10) HISTORY.shift();
+
+      ctx.fillStyle = '#0a1a14'; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(0,200,100,.08)'; ctx.lineWidth = 1;
+      for (var gx = 0; gx < W; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+      for (var gy = 0; gy < H; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+      if (HISTORY.length >= 2) {
+        var offsetX = W - (xCursor - HISTORY[0].x);
+        var passes = st.noise.elec ? 5 : 1;
+        for (var p = 0; p < passes; p++) {
+          ctx.save();
+          ctx.strokeStyle = st.noise.elec ? 'rgba(0,230,100,' + (0.20 + p * 0.04) + ')' : 'rgba(0,230,100,.95)';
+          ctx.lineWidth = st.noise.elec ? 1 : 2;
+          ctx.shadowColor = '#00ff88'; ctx.shadowBlur = st.noise.elec ? 3 : 8;
+          ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+          if (st.noise.elec && p > 0) ctx.filter = 'blur(' + (p * 1.2) + 'px)';
+          ctx.beginPath();
+          for (var j = 0; j < HISTORY.length; j++) {
+            var px = HISTORY[j].x - HISTORY[0].x + offsetX;
+            var jit = (st.noise.elec && p > 0) ? (Math.random() - 0.5) * p * 2 : 0;
+            var py = mid - HISTORY[j].y * amp + jit;
+            j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke(); ctx.restore();
+        }
+        var last = HISTORY[HISTORY.length - 1];
+        var lx = last.x - HISTORY[0].x + offsetX, ly = mid - last.y * amp;
+        ctx.save(); ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#00ff88'; ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 14; ctx.fill(); ctx.restore();
+      }
+
+      updateQuality();
+      rafId = requestAnimationFrame(draw);
+    }
+
+    // Interactions
+    document.getElementById('acq-track').addEventListener('click', function () {
+      st.sport = !st.sport;
+      this.classList.toggle('sport', st.sport);
+      document.getElementById('acq-lab-hosp').classList.toggle('off', st.sport);
+      document.getElementById('acq-lab-sport').classList.toggle('off', !st.sport);
+    });
+    var NMAP = { breath: 'on-breath', move: 'on-move', elec: 'on-elec' };
+    function bindNoise(type, id) {
+      document.getElementById(id).addEventListener('click', function () {
+        st.noise[type] = !st.noise[type];
+        this.classList.toggle(NMAP[type], st.noise[type]);
+      });
+    }
+    bindNoise('breath', 'acq-btn-breath');
+    bindNoise('move',   'acq-btn-move');
+    bindNoise('elec',   'acq-btn-elec');
+
+    window.__oscillo = {
+      start: function () { if (running) return; running = true; lastTime = null; rafId = requestAnimationFrame(draw); },
+      stop:  function () { running = false; if (rafId) { cancelAnimationFrame(rafId); rafId = null; } },
+      resize: resize
+    };
+  })();
+
+  /* ================================================================
+     10) Démarrage — étape 0 par défaut, ou ?etape=N pour un lien direct
+     ================================================================ */
+  (function demarrer() {
+    var params = new URLSearchParams(window.location.search);
+    var e = parseInt(params.get('etape'), 10);
+    if (isNaN(e) || e < 0 || e > 3) e = 0;
+    allerEtape(e);
+  })();
   </script>
 </body>
 </html>

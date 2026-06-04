@@ -864,3 +864,70 @@ body {
   .tinder-btn { width: 56px; height: 56px; font-size: 1.4rem; }
   .tinder-boutons { gap: 28px; margin-top: 24px; }
 }
+
+/* =====================================================================
+   Sous-listes de modules (accueil) — pastille dépliable
+   Réutilisable pour chaque module : il suffit de reprendre la structure
+   .pastille-expandable > .pastille-tete + .sous-liste > .sous-liste-inner
+   ===================================================================== */
+.pastille.pastille-expandable {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.pastille-tete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pastille-tete:hover { background: #f3f9f6; }
+.pastille-texte { flex: 1; }
+.pastille-chevron {
+  flex: none;
+  font-size: 1.1rem;
+  color: var(--encre-doux);
+  transition: transform 0.25s ease;
+}
+.pastille-expandable.ouvert .pastille-chevron { transform: rotate(180deg); }
+
+/* Animation d'ouverture fluide via grid-template-rows 0fr → 1fr */
+.sous-liste {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+.pastille-expandable.ouvert .sous-liste { grid-template-rows: 1fr; }
+.sous-liste-inner {
+  overflow: hidden;
+  min-height: 0;
+  border-top: 1px solid var(--bord);
+}
+.sous-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px 11px 18px;
+  text-decoration: none;
+  color: var(--encre);
+  border-top: 1px solid #f0f3f1;
+  transition: background 0.12s ease, padding-left 0.12s ease, color 0.12s ease;
+}
+.sous-item:first-child { border-top: none; }
+.sous-item:hover {
+  background: #eafaf3;
+  padding-left: 24px;
+  color: var(--signal-fonce);
+}
+.si-num {
+  width: 22px; height: 22px; flex: none; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--titre); font-weight: 700; font-size: 0.8rem;
+  background: #eef2ef; color: var(--encre-doux);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.sous-item:hover .si-num { background: var(--signal); color: #fff; }
