@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Détective des pathologies — Lis un cœur</title>
+  <meta name="description" content="Module interactif : apprends à reconnaître les pathologies cardiaques sur un ECG et diagnostique tes patients.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Spécifique à pathologies.html ─────────────────────────────── */
+
+    /* --- Barre d'étapes cliquables (même pattern que labo.html) --- */
+    #etapes .pastille { cursor: pointer; user-select: none; transition: border-color .15s, background .15s, opacity .15s; }
+    #etapes .pastille:hover { border-color: var(--signal); }
+    #etapes .pastille.verrou { opacity: .45; cursor: not-allowed; }
+    #etapes .pastille.verrou:hover { border-color: var(--bord); background: var(--carte); }
+    #etapes .pastille.verrou .num { background: #e5e7eb; color: #9aa6a0; }
+    #etapes .pastille.verrou::after { content: "🔒"; margin-left: auto; font-size: .82rem; }
+
+    /* --- Zone animation du cœur (Étape 1) --- */
+    .coeur-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0 20px;
+    }
+    .coeur-emoji {
+      font-size: 7rem;
+      line-height: 1;
+      transition: transform 0.08s ease;
+      will-change: transform;
+      filter: drop-shadow(0 4px 12px rgba(225, 29, 72, 0.25));
+    }
+    .coeur-bpm-label {
+      font-family: var(--titre);
+      font-weight: 800;
+      font-size: 1.6rem;
+      color: var(--battement);
+      margin-top: 4px;
+    }
+    .coeur-bpm-label .unite {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--encre-doux);
+    }
+    .coeur-etat {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 4px 16px;
+      border-radius: 99px;
+      transition: all 0.3s ease;
+    }
+    .coeur-etat.normal { color: var(--signal-fonce); background: rgba(14, 159, 110, 0.10); }
+    .coeur-etat.tachy  { color: var(--battement);    background: rgba(225, 29, 72, 0.10); }
+    .coeur-etat.brady  { color: var(--attention);    background: rgba(217, 119, 6, 0.10); }
+    .coeur-etat.fibr   { color: #7c3aed;            background: rgba(124, 58, 237, 0.10); }
+    .coeur-etat.extra  { color: #2563eb;             background: rgba(37, 99, 235, 0.10); }
+
+    /* --- Boutons segments (Étape 3) --- */
+    /* Segmented controls — classes uniques pour éviter tout conflit avec style.css */
+    .boss-segmented-control {
+      display: flex; width: 100%; background: #f1f5f9; border-radius: 10px; padding: 4px; gap: 3px;
+    }
+    .boss-segmented-control .boss-segment-btn {
+      -webkit-appearance: none; appearance: none;
+      flex: 1; padding: 9px 12px;
+      background: transparent; border: none; outline: none; box-shadow: none;
+      border-radius: 7px; color: #64748b; font-weight: 600; cursor: pointer;
+      transition: color 0.15s; text-align: center; line-height: 1.2;
+    }
+    .boss-segmented-control .boss-segment-btn:hover  { color: #334155; }
+    .boss-segmented-control .boss-segment-btn:focus  { outline: none; box-shadow: none; }
+    .boss-segmented-control .boss-segment-btn.actif  {
+      background: #ffffff; color: #0f172a; font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.06);
+    }
+    /* Curseur viseur sur le graphe Mystère lors du pointage des pics R */
+    #graphe-mystere.crosshair-actif .nsewdrag { cursor: crosshair !important; }
+
+    /* --- Sélecteur de pathologie (boutons radio stylés) --- */
+    .patho-selecteur {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 0 0 18px;
+    }
+    .patho-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #ffffff;
+      cursor: pointer;
+      font-family: var(--texte);
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      transition: border-color .15s, transform .08s, box-shadow .2s, background .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .patho-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.10); border-color: #cbd5e1; }
+    .patho-btn:active { transform: scale(.97); }
+    /* États actifs chromatiques selon la pathologie */
+    .patho-btn[data-patho="normal"].actif { background: #f0fdf4; border-color: rgba(14,159,110,.55);  box-shadow: 0 4px 16px rgba(14,159,110,.12); }
+    .patho-btn[data-patho="tachy"].actif  { background: #fff5f6; border-color: rgba(225,29,72,.55);   box-shadow: 0 4px 16px rgba(225,29,72,.12); }
+    .patho-btn[data-patho="brady"].actif  { background: #fffbeb; border-color: rgba(217,119,6,.55);   box-shadow: 0 4px 16px rgba(217,119,6,.12); }
+    .patho-btn[data-patho="fibr"].actif   { background: #f5f3ff; border-color: rgba(124,58,237,.55);  box-shadow: 0 4px 16px rgba(124,58,237,.12); }
+    .patho-btn[data-patho="extra"].actif  { background: #eff6ff; border-color: rgba(37,99,235,.55);   box-shadow: 0 4px 16px rgba(37,99,235,.12); }
+    .patho-btn .em { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+    .patho-btn .infos { display: flex; flex-direction: column; min-width: 0; }
+    .patho-btn .ti { font-family: var(--titre); font-weight: 700; font-size: 0.92rem; color: var(--encre); }
+    .patho-btn .so { font-size: 0.76rem; color: var(--encre-doux); line-height: 1.3; }
+
+    /* --- Zone du graphe ECG (Étape 1) --- */
+    #graphe-patho { width: 100%; height: 260px; }
+
+    .explication-patho {
+      border-radius: 12px;
+      border: 1.5px solid #e2e8f0;
+      padding: 14px 18px;
+      margin: 14px 0 0;
+      font-size: 0.92rem;
+      color: var(--encre-doux);
+      min-height: 2.8em;
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+    .explication-patho strong { color: var(--encre); }
+    /* Thèmes chromatiques de l'encart — synchronisés avec les cartes */
+    .expl-normal { background: #f0fdf4; border-color: rgba(14,159,110,.3); }
+    .expl-tachy  { background: #fff5f6; border-color: rgba(225,29,72,.3); }
+    .expl-brady  { background: #fffbeb; border-color: rgba(217,119,6,.3); }
+    .expl-fibr   { background: #f5f3ff; border-color: rgba(124,58,237,.3); }
+    .expl-extra  { background: #eff6ff; border-color: rgba(37,99,235,.3); }
+
+    /* --- Wrapper du graphe + point rouge (tête de lecture) --- */
+    .graphe-patho-wrapper { position: relative; overflow: hidden; }
+    .point-rouge {
+      position: absolute;
+      top: 0; left: 0;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--battement);
+      box-shadow: -2px 0 8px rgba(225, 29, 72, 0.8), 0 0 12px rgba(225, 29, 72, 0.4);
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+      will-change: transform;
+      transition: transform 0.04s linear;
+    }
+
+    /* --- Boutons Diagnostic --- */
+    .btn-diag {
+      background: white;
+      color: var(--encre);
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .btn-diag:hover:not(:disabled) {
+      border-color: var(--signal);
+      background: #f8fafc;
+      transform: translateY(-2px);
+    }
+    .btn-diag.erreur {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #991b1b;
+      animation: secousse 0.3s ease;
+    }
+    .btn-diag.succes {
+      background: #f0fdf4;
+      border-color: #22c55e;
+      color: #166534;
+    }
+    .btn-diag:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+
+    @keyframes secousse {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    @media (max-width: 640px) {
+      .patho-selecteur { grid-template-columns: 1fr; }
+      .coeur-emoji { font-size: 5rem; }
+      #graphe-patho { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="barre">
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <header class="mission">
+      <h1>🩺 Détective des pathologies</h1>
+      <p>Le cardiologue t'envoie plusieurs patients à diagnostiquer.
+         D'abord, comprends comment le cœur <strong>déraille</strong> ;
+         ensuite, identifie la maladie de chaque patient ; puis affronte
+         le <strong>patient mystère</strong>, l'épreuve ultime !</p>
+    </header>
+
+    <div class="etapes" id="etapes">
+      <div class="pastille active" data-etape="0"><span class="num">1</span> Comprendre</div>
+      <div class="pastille" data-etape="1"><span class="num">2</span> Diagnostiquer</div>
+      <div class="pastille" data-etape="2"><span class="num">3</span> Patient Mystère</div>
+    </div>
+
+    <!-- ================================================================
+         ÉTAPE 0 — Comprendre la mécanique des pathologies
+         ================================================================ -->
+    <section class="carte etape" id="etape0">
+      <h2>Étape 1 — La mécanique du cœur qui déraille</h2>
+      <p class="explication">Chaque pathologie a un <strong>effet visible</strong> sur le cœur et sur le signal ECG.
+        Clique sur un rythme pour voir le cœur battre différemment et observer le tracé correspondant.</p>
+
+      <!-- Sélecteur de pathologie -->
+      <div class="patho-selecteur" id="patho-selecteur">
+        <button class="patho-btn actif" data-patho="normal" type="button">
+          <span class="em">💚</span>
+          <span class="infos"><span class="ti">Normal</span><span class="so">60–100 bpm, régulier</span></span>
+        </button>
+        <button class="patho-btn" data-patho="tachy" type="button">
+          <span class="em">🔥</span>
+          <span class="infos"><span class="ti">Tachycardie</span><span class="so">> 100 bpm, trop vite</span></span>
+        </button>
+        <button class="patho-btn" data-patho="brady" type="button">
+          <span class="em">🐢</span>
+          <span class="infos"><span class="ti">Bradycardie</span><span class="so">< 60 bpm, trop lent</span></span>
+        </button>
+        <button class="patho-btn" data-patho="fibr" type="button">
+          <span class="em">⚡</span>
+          <span class="infos"><span class="ti">Fibrillation</span><span class="so">Chaotique, tout tremble</span></span>
+        </button>
+        <button class="patho-btn" data-patho="extra" type="button">
+          <span class="em">💥</span>
+          <span class="infos"><span class="ti">Extrasystole</span><span class="so">Battement « raté »</span></span>
+        </button>
+      </div>
+
+      <!-- Animation du cœur -->
+      <div class="coeur-zone">
+        <div class="coeur-emoji" id="coeur-emoji">❤️</div>
+        <div class="coeur-bpm-label"><span id="coeur-bpm-val">72</span> <span class="unite">bpm</span></div>
+        <div class="coeur-etat normal" id="coeur-etat">Rythme normal</div>
+      </div>
+
+      <!-- ECG correspondant + point rouge synchronisé -->
+      <div class="graphe-patho-wrapper" id="graphe-patho-wrapper">
+        <div id="graphe-patho"></div>
+        <div class="point-rouge" id="point-rouge"></div>
+      </div>
+
+      <!-- Explication contextuelle -->
+      <div class="explication-patho" id="explication-patho">
+        💚 <strong>Rythme normal (sinusal)</strong> — Le cœur bat régulièrement entre 60 et 100 fois par minute.
+        Chaque battement produit les ondes P, QRS et T bien espacées. Tout va bien !
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:18px;">
+        <button class="bouton" id="btnVersEtape2">J'ai compris, passons au diagnostic →</button>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         ÉTAPE 1 — Le jeu du diagnostic (5 patients)
+         ================================================================ -->
+    <section class="carte etape cache" id="etape1">
+      <h2>Étape 2 — Le jeu du diagnostic</h2>
+      <p class="explication">5 patients arrivent aux urgences. Pour chacun, observe le signal ECG et pose le bon diagnostic !</p>
+      
+      <div id="jeu-diagnostic">
+        <!-- Carte Patient -->
+        <div id="patient-carte" style="background: #f8fafc; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+          <h3 id="patient-nom" style="margin: 0 0 10px; color: var(--encre);">Patient X</h3>
+          <p id="patient-contexte" style="margin: 0; color: var(--encre-doux); font-style: italic;">Contexte...</p>
+        </div>
+
+        <!-- ECG -->
+        <div id="graphe-patient" style="height: 260px; width: 100%; margin-bottom: 20px;"></div>
+
+        <!-- Boutons de diagnostic -->
+        <div id="diagnostic-boutons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+          <button class="btn-diag" data-reponse="normal" type="button">Sain</button>
+          <button class="btn-diag" data-reponse="tachy" type="button">Tachycardie</button>
+          <button class="btn-diag" data-reponse="brady" type="button">Bradycardie</button>
+          <button class="btn-diag" data-reponse="fibr" type="button">Fibrillation</button>
+        </div>
+
+        <!-- Retour du patient -->
+        <div id="patient-retour" class="cache" style="margin-bottom: 20px; font-size: 1.05rem;">
+          <!-- Bulle Patient (erreur ou succes) -->
+          <div id="retour-patient-bulle" style="background: #f1f5f9; padding: 12px 18px; border-radius: 18px 18px 18px 4px; display: inline-block; margin-bottom: 15px; color: var(--encre); border: 1px solid #e2e8f0; text-align: left;">
+            💬 <strong id="patient-plainte"></strong>
+          </div>
+          <!-- Encart Cardiologue (uniquement succes) -->
+          <div id="retour-medecin-encart" class="cache" style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; color: #166534; text-align: left;">
+            👨‍⚕️ <strong>Le Cardiologue :</strong>
+            <div id="patient-prevention" style="margin-top: 5px;"></div>
+          </div>
+        </div>
+
+        <!-- Bouton Patient suivant -->
+        <div style="text-align: right;">
+          <button id="btnPatientSuivant" class="bouton cache">Patient suivant →</button>
+        </div>
+        
+        <!-- Fin du jeu -->
+        <div id="jeu-fin" class="cache" style="text-align: center; padding: 30px 0;">
+          <h3 style="color: var(--signal-fonce); font-size: 1.5rem; margin-bottom: 10px;">Bravo, tu as sauvé tous les patients !</h3>
+          <p style="color: var(--encre-doux); margin-bottom: 20px;">Tu es prêt(e) pour affronter l'épreuve finale.</p>
+          <button class="bouton" id="btnVersEtape3">Débloquer le Patient Mystère →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         ÉTAPE 3 — Le Patient Mystère (Boss de fin)
+         ================================================================ -->
+    <section class="carte etape cache" id="etape2" style="background: #0f172a; color: white; border: none;">
+      <!-- Intro / Alerte -->
+      <div id="mystere-intro" style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">👤⚠️</div>
+        <h2 style="color: #ef4444; font-size: 2rem; margin-bottom: 10px; text-transform: uppercase;">Alerte Urgence : Un nouveau patient mystère arrive !</h2>
+        <p style="color: #cbd5e1; font-size: 1.2rem; margin-bottom: 30px;">Son ECG est complètement illisible. À toi de nettoyer le signal pour le sauver.</p>
+        <button class="bouton" id="btnDemarrerMystere" style="background: #ef4444; color: white; border: none; font-size: 1.2rem; padding: 15px 30px;">Prendre le patient en charge</button>
+      </div>
+
+      <!-- Interface de l'épreuve -->
+      <div id="mystere-epreuve" class="cache" style="padding: 20px;">
+        <h3 style="color: white; margin-top: 0; margin-bottom: 20px;">Console de nettoyage</h3>
+        
+        <!-- ECG Mystere -->
+        <div id="graphe-mystere" style="height: 300px; width: 100%; margin-bottom: 20px; background: white; border-radius: 8px;"></div>
+        
+        <!-- Phase A : Zoom -->
+        <div id="mystere-phase-a" style="background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <label style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold;">
+            <span>🔍 Zoom Temporel</span>
+            <span id="val-zoom" style="color: #94a3b8;">300s</span>
+          </label>
+          <input type="range" id="curseur-zoom" min="3" max="300" step="1" value="300" style="width: 100%; cursor: pointer;">
+          <p style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px; margin-bottom: 0;">Trouve le bon niveau de zoom pour analyser les battements (entre 3s et 5s).</p>
+        </div>
+
+        <!-- Phase B : Filtres -->
+        <div id="mystere-phase-b" class="cache" style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #1e293b;">Anti-tangage (Ligne de base)</label>
+            <div class="boss-segmented-control" id="groupe-tangage">
+              <button class="boss-segment-btn actif" data-val="false" type="button">Désactivé</button>
+              <button class="boss-segment-btn" data-val="true" type="button">Activé</button>
+            </div>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #1e293b;">Anti-grésillement (Haute fréquence)</label>
+            <div class="boss-segmented-control" id="groupe-gresillement">
+              <button class="boss-segment-btn actif" data-val="0" type="button">Aucun</button>
+              <button class="boss-segment-btn" data-val="1" type="button">Léger</button>
+              <button class="boss-segment-btn" data-val="2" type="button">Fort</button>
+            </div>
+          </div>
+          
+          <!-- Jauge de qualité du signal -->
+          <div id="jauge-qualite-conteneur" style="opacity: 0; transition: opacity 1s; display: flex; align-items: center; gap: 12px; margin-top: 25px; pointer-events: none;">
+            <div id="jauge-emoji" style="font-size: 2rem; width: 2.4rem; text-align: center; flex-shrink: 0; transition: all .4s;">🤔</div>
+            <div style="flex: 1; height: 22px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
+              <div id="jauge-remplissage" style="height: 100%; border-radius: 999px; width: 0%; background: #ef4444; transition: width .5s ease, background-color .5s ease;"></div>
+            </div>
+            <div id="jauge-texte" style="font-family: var(--titre); font-weight: 700; font-size: 0.85rem; min-width: 130px; text-align: right; color: var(--encre-doux); transition: color .4s;">0% Illisible</div>
+          </div>
+        </div>
+
+        <!-- Phase C : Pointage -->
+        <div id="mystere-phase-c" class="cache" style="background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+          <p style="color: white; font-weight: bold; font-size: 1.1rem; margin-top: 0;">🎯 Le signal est propre ! Pointe le curseur sur 3 grands pics (ondes R) consécutifs et clique.</p>
+          <p id="compteur-clics" style="color: #94a3b8; margin-bottom: 0; font-size: 1.05rem;">Pics trouvés : 0 / 3</p>
+          <div id="resultat-bpm" class="cache" style="margin-top: 15px; font-size: 1.6rem; font-weight: 800; color: #22c55e; letter-spacing: -0.5px;"></div>
+        </div>
+
+        <!-- Phase D : Diagnostic -->
+        <div id="mystere-phase-d" class="cache">
+          <h4 style="text-align: center; color: white; margin-bottom: 10px; font-size:1.2rem;">Quel est ton diagnostic final ?</h4>
+          <!-- Boutons de diagnostic (Choix) -->
+          <div id="diag-mystere-boutons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <button class="btn-diag" data-reponse="normal" type="button">Sain</button>
+            <button class="btn-diag" data-reponse="tachy" type="button">Tachycardie</button>
+            <button class="btn-diag" data-reponse="brady" type="button">Bradycardie</button>
+            <button class="btn-diag" data-reponse="fibr" type="button">Fibrillation</button>
+          </div>
+
+          <!-- Retour (Blague) -->
+          <div id="mystere-retour" class="cache" style="font-size: 1.05rem;">
+            <div id="mystere-patient-bulle" style="background: #334155; padding: 12px 18px; border-radius: 18px 18px 18px 4px; display: inline-block; margin-bottom: 15px; color: white; border: 1px solid #475569; text-align: left;">
+              💬 <strong id="mystere-plainte"></strong>
+            </div>
+            <div id="mystere-medecin-encart" class="cache" style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; color: #166534; text-align: left;">
+              👨‍⚕️ <strong>Le Cardiologue :</strong>
+              <div id="mystere-prevention" style="margin-top: 5px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bandeau de badge obtenu (affiché en fin d'étape 3) -->
+    <section class="carte cache" id="badge-obtenu-section" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid var(--signal); text-align: center;">
+      <div style="font-size: 2.5rem; margin-bottom: 8px;">🏅🩺</div>
+      <h2 style="color: var(--signal-fonce); margin: 0 0 6px;">Badge obtenu : Détective Médical !</h2>
+      <p style="color: var(--encre-doux); margin: 0 0 18px;">Tu as diagnostiqué tous les patients et vaincu le patient mystère. Bravo !</p>
+      <a href="index.html?badge=pathologies" class="bouton" style="display: inline-block; text-decoration: none;">← Retour à l'accueil pour voir ton badge</a>
+    </section>
+
+    <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <script src="progression.js"></script>
+  <script src="lib/plotly-basic.min.js"></script>
+  <script src="signaux.js"></script>
+
+  <script>
+  /* =====================================================================
+     PATHOLOGIES — Script principal
+     ===================================================================== */
+
+  /* ================================================================
+     0) Constantes & état
+     ================================================================ */
+  var FE = 200;
+  var DUREE_VISU = 6;  // secondes affichées dans l'ECG de la démo
+
+  var etapeActuelle = 0;
+  var etapeMax = 0;
+
+  /* ================================================================
+     1) Descriptions des pathologies
+     ================================================================ */
+  var PATHOLOGIES = {
+    normal: {
+      bpm: 72, irregulier: false, graine: 42,
+      etatClasse: "normal",
+      etatTexte: "Rythme normal",
+      explication: "💚 <strong>Rythme normal (sinusal)</strong> — Le cœur bat régulièrement entre 60 et 100 fois par minute. " +
+                   "Chaque battement produit les ondes P, QRS et T bien espacées. Tout va bien !",
+      couleurTrace: "#0b7a55"
+    },
+    tachy: {
+      bpm: 140, irregulier: false, graine: 55,
+      etatClasse: "tachy",
+      etatTexte: "Tachycardie",
+      explication: "🔥 <strong>Tachycardie</strong> — Le cœur bat trop vite (ici ~140 bpm). " +
+                   "Les battements sont rapprochés, les ondes se chevauchent presque. " +
+                   "Causes possibles : stress intense, fièvre, effort, caféine…",
+      couleurTrace: "#e11d48"
+    },
+    brady: {
+      bpm: 42, irregulier: false, graine: 33,
+      etatClasse: "brady",
+      etatTexte: "Bradycardie",
+      explication: "🐢 <strong>Bradycardie</strong> — Le cœur bat trop lentement (ici ~42 bpm). " +
+                   "Les battements sont très espacés. " +
+                   "Chez un sportif entraîné c'est normal, mais chez d'autres personnes ça peut causer des étourdissements.",
+      couleurTrace: "#d97706"
+    },
+    fibr: {
+      bpm: 300, irregulier: true, graine: 77,
+      fibrillation: true,
+      etatClasse: "fibr",
+      etatTexte: "Fibrillation",
+      explication: "⚡ <strong>Fibrillation</strong> — Le cœur ne bat plus : il <em>tremble</em> de façon chaotique. " +
+                   "Le signal est complètement irrégulier, sans vrai pic R reconnaissable. " +
+                   "C'est une urgence médicale !",
+      couleurTrace: "#7c3aed"
+    },
+    extra: {
+      bpm: 72, irregulier: false, graine: 42,
+      extrasystole: true,
+      etatClasse: "extra",
+      etatTexte: "Extrasystole",
+      explication: "💥 <strong>Extrasystole</strong> — Le cœur bat normalement… sauf qu'un battement arrive trop tôt, " +
+                   "suivi d'une pause compensatoire. C'est un « raté » ponctuel, souvent bénin mais parfois gênant.",
+      couleurTrace: "#2563eb"
+    }
+  };
+
+  var pathoActuelle = "normal";
+
+  /* ================================================================
+     2) Génération du signal ECG pour chaque pathologie
+     ================================================================ */
+
+  /**
+   * Génère un signal de fibrillation (tremblement chaotique, pas de vrai QRS).
+   * On superpose du bruit rapide haute fréquence + petites ondulations aléatoires.
+   */
+  function genererFibrillation(duree, fe, graine) {
+    var hasard = creerHasard(graine);
+    var n = Math.round(duree * fe);
+    var t = new Array(n);
+    var y = new Array(n);
+    for (var i = 0; i < n; i++) {
+      t[i] = i / fe;
+      // Superposition de plusieurs oscillations erratiques
+      var temps = t[i];
+      y[i] = 0.15 * Math.sin(2 * Math.PI * 5.3 * temps + hasard() * 6.28)
+           + 0.12 * Math.sin(2 * Math.PI * 7.8 * temps + hasard() * 6.28)
+           + 0.10 * Math.sin(2 * Math.PI * 3.1 * temps + hasard() * 6.28)
+           + 0.08 * (hasard() * 2 - 1)   // bruit aléatoire
+           + 0.06 * Math.sin(2 * Math.PI * 11.2 * temps);
+    }
+    return { t: t, y: y, fe: fe };
+  }
+
+  /**
+   * Génère un ECG normal puis y insère une extrasystole (battement prématuré).
+   * On prend un ECG normal, on repère le 3ᵉ battement et on en injecte un en avance.
+   */
+  function genererExtrasystole(duree, fe, graine) {
+    var ecg = genererECG({ bpm: 72, duree: duree, fe: fe, graine: graine });
+    var periodeNorm = 60 / 72;  // ~0.833 s
+    var instantsR = ecg.instantsR;
+
+    // On injecte une extrasystole entre le 3ᵉ et le 4ᵉ battement
+    if (instantsR.length >= 4) {
+      var r3 = instantsR[2];
+      var extraInstant = r3 + periodeNorm * 0.45; // arrive trop tôt (45 % au lieu de 100 %)
+
+      // Ajouter le battement prématuré (amplitude légèrement réduite)
+      for (var i = 0; i < ecg.y.length; i++) {
+        var temps = ecg.t[i];
+        if (Math.abs(temps - extraInstant) < 0.5) {
+          ecg.y[i] += unBattement(temps, extraInstant) * 0.7;
+        }
+      }
+
+      // Supprimer le 4ᵉ battement normal (pause compensatoire) :
+      // on "écrase" la zone autour du 4ᵉ R
+      if (instantsR.length >= 4) {
+        var r4 = instantsR[3];
+        for (var j = 0; j < ecg.y.length; j++) {
+          var t2 = ecg.t[j];
+          if (Math.abs(t2 - r4) < 0.35) {
+            ecg.y[j] *= Math.max(0, (Math.abs(t2 - r4) - 0.05) / 0.30);
+          }
+        }
+      }
+    }
+    return ecg;
+  }
+
+  /** Génère le signal ECG pour une pathologie donnée */
+  function genererSignalPatho(id) {
+    var p = PATHOLOGIES[id];
+    if (p.fibrillation) {
+      return genererFibrillation(DUREE_VISU + 1, FE, p.graine);
+    }
+    if (p.extrasystole) {
+      return genererExtrasystole(DUREE_VISU + 1, FE, p.graine);
+    }
+    return genererECG({ bpm: p.bpm, duree: DUREE_VISU + 1, fe: FE, graine: p.graine });
+  }
+
+  /* ================================================================
+     3) Affichage du graphe ECG (Plotly)
+     ================================================================ */
+  var LAYOUT_PATHO = {
+    margin: { l: 20, r: 14, t: 8, b: 36 },
+    xaxis: { title: "temps (s)", range: [0, DUREE_VISU], fixedrange: true,
+             gridcolor: "#eef2ef", zeroline: false },
+    yaxis: { fixedrange: true, showticklabels: false,
+             gridcolor: "#f3f6f4", zeroline: false },
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "Atkinson, sans-serif", color: "#4b6058", size: 12 },
+    showlegend: false, dragmode: false
+  };
+  var CFG_PATHO = { displayModeBar: false, responsive: true };
+
+  function tracerPatho(ecg, couleur) {
+    Plotly.react("graphe-patho", [{
+      x: ecg.t, y: ecg.y, type: "scatter", mode: "lines",
+      line: { color: couleur, width: 1.8 }, hoverinfo: "none"
+    }], LAYOUT_PATHO, CFG_PATHO);
+  }
+
+  /* ================================================================
+     4) Animation synchronisée : point rouge sur l'ECG + cœur pulsé
+     ────────────────────────────────────────────────────────────────
+     Une boucle requestAnimationFrame unique sert d'horloge globale.
+     Elle fait avancer un point rouge le long du tracé ECG et, à
+     l'instant exact où il croise un pic R, déclenche la pulsation
+     du cœur. Résultat : on VOIT le lien électrique → mécanique.
+     ================================================================ */
+  var coeurEl    = document.getElementById("coeur-emoji");
+  var bpmValEl   = document.getElementById("coeur-bpm-val");
+  var etatEl     = document.getElementById("coeur-etat");
+  var explEl     = document.getElementById("explication-patho");
+  var pointRouge = document.getElementById("point-rouge");
+  var grapheDiv  = document.getElementById("graphe-patho");
+
+  // État de l'animation
+  var signalActuel    = null;   // { t, y, fe } — signal ECG affiché
+  var picsActuels     = [];     // indices des pics R dans signalActuel
+  var animRAF         = null;   // ID du requestAnimationFrame en cours
+  var animDebut       = null;   // timestamp de départ de la boucle
+  var dernierT        = 0;      // dernier temps de lecture (détection rebouclage)
+  var picsPulses      = {};     // pics déjà déclenchés dans ce cycle
+  var estFibrillation = false;
+  var hasardFibr      = null;
+
+  /** Arrête toute animation (cœur + point rouge + rAF) */
+  function stopAnimCoeur() {
+    if (animRAF) { cancelAnimationFrame(animRAF); animRAF = null; }
+    animDebut  = null;
+    dernierT   = 0;
+    picsPulses = {};
+    coeurEl.style.transform = "scale(1)";
+    pointRouge.style.opacity = "0";
+  }
+
+  /** Déclenche une pulsation du cœur (scale up rapide puis retour) */
+  function pulserCoeur() {
+    coeurEl.style.transform = "scale(1.25)";
+    setTimeout(function () {
+      coeurEl.style.transform = "scale(1)";
+    }, 120);
+  }
+
+  /**
+   * Convertit des coordonnées data (temps, amplitude) en pixels
+   * sur le graphe Plotly, en exploitant ses axes internes.
+   */
+  function dataVersPixel(tVal, yVal) {
+    var fl = grapheDiv._fullLayout;
+    if (!fl || !fl.xaxis || !fl.yaxis) return null;
+    return {
+      x: fl.xaxis._offset + fl.xaxis.l2p(tVal),
+      y: fl.yaxis._offset + fl.yaxis.l2p(yVal)
+    };
+  }
+
+  /** Interpole la valeur Y proportionnellement entre deux indices */
+  function interpolerY(signal, tCourant, fe) {
+    var exactIdx = tCourant * fe;
+    var idx0 = Math.floor(exactIdx);
+    var idx1 = Math.min(idx0 + 1, signal.y.length - 1);
+    var fract = exactIdx - idx0;
+    return signal.y[idx0] + (signal.y[idx1] - signal.y[idx0]) * fract;
+  }
+
+  /** Boucle d'animation principale (requestAnimationFrame) */
+  function boucleAnimation(timestamp) {
+    if (!animDebut) animDebut = timestamp;
+    var elapsed  = (timestamp - animDebut) / 1000;   // secondes écoulées
+    var tCourant = elapsed % DUREE_VISU;              // position dans le signal (boucle)
+
+    // Détection du rebouclage → réinitialiser les pics pulsés
+    if (tCourant < dernierT - 0.1) {
+      picsPulses = {};
+    }
+    dernierT = tCourant;
+
+    // ── Fibrillation : vibration chaotique, pas de pic R ──────────
+    if (estFibrillation) {
+      var dx = (hasardFibr() - 0.5) * 14;
+      var dy = (hasardFibr() - 0.5) * 14;
+      var s  = 0.92 + hasardFibr() * 0.16;
+      coeurEl.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
+
+      // Le point rouge avance quand même sur le tracé chaotique
+      if (signalActuel) {
+        var yF = interpolerY(signalActuel, tCourant, FE);
+        var posF = dataVersPixel(tCourant, yF);
+        if (posF) {
+          pointRouge.style.transform = "translate3d(" + (posF.x - 7) + "px, " + (posF.y - 7) + "px, 0)";
+          pointRouge.style.opacity = "1";
+        }
+      }
+      animRAF = requestAnimationFrame(boucleAnimation);
+      return;
+    }
+
+    // ── Rythmes structurés : point rouge + pulsation sur pic R ─────
+    if (!signalActuel) { animRAF = requestAnimationFrame(boucleAnimation); return; }
+
+    var yInterp = interpolerY(signalActuel, tCourant, FE);
+    var pos = dataVersPixel(tCourant, yInterp);
+
+    if (pos) {
+      pointRouge.style.transform = "translate3d(" + (pos.x - 7) + "px, " + (pos.y - 7) + "px, 0)";
+      pointRouge.style.opacity = "1";
+    }
+
+    // Vérifier si le point croise un pic R (tolérance ≈ 25 ms)
+    for (var i = 0; i < picsActuels.length; i++) {
+      if (picsPulses[i]) continue;
+      var picT = picsActuels[i] / FE;
+      if (Math.abs(tCourant - picT) < 0.025) {
+        picsPulses[i] = true;
+        pulserCoeur();
+        break;  // un seul pic par frame
+      }
+    }
+
+    animRAF = requestAnimationFrame(boucleAnimation);
+  }
+
+  /** Démarre l'animation synchronisée pour la pathologie en cours */
+  function lancerAnimCoeur(id) {
+    stopAnimCoeur();
+    var p = PATHOLOGIES[id];
+    estFibrillation = !!p.fibrillation;
+
+    if (estFibrillation) {
+      picsActuels = [];
+      hasardFibr  = creerHasard(99);
+    } else if (signalActuel) {
+      picsActuels = detecterPicsR(signalActuel.y, FE);
+    } else {
+      picsActuels = [];
+    }
+
+    animDebut  = null;
+    dernierT   = 0;
+    picsPulses = {};
+    animRAF    = requestAnimationFrame(boucleAnimation);
+  }
+
+  /* ================================================================
+     5) Sélection d'une pathologie (Étape 1)
+     ================================================================ */
+  function selectionnerPatho(id) {
+    pathoActuelle = id;
+    var p = PATHOLOGIES[id];
+
+    // Mettre à jour le bouton actif
+    document.querySelectorAll(".patho-btn").forEach(function (btn) {
+      btn.classList.toggle("actif", btn.dataset.patho === id);
+    });
+
+    // Texte BPM et état
+    bpmValEl.textContent = p.fibrillation ? "???" : p.bpm;
+    etatEl.textContent = p.etatTexte;
+    etatEl.className = "coeur-etat " + p.etatClasse;
+
+    // Explication — thème chromatique synchronisé avec la pathologie
+    explEl.className = "explication-patho expl-" + id;
+    explEl.innerHTML = p.explication;
+
+    // Générer le signal ECG, le stocker globalement et l'afficher
+    signalActuel = genererSignalPatho(id);
+    tracerPatho(signalActuel, p.couleurTrace);
+
+    // Lancer l'animation synchronisée (point rouge + cœur pulsé)
+    lancerAnimCoeur(id);
+  }
+
+  // Attachement des événements aux boutons de pathologie
+  document.querySelectorAll(".patho-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      selectionnerPatho(btn.dataset.patho);
+    });
+  });
+
+  /* ================================================================
+     6) Navigation entre les étapes (verrouillage linéaire)
+     ================================================================ */
+  function majPastilles() {
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      var e = Number(p.dataset.etape);
+      p.classList.toggle("active", e === etapeActuelle);
+      p.classList.toggle("verrou", e > etapeMax);
+      p.classList.toggle("faite",  e < etapeMax && e !== etapeActuelle);
+    });
+  }
+
+  function allerEtape(n) {
+    if (n > etapeMax) { majPastilles(); return; }
+    etapeActuelle = n;
+
+    // Afficher/cacher les sections d'étape
+    [0, 1, 2].forEach(function (i) {
+      var sec = document.getElementById("etape" + i);
+      if (sec) sec.classList.toggle("cache", i !== n);
+    });
+    document.getElementById("badge-obtenu-section").classList.add("cache");
+
+    // Arrêter l'animation du cœur si on quitte l'étape 0
+    if (n !== 0) {
+      stopAnimCoeur();
+    } else {
+      lancerAnimCoeur(pathoActuelle);
+    }
+
+    if (n === 1 && typeof chargerPatient === "function") {
+      chargerPatient();
+    }
+
+    majPastilles();
+  }
+
+  // Bouton « J'ai compris → Étape 2 »
+  document.getElementById("btnVersEtape2").addEventListener("click", function () {
+    etapeMax = Math.max(etapeMax, 1);
+    allerEtape(1);
+  });
+
+  // Pastilles cliquables
+  document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+    p.addEventListener("click", function () {
+      var n = Number(p.dataset.etape);
+      if (n <= etapeMax) allerEtape(n);
+    });
+  });
+
+  /* ================================================================
+     7) Jeu du diagnostic (Étape 2)
+     ================================================================ */
+  var PATIENTS = [
+    {
+      nom: "Valentin, 21 ans",
+      contexte: "Étudiant, a bu 4 cafés et une boisson énergisante pour finir un rapport à 3h du matin. Son cœur bat à 120 bpm.",
+      patho: "tachy",
+      solution: "tachy",
+      bpm: 120,
+      plainte: "Wow, vous êtes sûr ? J'ai l'impression que mon cœur va exploser !",
+      prevention: "C'est bien une tachycardie ! Pour l'éviter, l'ingénieur te conseille de limiter les excitants (caféine) et de privilégier un bon sommeil.",
+      graine: 123
+    },
+    {
+      nom: "Papy Jean, 82 ans",
+      contexte: "Se sent très fatigué en jardinant, a eu des vertiges ce matin. Son cœur bat à 45 bpm.",
+      patho: "brady",
+      solution: "brady",
+      bpm: 45,
+      plainte: "Vous êtes certain ? Je me sens tout raplapla, pas du tout excité.",
+      prevention: "Exact ! Le cœur de Jean bat trop lentement. Une surveillance médicale est nécessaire pour les seniors en cas de vertiges.",
+      graine: 456
+    },
+    {
+      nom: "Sarah, 21 ans",
+      contexte: "Étudiante et très sportive, elle s'entraîne à la salle (musculation et cardio) 5 fois par semaine. Son cœur au repos bat à 55 bpm, de façon très régulière.",
+      patho: "normal",
+      solution: "brady",
+      bpm: 55,
+      plainte: "Attendez, je pète la forme moi, regardez mes perfs !",
+      prevention: "Bien vu ! C'est une bradycardie, mais elle est saine ! Chez les grands sportifs, le cœur se muscle et devient si efficace qu'il n'a pas besoin de battre vite au repos.",
+      graine: 789
+    },
+    {
+      nom: "Marc, 55 ans",
+      contexte: "Fumeur, ressent des palpitations bizarres, comme si son cœur \"sautait\" de manière totalement anarchique dans sa poitrine.",
+      patho: "fibr",
+      solution: "fibr",
+      plainte: "Sain ?! Ça tremble de partout là-dedans !",
+      prevention: "Bravo. C'est une fibrillation, le rythme est complètement chaotique. Il faut consulter vite pour éviter la formation d'un caillot sanguin.",
+      graine: 321
+    },
+    {
+      nom: "Léa, 16 ans",
+      contexte: "Vient faire un électrocardiogramme de routine pour obtenir son certificat médical pour le club d'athlétisme. Rythme à 72 bpm régulier.",
+      patho: "normal",
+      solution: "normal",
+      bpm: 72,
+      plainte: "Euh, on m'a dit que tout allait bien pourtant...",
+      prevention: "Parfait ! Un tracé régulier, des ondes bien dessinées. Léa est prête pour sa saison d'athlétisme.",
+      graine: 654
+    }
+  ];
+
+  var indexPatient = 0;
+
+  function chargerPatient() {
+    var patient = PATIENTS[indexPatient];
+    document.getElementById("patient-nom").textContent = patient.nom;
+    document.getElementById("patient-contexte").textContent = patient.contexte;
+
+    // Réinitialiser le retour
+    var retour = document.getElementById("patient-retour");
+    retour.classList.add("cache");
+    document.getElementById("retour-medecin-encart").classList.add("cache");
+    document.getElementById("btnPatientSuivant").classList.add("cache");
+
+    // Activer et réinitialiser les boutons
+    document.querySelectorAll("#diagnostic-boutons .btn-diag").forEach(function(b) {
+      b.disabled = false;
+      b.className = "btn-diag"; // enlève succès/erreur
+    });
+
+    // Générer le signal
+    var signal;
+    if (patient.patho === "fibr") {
+      signal = genererFibrillation(DUREE_VISU, FE, patient.graine);
+    } else {
+      signal = genererECG({ bpm: patient.bpm || PATHOLOGIES[patient.patho].bpm, duree: DUREE_VISU, fe: FE, graine: patient.graine });
+    }
+
+    Plotly.react("graphe-patient", [{
+      x: signal.t, y: signal.y, type: "scatter", mode: "lines",
+      line: { color: "#1e293b", width: 1.8 }, hoverinfo: "none"
+    }], LAYOUT_PATHO, CFG_PATHO);
+  }
+
+  document.querySelectorAll("#diagnostic-boutons .btn-diag").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      if (btn.disabled) return;
+      
+      var reponse = btn.dataset.reponse;
+      var patient = PATIENTS[indexPatient];
+      var retour = document.getElementById("patient-retour");
+      var encartMed = document.getElementById("retour-medecin-encart");
+
+      // Retirer la classe erreur de tous les boutons pour réinitialiser l'animation
+      document.querySelectorAll("#diagnostic-boutons .btn-diag").forEach(function(b) {
+        b.classList.remove("erreur");
+      });
+      // Forcer un reflow pour pouvoir rejouer l'animation secousse
+      void btn.offsetWidth;
+
+      if (reponse === patient.solution) {
+        // Bonne réponse
+        btn.classList.add("succes");
+        document.getElementById("patient-plainte").textContent = "Ouf, merci docteur !";
+        document.getElementById("patient-prevention").innerHTML = patient.prevention;
+        retour.classList.remove("cache");
+        encartMed.classList.remove("cache");
+
+        // Désactiver tous les boutons
+        document.querySelectorAll("#diagnostic-boutons .btn-diag").forEach(function(b) {
+          b.disabled = true;
+        });
+
+        // Fin ou patient suivant
+        if (indexPatient < PATIENTS.length - 1) {
+          document.getElementById("btnPatientSuivant").classList.remove("cache");
+        } else {
+          document.getElementById("diagnostic-boutons").classList.add("cache");
+          document.getElementById("patient-carte").classList.add("cache");
+          document.getElementById("graphe-patient").classList.add("cache");
+          retour.classList.add("cache");
+          document.getElementById("jeu-fin").classList.remove("cache");
+        }
+      } else {
+        // Mauvaise réponse
+        btn.classList.add("erreur");
+        document.getElementById("patient-plainte").textContent = patient.plainte;
+        encartMed.classList.add("cache");
+        retour.classList.remove("cache");
+      }
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var btnSuiv = document.getElementById("btnPatientSuivant");
+    if(btnSuiv) {
+      btnSuiv.addEventListener("click", function() {
+        indexPatient++;
+        chargerPatient();
+      });
+    }
+
+    var btnEtape3 = document.getElementById("btnVersEtape3");
+    if(btnEtape3) {
+      btnEtape3.addEventListener("click", function() {
+        etapeMax = Math.max(etapeMax, 2);
+        allerEtape(2);
+      });
+    }
+  });
+
+  /* ================================================================
+     8) Le Patient Mystère (Étape 3)
+     ================================================================ */
+  var mystereState = {
+    ecgParfait: null,
+    yActuel: null,
+    duree: 300,
+    zoomVal: 300,
+    tangage: false,
+    gresillement: 0,
+    clics: [],
+    bpmCalculé: 0,
+    timerJauge: null
+  };
+
+  function initPatientMystere() {
+    mystereState.ecgParfait = genererECG({ bpm: 85, duree: mystereState.duree, fe: FE, graine: 999 });
+    mystereState.yActuel = null;
+    mystereState.clics = [];
+    mystereState.zoomVal = 300;
+    document.getElementById("graphe-mystere").classList.remove("crosshair-actif");
+    document.getElementById("compteur-clics").textContent = "Pics trouvés : 0 / 3";
+    document.getElementById("resultat-bpm").classList.add("cache");
+    mystereState.tangage = false;
+    mystereState.gresillement = 0;
+
+    if (mystereState.timerJauge) clearTimeout(mystereState.timerJauge);
+    document.getElementById("jauge-qualite-conteneur").style.opacity = "0";
+
+    document.getElementById("curseur-zoom").value = 300;
+    document.getElementById("val-zoom").textContent = "300s";
+
+    document.querySelectorAll("#groupe-tangage .boss-segment-btn").forEach(function(b) {
+      b.classList.toggle("actif", b.dataset.val === "false");
+    });
+    document.querySelectorAll("#groupe-gresillement .boss-segment-btn").forEach(function(b) {
+      b.classList.toggle("actif", b.dataset.val === "0");
+    });
+
+    var layoutMystere = Object.assign({}, LAYOUT_PATHO, {
+      xaxis: Object.assign({}, LAYOUT_PATHO.xaxis, { range: [0, 300], fixedrange: true }),
+      yaxis: Object.assign({}, LAYOUT_PATHO.yaxis, { fixedrange: true })
+    });
+
+    Plotly.newPlot("graphe-mystere", [], layoutMystere, Object.assign({}, CFG_PATHO, { responsive: true }));
+    document.getElementById("graphe-mystere").on('plotly_click', onPlotlyClickMystere);
+    renderMystere();
+  }
+
+  function renderMystere() {
+    if (!mystereState.ecgParfait) return;
+
+    var t = mystereState.ecgParfait.t;
+    var yBase = mystereState.ecgParfait.y;
+    var n = yBase.length;
+    var y = new Array(n);
+
+    for (var i = 0; i < n; i++) {
+      var val = yBase[i];
+
+      // Tangage désactivé → grosse dérive sinusoïdale basse fréquence
+      if (!mystereState.tangage) {
+        val += 2.5 * Math.sin(2 * Math.PI * 0.05 * t[i]);
+      }
+
+      // Grésillement : composition selon le niveau sélectionné
+      if (mystereState.gresillement === 0) {
+        val += 0.4 * (Math.random() - 0.5);        // bruit massif
+      } else if (mystereState.gresillement === 1) {
+        val += 0.015 * (Math.random() - 0.5);       // quasi imperceptible — sweet spot
+      } else if (mystereState.gresillement === 2) {
+        val *= 0.6;                                  // filtre trop fort : pics écrasés
+      }
+
+      y[i] = val;
+    }
+
+    mystereState.yActuel = y;
+
+    var traces = [{
+      x: t, y: y, type: "scatter", mode: "lines",
+      line: { color: "#1e293b", width: 1.8 }, hoverinfo: "none", name: "ECG"
+    }];
+
+    if (mystereState.clics.length > 0) {
+      var cx = mystereState.clics.map(function(idx) { return t[idx]; });
+      var cy = mystereState.clics.map(function(idx) { return y[idx]; });
+      traces.push({
+        x: cx, y: cy, type: "scatter", mode: "markers",
+        marker: { color: "red", size: 10 }, hoverinfo: "none", name: "Pics"
+      });
+    }
+
+    var layoutMystere = Object.assign({}, LAYOUT_PATHO, {
+      xaxis: Object.assign({}, LAYOUT_PATHO.xaxis, { range: [0, mystereState.zoomVal], fixedrange: true }),
+      yaxis: Object.assign({}, LAYOUT_PATHO.yaxis, { fixedrange: true })
+    });
+
+    Plotly.react("graphe-mystere", traces, layoutMystere);
+  }
+
+  function handleMystereZoom(e) {
+    mystereState.zoomVal = parseInt(e.target.value, 10);
+    document.getElementById("val-zoom").textContent = mystereState.zoomVal + "s";
+    Plotly.relayout('graphe-mystere', {'xaxis.range': [0, mystereState.zoomVal]});
+    
+    if (mystereState.zoomVal >= 3 && mystereState.zoomVal <= 5) {
+      var phaseB = document.getElementById("mystere-phase-b");
+      if (phaseB.classList.contains("cache")) {
+        phaseB.classList.remove("cache");
+        mystereState.timerJauge = setTimeout(function() {
+          document.getElementById("jauge-qualite-conteneur").style.opacity = "1";
+        }, 25000);
+      }
+    }
+  }
+
+  function handleMystereFiltres() {
+    renderMystere();
+    
+    var q = 0;
+    if (mystereState.tangage) q += 50;
+    if (mystereState.gresillement > 0) q += 50;
+
+    var qFill = document.getElementById("jauge-remplissage");
+    var qTexte = document.getElementById("jauge-texte");
+    var qEmoji = document.getElementById("jauge-emoji");
+
+    qFill.style.width = q + "%";
+    if (q < 40) {
+      qFill.style.backgroundColor = "#ef4444";
+      qTexte.textContent = q + "% Illisible";
+      qTexte.style.color = "#ef4444";
+      qEmoji.textContent = "🤔";
+    } else if (q < 80) {
+      qFill.style.backgroundColor = "#f59e0b";
+      qTexte.textContent = q + "% Bruité";
+      qTexte.style.color = "#f59e0b";
+      qEmoji.textContent = "🧐";
+    } else {
+      qFill.style.backgroundColor = "#10b981";
+      qTexte.textContent = q + "% Parfait";
+      qTexte.style.color = "#10b981";
+      qEmoji.textContent = "😎";
+    }
+
+    if (q === 100) {
+      if (mystereState.timerJauge) clearTimeout(mystereState.timerJauge);
+      document.getElementById("jauge-qualite-conteneur").style.opacity = "1";
+      document.getElementById("mystere-phase-c").classList.remove("cache");
+      document.getElementById("graphe-mystere").classList.add("crosshair-actif");
+      setTimeout(function() {
+        document.getElementById("mystere-phase-c").scrollIntoView({ behavior: "smooth" });
+      }, 200);
+    }
+  }
+
+  function onPlotlyClickMystere(data) {
+    if (document.getElementById("mystere-phase-c").classList.contains("cache")) return;
+    if (mystereState.clics.length >= 3) return;
+    
+    var pt = data.points[0];
+    if (!pt) return;
+    
+    var idx = Math.round(pt.x * FE);
+    var yRef = mystereState.yActuel || mystereState.ecgParfait.y;
+    var vraiSommet = trouverSommetProche(yRef, idx, Math.round(0.15 * FE));
+    
+    mystereState.clics.push(vraiSommet);
+    mystereState.clics.sort(function(a, b) { return a - b; }); 
+    
+    document.getElementById("compteur-clics").textContent = "Pics trouvés : " + mystereState.clics.length + " / 3";
+    renderMystere();
+
+    if (mystereState.clics.length === 3) {
+      mystereState.bpmCalculé = calculerBPM(mystereState.clics, FE);
+      var result = document.getElementById("resultat-bpm");
+      result.textContent = "Rythme détecté : " + mystereState.bpmCalculé + " BPM !";
+      result.classList.remove("cache");
+
+      document.getElementById("graphe-mystere").classList.remove("crosshair-actif");
+
+      document.getElementById("mystere-phase-d").classList.remove("cache");
+      setTimeout(function() {
+        document.getElementById("mystere-phase-d").scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var btnD = document.getElementById("btnDemarrerMystere");
+    if(btnD) {
+      btnD.addEventListener("click", function() {
+        document.getElementById("mystere-intro").classList.add("cache");
+        document.getElementById("mystere-epreuve").classList.remove("cache");
+        initPatientMystere();
+      });
+    }
+
+    var cz = document.getElementById("curseur-zoom");
+    if(cz) cz.addEventListener("input", handleMystereZoom);
+    
+    document.querySelectorAll("#groupe-tangage .boss-segment-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("#groupe-tangage .boss-segment-btn").forEach(function(b) { b.classList.remove("actif"); });
+        btn.classList.add("actif");
+        mystereState.tangage = btn.dataset.val === "true";
+        handleMystereFiltres();
+      });
+    });
+    
+    document.querySelectorAll("#groupe-gresillement .boss-segment-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("#groupe-gresillement .boss-segment-btn").forEach(function(b) { b.classList.remove("actif"); });
+        btn.classList.add("actif");
+        mystereState.gresillement = parseInt(btn.dataset.val, 10);
+        handleMystereFiltres();
+      });
+    });
+
+    document.querySelectorAll("#diag-mystere-boutons .btn-diag").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        if (btn.disabled) return;
+        
+        var reponse = btn.dataset.reponse;
+        var retour = document.getElementById("mystere-retour");
+        var encartMed = document.getElementById("mystere-medecin-encart");
+        var plainte = document.getElementById("mystere-plainte");
+        
+        document.querySelectorAll("#diag-mystere-boutons .btn-diag").forEach(function(b) {
+          b.classList.remove("erreur");
+        });
+        void btn.offsetWidth;
+
+        if (reponse === "normal") {
+          btn.classList.add("succes");
+          plainte.textContent = "Ouf... J'avais lu sur Internet que j'allais exploser avec ce stress !";
+          document.getElementById("mystere-prevention").innerHTML =
+            "<p style='margin:0 0 8px'><em>(au patient)</em> « Rassurez-vous Monsieur, votre cœur va très bien. Ce tracé chaotique était uniquement dû à vos tremblements. »</p>" +
+            "<p style='margin:0; padding-top:8px; border-top:1px solid rgba(22,101,52,.2)'>🔬 <strong>Le Cardiologue (à l'élève) :</strong> « Excellent travail, ingénieur ! Tu as su nettoyer le signal pour éviter un faux diagnostic. Le patient est sauvé ! »</p>";
+          retour.classList.remove("cache");
+          encartMed.classList.remove("cache");
+
+          document.querySelectorAll("#diag-mystere-boutons .btn-diag").forEach(function(b) { b.disabled = true; });
+
+          document.getElementById("badge-obtenu-section").classList.remove("cache");
+          setTimeout(function() {
+            document.getElementById("badge-obtenu-section").scrollIntoView({ behavior: 'smooth' });
+          }, 300);
+
+        } else {
+          btn.classList.add("erreur");
+          plainte.textContent = "Aaah ! Je le savais ! C'est la fin ! (Indice : regarde le BPM que tu as mesuré !)";
+          encartMed.classList.add("cache");
+          retour.classList.remove("cache");
+        }
+      });
+    });
+  });
+
+  /* ================================================================
+     9) Deep-link par paramètre ?etape=N
+     ================================================================ */
+  var paramsPatho = new URLSearchParams(window.location.search);
+  var etapeParam = paramsPatho.get("etape");
+  if (etapeParam !== null) {
+    var ep = Math.max(0, Math.min(2, Number(etapeParam)));
+    // En mode révision (badge obtenu), tout est débloqué
+    if (typeof moduleValide === "function" && moduleValide("pathologies")) {
+      etapeMax = 2;
+    }
+    ep = Math.min(ep, etapeMax);
+    if (ep > 0) allerEtape(ep);
+  }
+
+  // Si le badge est déjà obtenu, débloquer tout (mode révision)
+  if (typeof moduleValide === "function" && moduleValide("pathologies")) {
+    etapeMax = 2;
+    majPastilles();
+  }
+
+  /* ================================================================
+     8) Initialisation de l'Étape 1
+     ================================================================ */
+  selectionnerPatho("normal");
+
+  </script>
+</body>
+</html>

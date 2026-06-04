@@ -53,7 +53,10 @@
         <span><strong>La photo du son</strong> <em>(bonus)</em> — Lis un spectrogramme et traque le parasite caché.</span>
       </a>
 
-      <div class="pastille"><span class="num">★</span><span>Détective des pathologies <em>(à venir)</em></span></div>
+      <a class="pastille" id="lien-pathologies" href="pathologies.html" style="text-decoration:none;">
+        <span class="num" id="badge-pathologies">★</span>
+        <span><strong>Détective des pathologies</strong> — Diagnostique tes patients et affronte le patient mystère.</span>
+      </a>
     </div>
 
     <!-- =================== SECTION PROGRESSION =================== -->
@@ -155,6 +158,10 @@
     if (moduleValide("curieux")) {
       var numCurieux = document.getElementById("badge-curieux");
       if (numCurieux) { numCurieux.style.background = "var(--attention)"; numCurieux.style.color = "#fff"; }
+    }
+    if (moduleValide("pathologies")) {
+      var numPatho = document.getElementById("badge-pathologies");
+      if (numPatho) { numPatho.style.background = "var(--signal)"; numPatho.style.color = "#fff"; }
     }
   }
 

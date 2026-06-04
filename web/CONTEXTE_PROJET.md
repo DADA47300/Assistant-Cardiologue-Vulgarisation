@@ -164,8 +164,18 @@ Une page bonus simplifiée, accessible à la fin du labo, centrée sur la lectur
 3. **Trouve l'intrus** : Un jeu où il faut cliquer sur la ligne du parasite positionnée aléatoirement.
 Technique : Aucune vraie FFT n'est calculée. La "photo" est directement dessinée sur le Canvas à partir d'un modèle (lignes horizontales pour le son continu, barres verticales pour les battements) pour plus de légèreté et un fonctionnement 100% hors-ligne fiable.
 
-### Détective des pathologies (badge : pathologies) — PAS ENCORE FAIT
-Pastille « à venir » sur l'accueil.
+### pathologies.html — « Détective des pathologies » — À CONSTRUIRE IMMÉDIATEMENT
+Ce module doit être découpé en 3 mini-parties distinctes (barre d'étapes linéaires, comme le Labo) :
+
+    Étape 1 : Comprendre la mécanique : Une zone interactive montrant une animation visuelle de cœur (ex: un SVG ou un gros emoji qui bat). Un curseur ou des boutons permettent de basculer entre : Rythme Normal, Tachycardie (le cœur bat super vite), Bradycardie (le cœur bat au ralenti), Fibrillation (le cœur tremble de façon chaotique), et Extrasystole (un raté visuel ponctuel). L'élève voit l'impact mécanique sur l'organe et le signal ECG théorique correspondant en dessous.
+
+    Étape 2 : Le jeu du diagnostic (Style Tinder) : Un jeu de rôle séquentiel avec 5 à 6 patients max. Chaque patient a un mini-profil textuel (ex: « Papy Jean, 82 ans, grosse fatigue au réveil »). L'élève voit défiler son signal ECG et doit cliquer sur le bon diagnostic parmi 4 choix : Sain, Tachycardie, Bradycardie, Fibrillation.
+
+        Mécanique humoristique : Si l'élève se trompe, le patient "râle" avec un message personnalisé (« Aïe, vous me donnez le mauvais traitement ! »). S'il a juste, le patient est sauvé et un court message de prévention santé/sport s'affiche (« Bien joué ! Éviter le stress et courir régulièrement protège le cœur... »).
+
+    Étape 3 : Le Patient Mystère (Le Boss de fin) : Une transition graphique dramatique inspirée de Smash Bros (Silhouette noire + texte "UN NOUVEAU PATIENT MYSTÈRE ARRIVE !"). C'est l'épreuve ultime qui rassemble TOUTES les connaissances acquises : l'élève reçoit un signal brut ultra-salit, il doit lui-même le filtrer (console de nettoyage), appliquer le bon zoom, cliquer sur les pics R pour obtenir le BPM, et poser le diagnostic final pour sauver ce patient spécial.
+
+Réussir l'étape 3 attribue le 4ème badge obligatoire : pathologies (Détective Médical), déclenchant le diplôme final sur l'accueil.
 
 ---
 
@@ -187,6 +197,7 @@ Maths du signal/ECG (haut du fichier) :
 ⚠️ Le bas de `signaux.js` contient aussi des helpers **spécifiques à signal.html** (jeu de
 swipe, audio, spectre/animation). Ne casse pas ces parties en touchant à la lib.
 
+Note pour l'agent : Pour le module pathologies, tu devras utiliser ou étendre genererECG pour simuler facilement des rythmes lents (brady), rapides (tachy), chaotiques (fibrillation) ou avec des anomalies isolées (extrasystoles).
 ---
 
 ## 9. Idée directrice à poursuivre & TODO
@@ -199,17 +210,9 @@ Le même motif peut être appliqué à `signal.html` et `coeur.html` plus tard.
 
 Restant à construire (par ordre logique du déroulé) :
 
-1. Intégration du Badge Curieux : Ajouter ce 5ème badge dans progression.js pour récompenser les modules bonus. Faire en sorte que la partie bonus spectro.html soit bien visible sur l'accueil et pas seulement cachée à la fin du labo.
+Créer la page pathologies.html en suivant scrupuleusement la structure en 3 étapes décrite au §7.
 
-2. **Détective des pathologies** (Bloc 5) : jeu de diagnostic sur 3-4 ECG avec petites
-   histoires patients ; reconnaître **tachycardie** (>100 bpm), **bradycardie** (<60 bpm),
-   **fibrillation** (rythme chaotique, ondes nettes disparues). Réutiliser `genererECG`,
-   `detecterPicsR`, `calculerBPM`, `diagnostiquer`. Attribuer le badge `pathologies`.
-3. **Patient mystère** (Bloc 6) : un dernier ECG à analyser seul pour « valider la
-   formation ».
-4. **Métiers / Et après ?** (Bloc 6) : page courte reliant le filtrage réalisé aux métiers
-   (traitement du signal : IRM, écouteurs à réduction de bruit, smartphones) et aux filières
-   ENSEIRB. Le diplôme « ingénieur biomédical junior » existe déjà côté accueil.
+S'assurer que le bouton de fin valide le badge pathologies avec la règle de redirection index.html?badge=pathologies.
 
 ---
 
