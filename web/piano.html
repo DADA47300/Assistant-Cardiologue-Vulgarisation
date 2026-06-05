@@ -86,6 +86,21 @@
     }
     .touche.enfoncee .touche-lettre { background: #fff; border-color: var(--signal); }
 
+    .touche-noire .touche-lettre {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      padding: 0px 4px;
+      color: var(--encre);
+      background: rgba(255, 255, 255, 0.85);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    .touche-noire.enfoncee .touche-lettre {
+      background: #fff;
+    }
+
     .lecteur-note {
       text-align: center;
       font-family: var(--titre);
@@ -210,7 +225,7 @@
       <p>Une note <strong>grave</strong> = une <strong>basse fréquence</strong> (la corde vibre lentement).
          Une note <strong>aiguë</strong> = une <strong>haute fréquence</strong> (elle vibre vite).
          Clique sur les touches (blanches <em>et</em> noires) ou tape les lettres
-         <strong>A&nbsp;Z&nbsp;E&nbsp;R&nbsp;T&nbsp;Y&nbsp;U&nbsp;I</strong> de ton clavier.</p>
+         <strong>A&nbsp;Z&nbsp;E&nbsp;R&nbsp;T&nbsp;Y&nbsp;U&nbsp;I</strong> ou les chiffres <strong>2&nbsp;3&nbsp;5&nbsp;6&nbsp;7</strong> de ton clavier.</p>
 
       <div class="clavier-cadre">
         <div class="clavier" id="clavier" role="group" aria-label="Clavier de piano"></div>
@@ -356,11 +371,11 @@
      d'indice "apres". Dans une octave : noires après Do, Ré, (rien entre Mi-Fa),
      Fa, Sol, La, (rien entre Si-Do aigu). */
   var NOTES_NOIRES = [
-    { nom: "Do♯",  freq: 277.18, apres: 0 },
-    { nom: "Ré♯",  freq: 311.13, apres: 1 },
-    { nom: "Fa♯",  freq: 369.99, apres: 3 },
-    { nom: "Sol♯", freq: 415.30, apres: 4 },
-    { nom: "La♯",  freq: 466.16, apres: 5 }
+    { nom: "Do♯",  freq: 277.18, apres: 0, touche: "2", keyCodeAlt: "é" },
+    { nom: "Ré♯",  freq: 311.13, apres: 1, touche: "3", keyCodeAlt: '"' },
+    { nom: "Fa♯",  freq: 369.99, apres: 3, touche: "5", keyCodeAlt: "(" },
+    { nom: "Sol♯", freq: 415.30, apres: 4, touche: "6", keyCodeAlt: "-" },
+    { nom: "La♯",  freq: 466.16, apres: 5, touche: "7", keyCodeAlt: "è" }
   ];
 
   var clavier = document.getElementById("clavier");
@@ -397,8 +412,11 @@
     var n = document.createElement("button");
     n.className = "touche-noire";
     n.dataset.id = "n" + i;
-    n.setAttribute("aria-label", note.nom);
+    n.dataset.freq = note.freq;
+    n.dataset.nom = note.nom;
+    n.setAttribute("aria-label", note.nom + " (touche " + note.touche + ")");
     n.style.left = (((note.apres + 1) / nbBlanches) * 100) + "%";
+    n.innerHTML = '<span class="touche-lettre">' + note.touche + '</span>';
     cablerTouche(n, note.freq, n.dataset.id, note.nom);
     clavier.appendChild(n);
   });
@@ -407,6 +425,11 @@
   var toucheVersBouton = {};
   NOTES.forEach(function (note, i) {
     toucheVersBouton[note.touche] = document.querySelector('.touche[data-id="k' + i + '"]');
+  });
+  NOTES_NOIRES.forEach(function (note, i) {
+    var btn = document.querySelector('.touche-noire[data-id="n' + i + '"]');
+    toucheVersBouton[note.touche] = btn;
+    toucheVersBouton[note.keyCodeAlt] = btn;
   });
 
   document.addEventListener("keydown", function (e) {
