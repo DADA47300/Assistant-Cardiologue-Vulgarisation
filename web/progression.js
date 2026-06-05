@@ -10,19 +10,20 @@
  *   value = { nom: nom affiché du badge, icone: emoji affiché }
  */
 var BADGES = {
-  signal:      { nom: "Maître des Ondes",           icone: "🌊" },
-  coeur_ecg:   { nom: "Explorateur Anatomique",     icone: "🫀" },
-  labo:        { nom: "Technicien de Laboratoire",   icone: "🔬" },
-  pathologies: { nom: "Expert Diagnostic",           icone: "🩺" },
-  metiers:     { nom: "Ingénieur Polyvalent",        icone: "🛠️" },
-  curieux:     { nom: "Esprit Curieux",              icone: "📸" }
+  signal:      { nom: "Maître des Ondes",             icone: "🌊" },
+  coeur_ecg:   { nom: "Explorateur Anatomique",       icone: "🫀" },
+  labo:        { nom: "Technicien de Laboratoire",     icone: "🔬" },
+  pathologies: { nom: "Expert Diagnostic",             icone: "🩺" },
+  metiers:     { nom: "Ingénieur Polyvalent",          icone: "🛠️" },
+  curieux:     { nom: "Esprit Curieux",                icone: "📸" },
+  matlab:      { nom: "Dans les coulisses de Matlab",  icone: "📊" }
 };
 
-/** Badges obligatoires pour le diplôme (le badge bonus n'en fait pas partie) */
+/** Badges obligatoires pour le diplôme (les badges bonus n'en font pas partie) */
 var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "labo", "pathologies", "metiers"];
 
-/** Badges bonus (récompenses supplémentaires, non requis pour le diplôme) */
-var BADGES_BONUS = ["curieux"];
+/** Badges bonus (missions secondaires, non requis pour le diplôme) */
+var BADGES_BONUS = ["curieux", "matlab"];
 
 /** Clé sessionStorage pour stocker les badges */
 var CLE_PROGRESSION = "lisuncoeur_badges";

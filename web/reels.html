@@ -1062,7 +1062,141 @@ body {
       padding:7px 12px; font-size:.85rem; color:var(--encre-doux);
     }
     .mesure b { font-family:var(--titre); color:var(--encre); font-size:1rem; }
-  </style>
+
+    /* ══════════════════════════════════════════
+       DOSSIER MÉDICAL iOS + MONITEUR
+       ══════════════════════════════════════════ */
+
+    /* ── 1. Carte principale — fond blanc, ombre douce ── */
+    .article-signal {
+      background: var(--carte);
+      border: 1px solid var(--bord);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(22,48,42,0.09);
+    }
+
+    /* ── 2. En-tête — thème clair (dossier médical) ── */
+    .article-header {
+      padding: 14px 22px;
+      display: flex; align-items: center; gap: 12px;
+      font-family: var(--titre); font-weight: 800; font-size: 1.05rem;
+    }
+    .article-header .badge {
+      font-size: .72rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 99px; margin-left: auto; letter-spacing: .02em;
+      background: rgba(255,255,255,0.75);
+    }
+    .article-header.sain {
+      background: #f0fdf4; color: var(--signal-fonce);
+      border-bottom: 2px solid #86efac;
+    }
+    .article-header.fa {
+      background: #fffbeb; color: #92400e;
+      border-bottom: 2px solid #fcd34d;
+    }
+    .article-header.fv {
+      background: #fff1f2; color: #9b1230;
+      border-bottom: 2px solid #fca5a5;
+    }
+
+    /* ── 3. Texte d'intro — fond blanc, texte sombre ── */
+    .article-intro {
+      padding: 16px 22px 14px;
+      background: var(--carte);
+      color: var(--encre);
+      font-size: .96rem; line-height: 1.55; margin: 0;
+      border-bottom: 1px solid var(--bord);
+    }
+
+    /* ── 4. Moniteur ECG — zone sombre incrustée ── */
+    .article-scope-zone {
+      position: relative;
+      background: #0f172a;
+      padding: 14px 18px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .article-scope-zone .scope {
+      border-radius: 10px; margin: 0;
+      /* ombre interne : simule un vrai écran enfoncé */
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.55), 0 0 0 1.5px #1e3a3a;
+    }
+    /* Overlay désactivé : le texte n'est plus posé sur le canvas */
+    .article-scope-overlay { display: none; }
+
+    /* ── 5. Indice guidé — fond clair, texte sombre ── */
+    .article-signal .indice {
+      background: #eef7ff !important;
+      color: #1e3a5f !important;
+      border-left: 4px solid #3b82f6 !important;
+      border-top: none !important;
+      margin: 14px 22px 0 !important;
+      padding: 11px 14px !important;
+      border-radius: 0 11px 11px 0 !important;
+      font-size: .92rem;
+    }
+    .article-signal .indice .pic { opacity: 1 !important; }
+
+    /* ── 6. Bouton "Révéler" — design system vert, hover sans bug ── */
+    .article-signal .btn-reveler {
+      display: block;
+      width: calc(100% - 44px); margin: 14px 22px;
+      background: var(--signal);
+      border: none;
+      color: #fff !important;         /* force blanc même au survol */
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-family: var(--titre); font-weight: 700; font-size: .95rem;
+      cursor: pointer; text-align: center;
+      box-shadow: 0 4px 14px rgba(14,159,110,0.25);
+      transition: background 0.15s, transform 0.08s, box-shadow 0.15s;
+    }
+    .article-signal .btn-reveler:hover {
+      background: var(--signal-fonce) !important;
+      color: #fff !important;         /* corrige le bug texte invisible */
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(14,159,110,0.38);
+      border-color: transparent !important;
+    }
+    .article-signal .btn-reveler:active { transform: translateY(0); }
+
+    /* ── 7. Diagnostic révélé — encart coloré par type ── */
+    .article-body {
+      padding: 20px 22px 22px;
+      border-top: 1px solid var(--bord);
+    }
+    .article-body.sain { background: #f0fdf4; }
+    .article-body.fa   { background: #fffbeb; }
+    .article-body.fv   { background: #fff1f2; }
+    .article-body .diag {
+      font-family: var(--titre); font-weight: 800; font-size: 1.1rem;
+      margin: 0 0 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .article-body .diag.sain { color: var(--signal-fonce); }
+    .article-body .diag.fa   { color: #b45309; }
+    .article-body .diag.fv   { color: var(--battement); }
+    .article-body .resume {
+      color: var(--encre-doux); font-size: .96rem; line-height: 1.6; margin: 0 0 14px;
+    }
+
+    /* ── 8. Gros bouton final — dégradé animé ── */
+    .bouton-badge-final {
+      display: block; width: 100%; max-width: 540px;
+      margin: 36px auto 0; padding: 20px 28px;
+      border: none; border-radius: 18px; text-decoration: none; text-align: center;
+      background: linear-gradient(135deg, var(--signal) 0%, #34d399 50%, var(--signal-fonce) 100%);
+      background-size: 200%;
+      color: #fff; font-family: var(--titre); font-weight: 800; font-size: 1.22rem;
+      letter-spacing: -0.01em;
+      box-shadow: 0 8px 32px rgba(14,159,110,0.35);
+      animation: degrade-anime 3s ease infinite;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .bouton-badge-final:hover {
+      transform: translateY(-3px); box-shadow: 0 14px 44px rgba(14,159,110,0.45);
+    }
+    </style>
 </head>
 <body>
 
@@ -1089,23 +1223,29 @@ body {
     Sur écran tactile : un doigt pour sélectionner, deux doigts pour pincer.
   </div>
 
-  <!-- ════════════════ SIGNAL 1 — SAIN ════════════════ -->
-  <section class="carte">
-    <div class="sig-header sain">💚 Signal 1 — Cœur sain <span class="badge">rythme sinusal</span></div>
-    <p class="explication">
-      Un enregistrement normal. Affiche le signal <strong>brut</strong> puis <strong>filtré</strong> pour voir
-      ce que le filtre nettoie, puis zoome sur <em>un seul battement</em> pour retrouver la forme PQRST.
+  <!-- ════════════════ ARTICLE 1 — CŒUR SAIN ════════════════ -->
+  <article class="article-signal">
+    <div class="article-header sain">
+      💚 Signal 1 — Cœur sain <span class="badge">rythme sinusal</span>
+    </div>
+    <p class="article-intro">
+      Un enregistrement normal. Affiche le signal <strong>brut</strong> puis <strong>filtré</strong>
+      pour voir ce que le filtre nettoie, puis zoome sur <em>un seul battement</em>
+      pour retrouver la forme PQRST.
     </p>
-    <div data-scope="sain"></div>
+    <div class="article-scope-zone">
+      <div data-scope="sain"></div>
+      <div class="article-scope-overlay"></div>
+    </div>
     <div class="indice">
       <span class="pic">👉</span>
       <span>Essaie : entoure <strong>un seul battement</strong> à la souris. Tu verras nettement la grande
       déflexion du complexe QRS, et l'écart régulier entre deux battements.</span>
     </div>
     <button class="btn-reveler" data-reveal="sain">🔎 Révéler le diagnostic</button>
-    <div class="verdict-box sain cache" id="verdict-sain">
-      <p class="diag">✅ Cœur sain — rythme régulier</p>
-      <p>Les battements sont <strong>espacés de façon régulière</strong> : c'est la signature d'un rythme
+    <div class="article-body sain cache" id="verdict-sain">
+      <p class="diag sain">✅ Cœur sain — rythme régulier</p>
+      <p class="resume">Les battements sont <strong>espacés de façon régulière</strong> : c'est la signature d'un rythme
          sinusal normal. En zoomant, on retrouve la séquence PQRST à chaque battement.</p>
       <div class="mesures">
         <span class="mesure">Fréquence ≈ <b>66 bpm</b></span>
@@ -1113,25 +1253,30 @@ body {
         <span class="mesure">Intervalles 0,81 → 1,03 s</span>
       </div>
     </div>
-  </section>
+  </article>
 
-  <!-- ════════════════ SIGNAL 2 — FA ════════════════ -->
-  <section class="carte">
-    <div class="sig-header fa">💛 Signal 2 — Fibrillation auriculaire <span class="badge">FA</span></div>
-    <p class="explication">
+  <!-- ════════════════ ARTICLE 2 — FIBRILLATION AURICULAIRE ════════════════ -->
+  <article class="article-signal">
+    <div class="article-header fa">
+      💛 Signal 2 — Fibrillation auriculaire <span class="badge">FA</span>
+    </div>
+    <p class="article-intro">
       Les oreillettes s'emballent de façon désordonnée. Le tracé reste « lisible » mais le rythme devient
       <strong>irrégulier</strong>. Zoome pour comparer plusieurs intervalles entre battements.
     </p>
-    <div data-scope="fa"></div>
+    <div class="article-scope-zone">
+      <div data-scope="fa"></div>
+      <div class="article-scope-overlay"></div>
+    </div>
     <div class="indice">
       <span class="pic">👉</span>
       <span>Essaie : entoure <strong>4 ou 5 battements</strong> et mesure les écarts à l'œil. Contrairement
       au cœur sain, ils ne sont <strong>jamais</strong> identiques — c'est « irrégulièrement irrégulier ».</span>
     </div>
     <button class="btn-reveler" data-reveal="fa">🔎 Révéler le diagnostic</button>
-    <div class="verdict-box fa cache" id="verdict-fa">
-      <p class="diag">⚠️ Fibrillation auriculaire</p>
-      <p>Le rythme est <strong>rapide et irrégulier</strong>, et l'onde P organisée a disparu. Les intervalles
+    <div class="article-body fa cache" id="verdict-fa">
+      <p class="diag fa">⚠️ Fibrillation auriculaire</p>
+      <p class="resume">Le rythme est <strong>rapide et irrégulier</strong>, et l'onde P organisée a disparu. Les intervalles
          entre battements varient fortement d'un battement à l'autre.</p>
       <div class="mesures">
         <span class="mesure">Cadence moyenne ≈ <b>140 bpm</b></span>
@@ -1139,25 +1284,31 @@ body {
         <span class="mesure">Intervalles 0,30 → 1,25 s</span>
       </div>
     </div>
-  </section>
+  </article>
 
-  <!-- ════════════════ SIGNAL 3 — FV ════════════════ -->
-  <section class="carte">
-    <div class="sig-header fv">❤️ Signal 3 — Fibrillation ventriculaire <span class="badge">FV — urgence</span></div>
-    <p class="explication">
+  <!-- ════════════════ ARTICLE 3 — FIBRILLATION VENTRICULAIRE ════════════════ -->
+  <article class="article-signal">
+    <div class="article-header fv">
+      ❤️ Signal 3 — Fibrillation ventriculaire <span class="badge">FV — urgence</span>
+    </div>
+    <p class="article-intro">
       Le plus impressionnant. Au début le cœur bat encore, puis vers <strong>~213 s</strong> il
-      <strong>décroche</strong> : les ventricules tremblent au lieu de se contracter. Zoome sur l'instant du décrochage.
+      <strong>décroche</strong> : les ventricules tremblent au lieu de se contracter.
+      Zoome sur l'instant du décrochage.
     </p>
-    <div data-scope="fv"></div>
+    <div class="article-scope-zone">
+      <div data-scope="fv"></div>
+      <div class="article-scope-overlay"></div>
+    </div>
     <div class="indice">
       <span class="pic">👉</span>
       <span>Essaie : entoure la <strong>zone de transition (vers 213 s)</strong>. À gauche, des battements nets ;
       à droite, plus aucun complexe QRS identifiable — juste une ondulation chaotique.</span>
     </div>
     <button class="btn-reveler" data-reveal="fv">🔎 Révéler le diagnostic</button>
-    <div class="verdict-box fv cache" id="verdict-fv">
-      <p class="diag">🚨 Fibrillation ventriculaire</p>
-      <p>Après le décrochage, il n'y a <strong>plus de battement exploitable</strong> : impossible de mesurer une
+    <div class="article-body fv cache" id="verdict-fv">
+      <p class="diag fv">🚨 Fibrillation ventriculaire</p>
+      <p class="resume">Après le décrochage, il n'y a <strong>plus de battement exploitable</strong> : impossible de mesurer une
          fréquence cardiaque fiable. C'est une urgence vitale — le défibrillateur sert justement à « remettre à zéro »
          cette activité chaotique.</p>
       <div class="mesures">
@@ -1166,7 +1317,7 @@ body {
         <span class="mesure">Tracé chaotique</span>
       </div>
     </div>
-  </section>
+  </article>
 
   <!-- ════════════════ CONCLUSION ════════════════ -->
   <section class="carte">
@@ -1184,10 +1335,16 @@ body {
     </div>
   </section>
 
-  <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  <!-- ════════════════ BOUTON BADGE ════════════════ -->
+  <a href="index.html?badge=matlab" class="bouton-badge-final">
+    J'ai tout vu, récupérer mon badge ! 🏅
+  </a>
+
+    <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
 
 </main>
 
+<script src="progression.js"></script>
 <script>
 /* reels-data.js — signaux ECG réels traités (passe-bande 0,5–40 Hz, Fs=200 Hz)
    Extraits pleine résolution, brut + filtré, encodés Int16/base64 (÷scale ×1000).
@@ -1630,6 +1787,7 @@ document.querySelectorAll('.btn-reveler').forEach(btn => {
     btn.classList.add('cache');
   };
 });
+
 </script>
 
 </body>

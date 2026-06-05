@@ -142,6 +142,46 @@
     @media (max-width: 640px) {
       .notion-grille { grid-template-columns: 1fr 1fr; }
     }
+
+    /* ── Boîte objectif (alerte bleue) ── */
+    .alerte-objectif {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 10px 0 14px;
+      font-size: 0.97rem;
+      color: #1e3a5f;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .alerte-objectif .ao-icone { font-size: 1.3rem; flex-shrink: 0; }
+
+    /* ── Pulsation de la cible tant qu'elle n'est pas atteinte ── */
+    @keyframes pulse-cible {
+      0%, 100% { opacity: 1;    transform: scale(1);    }
+      50%       { opacity: 0.5; transform: scale(1.15); }
+    }
+    .pulse-cible { animation: pulse-cible 1.3s ease-in-out infinite; display: inline-block; }
+    .pulse-cible.arrete { animation: none; opacity: 1; }
+
+    /* ── Victoire période renforcée ── */
+    #message-victoire-periode.visible {
+      color: #16a34a;
+      font-size: 1.35rem;
+    }
+
+    /* ── Victoire synthèse Fourier ── */
+    #msg-victoire-synth {
+      display: none;
+      background: #f0fdf4;
+      border: 2px solid var(--signal);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-top: 14px;
+      font-family: var(--titre); font-weight: 700; font-size: 1.08rem;
+      color: var(--signal-fonce);
+    }
+    #msg-victoire-synth.visible { display: block; }
   </style>
 </head>
 <body>
@@ -288,8 +328,11 @@
          Sur le graphe ci-dessous, la <strong>grille</strong> marque les secondes.
          Une accolade <span style="color:var(--battement);font-weight:700;">rouge</span> te montre
          exactement la largeur d'un cycle.</p>
-      <p>Objectif : règle le curseur pour atteindre la période cible
-         <strong id="cible-periode-texte" style="color:var(--signal-fonce);">1.5</strong> s.</p>
+      <div class="alerte-objectif">
+        <span class="ao-icone">🎯</span>
+        <span>Objectif : règle le curseur pour atteindre la période cible
+        <strong id="cible-periode-texte" class="pulse-cible" style="color:#1d4ed8;">1.5</strong> s.</span>
+      </div>
 
       <div class="zone-jeu">
         <canvas id="canvas-periode"></canvas>
@@ -373,20 +416,17 @@
          SECTION 6 — DÉCOMPOSITION / SYNTHÈSE (clarifie le spectre)
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-synthese">
-      <h2>🧩 6. Construire un signal — le spectre, autrement</h2>
-      <p>On vient de <em>lire</em> des spectres en direct. Mais d'où vient cette idée ?
-         L'idée géniale (due à <strong>Fourier</strong>) : <strong>n'importe quel signal périodique
-         peut se fabriquer en empilant des sinus purs</strong> de fréquences multiples.
-         Le spectre n'est rien d'autre que la <strong>liste de ces ingrédients</strong>.</p>
+      <h2>🧩 6. Construire un signal — La recette</h2>
+      <p>Comment fabrique-t-on un signal complexe ? C'est comme une <strong>recette de cuisine</strong> !
+         On peut créer n'importe quelle forme en mélangeant des vagues très simples.
+         En bas, ce sont tes <strong>ingrédients</strong>. En haut, c'est le <strong>résultat</strong>.</p>
 
-      <div class="def-box">
-        <strong>À retenir :</strong> en haut on voit le signal <em>dans le temps</em> (ce qu'on entendrait),
-        en bas son <em>spectre</em> (de quelles fréquences il est fait). Ce sont deux façons de regarder
-        <strong>le même signal</strong>.
+      <div class="def-box" style="border-left-color:#7c3aed; background:linear-gradient(135deg,#f5f3ff,#ede9fe);">
+        <strong style="color:#5b21b6;">🎮 Défi :</strong> Fabrique un signal carré !
+        Les ordinateurs adorent ces signaux en forme de <strong>« créneaux »</strong> (pour faire des 0 et des 1).
+        La ligne en pointillés gris te montre la forme à atteindre.
+        À toi de doser les ingrédients avec les curseurs !
       </div>
-
-      <p>Monte les curseurs pour ajouter des « harmoniques » : regarde la vague se transformer
-         pendant que des barres apparaissent dans le spectre.</p>
 
       <div class="zone-jeu">
         <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin-bottom:4px;">Le signal dans le temps</div>
@@ -396,23 +436,32 @@
 
         <div class="panneau-controles">
           <div class="controle">
-            <label>Fondamentale (f) : <strong id="val-h1">1.0</strong></label>
+            <label>Vague de base (1) : <strong id="val-h1">1.0</strong></label>
             <input type="range" id="slide-h1" min="0" max="1" step="0.05" value="1">
           </div>
           <div class="controle">
-            <label>Harmonique (2f) : <strong id="val-h2">0.0</strong></label>
+            <label>Vague rapide (2) : <strong id="val-h2">0.0</strong></label>
             <input type="range" id="slide-h2" min="0" max="1" step="0.05" value="0">
           </div>
           <div class="controle">
-            <label>Harmonique (3f) : <strong id="val-h3">0.0</strong></label>
+            <label>Vague très rapide (3) : <strong id="val-h3">0.0</strong></label>
             <input type="range" id="slide-h3" min="0" max="1" step="0.05" value="0">
           </div>
           <div class="controle">
-            <label>Harmonique (4f) : <strong id="val-h4">0.0</strong></label>
+            <label>Vague ultra rapide (4) : <strong id="val-h4">0.0</strong></label>
             <input type="range" id="slide-h4" min="0" max="1" step="0.05" value="0">
           </div>
         </div>
         <p id="msg-synth" style="font-family:var(--titre);font-weight:700;font-size:0.92rem;margin:10px 0 0;min-height:24px;color:var(--encre-doux);"></p>
+
+        <button id="btn-indice-synth" class="bouton secondaire" style="margin-top:14px;">💡 Un indice ?</button>
+        <div id="indice-synth" class="cache" style="margin-top:10px; background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:12px 16px; font-size:0.95rem; color:#78350f; text-align:left;">
+          🤫 <strong>Astuce :</strong> Pour faire un créneau, tu n'as besoin que des vagues impaires.
+          Mets la <strong>Vague 1</strong> à fond, et ajoute un peu de <strong>Vague 3</strong>.
+          Laisse la 2 et la 4 à zéro !
+        </div>
+
+        <div id="msg-victoire-synth">🎉 Bravo ! Tu viens de recréer un signal numérique — c'est exactement comme ça qu'un ordinateur transmet des données !</div>
       </div>
     </section>
 
@@ -464,15 +513,21 @@
       </p>
     </section>
 
-    <!-- Bandeau de badge obtenu -->
-    <section class="carte cache" id="badge-obtenu-section"
+    <!-- ── Fin du module ── -->
+    <section class="carte" id="fin-module"
       style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid var(--signal);text-align:center;">
-      <div style="font-size:2.5rem;margin-bottom:8px;">🏅🌊</div>
-      <h2 style="color:var(--signal-fonce);margin:0 0 6px;">Badge obtenu : Maître des Ondes !</h2>
-      <p style="color:var(--encre-doux);margin:0 0 18px;">Tu as compris amplitude, fréquence, période, échantillonnage et bruit. Bravo !</p>
-      <a href="index.html?badge=signal" class="bouton" style="display:inline-block;text-decoration:none;">← Retour à l'accueil pour voir ton badge</a>
+      <div style="font-size:2.8rem;margin-bottom:10px;">🌊🏅</div>
+      <h2 style="color:var(--signal-fonce);margin:0 0 8px;">Fin du module — Maître des Ondes</h2>
+      <p style="color:var(--encre-doux);margin:0 0 22px;max-width:480px;margin-left:auto;margin-right:auto;">
+        Tu as exploré l'amplitude, la fréquence, la période, l'échantillonnage,
+        la synthèse de Fourier et le bruit.
+        C'est tout le vocabulaire de l'ingénieur en télécommunications !
+      </p>
+      <a href="index.html?badge=signal" class="bouton"
+         style="display:inline-block;text-decoration:none;font-size:1.2rem;padding:16px 32px;">
+        J'ai tout compris, récupérer mon badge ! 🏅
+      </a>
     </section>
-
     <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
   </main>
 
@@ -641,19 +696,6 @@
   let ciblePeriode = 1.5;
 
   window._periodeGagnee       = false;
-  window._boutonsSectreCliques = new Set();
-
-  function verifierVictoireOndes() {
-    if (window._periodeGagnee && window._boutonsSectreCliques.size >= 3 && !window._badgeSignalObtenu) {
-      window._badgeSignalObtenu = true;
-      validerModule('signal');
-      var bs = document.getElementById('badge-obtenu-section');
-      if (bs) {
-        bs.classList.remove('cache');
-        setTimeout(() => bs.scrollIntoView({ behavior: 'smooth', block: 'center' }), 600);
-      }
-    }
-  }
 
   function genererNouvellePeriode() {
     const opts = [0.5, 1.0, 1.5, 2.0, 2.5];
@@ -661,6 +703,7 @@
     ciblePeriodeTexte.textContent = ciblePeriode.toFixed(1);
     msgVictoirePer.classList.remove('visible');
     window._periodeGagnee = false;
+    ciblePeriodeTexte.classList.remove('arrete');
   }
 
   /* Dessine une accolade horizontale sous le premier cycle */
@@ -720,7 +763,7 @@
       periodeGagneeVal.textContent = userT.toFixed(1);
       if (!window._periodeGagnee) {
         window._periodeGagnee = true;
-        verifierVictoireOndes();
+        ciblePeriodeTexte.classList.add('arrete');
       }
     } else {
       msgVictoirePer.classList.remove('visible');
@@ -872,14 +915,27 @@
       var a = sliders.map(function (s) { return parseFloat(s.value); });
       valeurs.forEach(function (v, i) { v.textContent = a[i].toFixed(1); });
 
-      /* --- Signal dans le temps (somme des harmoniques) --- */
+      /* --- Signal dans le temps --- */
       var W = cT.width, H = cT.height;
       xT.clearRect(0, 0, W, H);
       axe(xT, W, H);
+
+      /* Cible créneau en pointillés gris */
+      xT.save(); xT.beginPath(); xT.strokeStyle = '#cbd5e1'; xT.lineWidth = 2; xT.setLineDash([6, 4]);
+      for (var xc = 0; xc < W; xc++) {
+        var tc = (xc / W) * 2;
+        var pyc = H / 2 - ((tc % 1 < 0.5) ? 1 : -1) * (H / 2 - 14);
+        xc === 0 ? xT.moveTo(xc, pyc) : xT.lineTo(xc, pyc);
+      }
+      xT.stroke(); xT.setLineDash([]); xT.restore();
+
+      /* Signal (vert si victoire, violet sinon) */
+      var victoire = a[0] > 0.8 && a[1] < 0.1 && a[2] > 0.2 && a[2] < 0.5 && a[3] < 0.1;
       var maxA = a.reduce(function (s, v) { return s + v; }, 0) || 1;
-      xT.save(); xT.beginPath(); xT.strokeStyle = '#7c3aed'; xT.lineWidth = 3;
+      xT.save(); xT.beginPath();
+      xT.strokeStyle = victoire ? '#0e9f6e' : '#7c3aed'; xT.lineWidth = 3;
       for (var x = 0; x < W; x++) {
-        var t = (x / W) * 2; // 2 périodes de la fondamentale à l'écran
+        var t = (x / W) * 2;
         var y = 0;
         for (var k = 0; k < 4; k++) { y += a[k] * Math.sin(2 * Math.PI * (k + 1) * t); }
         var py = H / 2 - (y / maxA) * (H / 2 - 12);
@@ -906,13 +962,34 @@
       }
       xS.textAlign = 'left';
 
+      /* Message + victoire */
       var actives = a.filter(function (v) { return v > 0.05; }).length;
-      if (actives <= 1) msg.textContent = 'Une seule fréquence → un sinus pur, une seule barre.';
-      else msg.textContent = actives + ' fréquences mélangées → un signal plus riche, ' + actives + ' barres dans le spectre.';
+      if (victoire) {
+        msg.textContent = '🟢 Signal numérique détecté ! La courbe colle à la cible.';
+        msg.style.color = 'var(--signal-fonce)';
+      } else if (actives <= 1) {
+        msg.textContent = 'Une seule fréquence → un sinus pur, une seule barre.';
+        msg.style.color = 'var(--encre-doux)';
+      } else {
+        msg.textContent = actives + ' fréquences mélangées → un signal plus riche, ' + actives + ' barres dans le spectre.';
+        msg.style.color = 'var(--encre-doux)';
+      }
+      var msgV = document.getElementById('msg-victoire-synth');
+      if (msgV) { msgV.className = victoire ? 'visible' : ''; }
     }
 
     sliders.forEach(function (s) { s.addEventListener('input', dessiner); });
     dessiner();
+
+    /* Bouton indice */
+    var btnIndice = document.getElementById('btn-indice-synth');
+    if (btnIndice) {
+      btnIndice.addEventListener('click', function () {
+        var indice = document.getElementById('indice-synth');
+        if (indice) indice.classList.remove('cache');
+        btnIndice.classList.add('cache');
+      });
+    }
   }());
 
   /* ════════════════════════════════════

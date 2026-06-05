@@ -21,6 +21,7 @@
          C'est exactement ce qu'on fait en télécommunications.</p>
     </header>
 
+    <!-- ── Tronc commun (quête principale) ── -->
     <div class="etapes" style="flex-direction:column; gap:14px;">
       <div class="pastille pastille-expandable" id="lien-signal">
         <div class="pastille-tete">
@@ -68,11 +69,6 @@
         </div>
       </div>
 
-      <a class="pastille" id="lien-spectro" href="spectro.html" style="text-decoration:none;">
-        <span class="num" id="badge-curieux">★</span>
-        <span><strong>La photo du son</strong> <em>(bonus)</em> — Lis un spectrogramme et traque le parasite caché.</span>
-      </a>
-
       <div class="pastille pastille-expandable" id="lien-pathologies">
         <div class="pastille-tete">
           <span class="num" id="badge-pathologies">★</span>
@@ -88,11 +84,6 @@
         </div>
       </div>
 
-      <a class="pastille" id="lien-reels" href="reels.html" style="text-decoration:none;">
-        <span class="num" id="badge-reels">★</span>
-        <span><strong>Retour au réel</strong> <em>(bonus)</em> — Observe des vrais signaux cardiaques et repère ce qui cloche.</span>
-      </a>
-
       <div class="pastille pastille-expandable" id="lien-metiers">
         <div class="pastille-tete">
           <span class="num" id="badge-metiers">★</span>
@@ -106,6 +97,20 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ── Missions secondaires (bonus) ── -->
+    <h3 style="font-family:var(--titre); font-weight:800; font-size:1.05rem; color:var(--encre-doux);
+               margin:32px 0 10px; letter-spacing:-0.01em;">🌟 Missions Secondaires <em style="font-weight:400;">(Bonus)</em></h3>
+    <div class="etapes bonus" style="flex-direction:column; gap:10px;">
+      <a class="pastille" id="lien-spectro" href="spectro.html" style="text-decoration:none;">
+        <span class="num" id="badge-curieux">★</span>
+        <span><strong>La photo du son</strong> — Lis un spectrogramme et traque le parasite caché.</span>
+      </a>
+      <a class="pastille" id="lien-matlab" href="reels.html" style="text-decoration:none;">
+        <span class="num" id="badge-matlab">★</span>
+        <span><strong>Dans les coulisses de Matlab</strong> — Explore de vrais signaux cardiaques issus d'un vrai capteur.</span>
+      </a>
     </div>
 
     <!-- =================== SECTION PROGRESSION =================== -->
@@ -142,20 +147,15 @@
      INDEX — Affichage dynamique de la progression
      ===================================================================== */
 
-  /** Ordre d'affichage des badges sur l'index */
-  /* Badge bonus de la page "Retour au réel" — défini ici pour ne pas modifier progression.js */
-  if (typeof BADGES !== "undefined" && !BADGES.reels) {
-    BADGES.reels = { nom: "Lecteur de vrais cœurs", icone: "💓" };
-  }
-
+  /** Ordre d'affichage des badges sur l'index (tronc commun d'abord, bonus ensuite) */
   var ORDRE_MODULES = [
     { id: "signal",      module: "C'est quoi un signal ?" },
     { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
     { id: "labo",        module: "Le Labo ECG" },
-    { id: "curieux",     module: "La photo du son (bonus)", bonus: true },
     { id: "pathologies", module: "Détective des pathologies" },
-    { id: "reels",       module: "Retour au réel (bonus)", bonus: true },
-    { id: "metiers",     module: "Les métiers de l'ingénieur" }
+    { id: "metiers",     module: "Les métiers de l'ingénieur" },
+    { id: "curieux",     module: "La photo du son",                bonus: true },
+    { id: "matlab",      module: "Dans les coulisses de Matlab",   bonus: true }
   ];
 
   /** Construit la grille de badges */
@@ -215,9 +215,9 @@
       var numCurieux = document.getElementById("badge-curieux");
       if (numCurieux) { numCurieux.style.background = "var(--attention)"; numCurieux.style.color = "#fff"; }
     }
-    if (moduleValide("reels")) {
-      var numReels = document.getElementById("badge-reels");
-      if (numReels) { numReels.style.background = "var(--attention)"; numReels.style.color = "#fff"; }
+    if (moduleValide("matlab")) {
+      var numMatlab = document.getElementById("badge-matlab");
+      if (numMatlab) { numMatlab.style.background = "var(--attention)"; numMatlab.style.color = "#fff"; }
     }
     if (moduleValide("pathologies")) {
       var numPatho = document.getElementById("badge-pathologies");
