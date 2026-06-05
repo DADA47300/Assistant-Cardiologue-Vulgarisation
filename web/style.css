@@ -134,6 +134,15 @@ body {
 .etapes .pastille.active .num { background: var(--signal); color: #fff; }
 .etapes .pastille.faite .num { background: var(--encre); color: #fff; }
 
+/* Effet de survol pour les pastilles qui sont des liens directs (Modules Bonus) */
+a.pastille {
+  transition: background 0.15s ease;
+}
+
+a.pastille:hover {
+  background: #f3f9f6;
+}
+
 /* --- Cartes --- */
 .carte {
   background: var(--carte); border: 1px solid var(--bord);

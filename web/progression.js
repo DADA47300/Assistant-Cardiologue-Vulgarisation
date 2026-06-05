@@ -15,8 +15,8 @@ var BADGES = {
   labo:        { nom: "Technicien de Laboratoire",     icone: "🔬" },
   pathologies: { nom: "Expert Diagnostic",             icone: "🩺" },
   metiers:     { nom: "Ingénieur Polyvalent",          icone: "🛠️" },
-  curieux:     { nom: "Esprit Curieux",                icone: "📸" },
-  matlab:      { nom: "Dans les coulisses de Matlab",  icone: "📊" }
+  curieux:     { nom: "Détective du Son",   icone: "🎧" },
+  matlab:      { nom: "Expert Matlab",      icone: "💻" }
 };
 
 /** Badges obligatoires pour le diplôme (les badges bonus n'en font pas partie) */
