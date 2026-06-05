@@ -22,15 +22,35 @@
     </header>
 
     <div class="etapes" style="flex-direction:column; gap:14px;">
-      <a class="pastille" id="lien-signal" href="signal.html" style="text-decoration:none;">
-        <span class="num" id="badge-signal">★</span>
-        <span><strong>C'est quoi un signal ?</strong> — Joue avec l'amplitude, la fréquence et la période.</span>
-      </a>
+      <div class="pastille pastille-expandable" id="lien-signal">
+        <div class="pastille-tete">
+          <span class="num" id="badge-signal">★</span>
+          <span class="pastille-texte"><strong>C'est quoi un signal ?</strong> — Joue avec l'amplitude, la fréquence et la période.</span>
+          <span class="pastille-chevron">▾</span>
+        </div>
+        <div class="sous-liste" id="sous-liste-signal">
+          <div class="sous-liste-inner">
+            <a class="sous-item" href="signal.html?etape=0"><span class="si-num">1</span> Le Tinder des signaux</a>
+            <a class="sous-item" href="signal.html?etape=1"><span class="si-num">2</span> Le bac à sable (Amplitude / Fréquence)</a>
+            <a class="sous-item" href="signal.html?etape=2"><span class="si-num">3</span> Le hachoir (Échantillonnage)</a>
+            <a class="sous-item" href="signal.html?etape=3"><span class="si-num">4</span> Le spectre</a>
+          </div>
+        </div>
+      </div>
 
-      <a class="pastille" id="lien-coeur" href="coeur.html" style="text-decoration:none;">
-        <span class="num" id="badge-coeur-ecg">★</span>
-        <span><strong>Le cœur et l'ECG</strong> — Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.</span>
-      </a>
+      <div class="pastille pastille-expandable" id="lien-coeur">
+        <div class="pastille-tete">
+          <span class="num" id="badge-coeur-ecg">★</span>
+          <span class="pastille-texte"><strong>Le cœur et l'ECG</strong> — Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.</span>
+          <span class="pastille-chevron">▾</span>
+        </div>
+        <div class="sous-liste" id="sous-liste-coeur">
+          <div class="sous-liste-inner">
+            <a class="sous-item" href="coeur.html?etape=0"><span class="si-num">1</span> L'anatomie du cœur</a>
+            <a class="sous-item" href="coeur.html?etape=1"><span class="si-num">2</span> Les ondes P-QRS-T</a>
+          </div>
+        </div>
+      </div>
 
       <div class="pastille pastille-expandable" id="lien-labo">
         <div class="pastille-tete">
@@ -53,10 +73,34 @@
         <span><strong>La photo du son</strong> <em>(bonus)</em> — Lis un spectrogramme et traque le parasite caché.</span>
       </a>
 
-      <a class="pastille" id="lien-pathologies" href="pathologies.html" style="text-decoration:none;">
-        <span class="num" id="badge-pathologies">★</span>
-        <span><strong>Détective des pathologies</strong> — Diagnostique tes patients et affronte le patient mystère.</span>
-      </a>
+      <div class="pastille pastille-expandable" id="lien-pathologies">
+        <div class="pastille-tete">
+          <span class="num" id="badge-pathologies">★</span>
+          <span class="pastille-texte"><strong>Détective des pathologies</strong> — Diagnostique tes patients et affronte le patient mystère.</span>
+          <span class="pastille-chevron">▾</span>
+        </div>
+        <div class="sous-liste" id="sous-liste-pathologies">
+          <div class="sous-liste-inner">
+            <a class="sous-item" href="pathologies.html?etape=0"><span class="si-num">1</span> Comprendre</a>
+            <a class="sous-item" href="pathologies.html?etape=1"><span class="si-num">2</span> Diagnostiquer</a>
+            <a class="sous-item" href="pathologies.html?etape=2"><span class="si-num">3</span> Patient Mystère</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="pastille pastille-expandable" id="lien-metiers">
+        <div class="pastille-tete">
+          <span class="num" id="badge-metiers">★</span>
+          <span class="pastille-texte"><strong>Les métiers de l'ingénieur</strong> — Applique tes connaissances au Réseau et au Web.</span>
+          <span class="pastille-chevron">▾</span>
+        </div>
+        <div class="sous-liste" id="sous-liste-metiers">
+          <div class="sous-liste-inner">
+            <a class="sous-item" href="metiers.html?etape=0"><span class="si-num">1</span> Réseaux &amp; Télécoms (Transmettre la donnée)</a>
+            <a class="sous-item" href="metiers.html?etape=1"><span class="si-num">2</span> Informatique (Créer l'interface web)</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- =================== SECTION PROGRESSION =================== -->
@@ -68,7 +112,7 @@
       <div class="barre-progression">
         <div class="barre-progression-remplissage" id="barre-remplissage" style="width: 0%;"></div>
       </div>
-      <div class="progression-compteur" id="progression-compteur">0 / 4 badges</div>
+      <div class="progression-compteur" id="progression-compteur">0 / 5 badges</div>
 
       <!-- Grille des 4 badges -->
       <div class="badges-grille" id="badges-grille">
@@ -99,7 +143,8 @@
     { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
     { id: "labo",        module: "Le Labo ECG" },
     { id: "curieux",     module: "La photo du son (bonus)", bonus: true },
-    { id: "pathologies", module: "Détective des pathologies" }
+    { id: "pathologies", module: "Détective des pathologies" },
+    { id: "metiers",     module: "Les métiers de l'ingénieur" }
   ];
 
   /** Construit la grille de badges */
@@ -163,6 +208,10 @@
       var numPatho = document.getElementById("badge-pathologies");
       if (numPatho) { numPatho.style.background = "var(--signal)"; numPatho.style.color = "#fff"; }
     }
+    if (moduleValide("metiers")) {
+      var numMetiers = document.getElementById("badge-metiers");
+      if (numMetiers) { numMetiers.style.background = "var(--signal)"; numMetiers.style.color = "#fff"; }
+    }
   }
 
   /** Gère l'apparition du bouton diplôme ou de la zone diplôme */
@@ -205,7 +254,7 @@
         '<div class="diplome-carte">' +
           '<span class="diplome-emoji">🎓</span>' +
           '<h2 class="diplome-titre">Félicitations, tu as réussi !</h2>' +
-          '<p class="diplome-sous-titre">Tu as collecté les 4 badges. Tu obtiens officiellement le titre de :</p>' +
+          '<p class="diplome-sous-titre">Tu as collecté les 5 badges. Tu obtiens officiellement le titre de :</p>' +
           '<div class="diplome-cadre">INGÉNIEUR BIOMÉDICAL JUNIOR</div>' +
           '<div class="diplome-action">' +
             '<p>🚀 Appelle un animateur de l\'ENSEIRB-MATMECA pour valider ton diplôme papier !</p>' +
@@ -216,14 +265,22 @@
   }
 
   /* --- Verrouillage des sous-listes ---
-     Tant qu'un module n'est pas terminé (badge non obtenu), seule la 1ʳᵉ
-     sous-étape est accessible : on doit commencer par le début.
-     Une fois le badge obtenu, tout est déverrouillé (révision libre). */
+     La 1re sous-étape de chaque module est toujours accessible.
+     Les suivantes sont verrouillées tant que le badge du module n'est pas obtenu.
+     Une fois le badge obtenu, tout se déverrouille (mode révision). */
   function majSousListes() {
-    var laboFait = (typeof moduleValide === "function") && moduleValide("labo");
-    document.querySelectorAll("#sous-liste-labo .sous-item").forEach(function (a, i) {
-      var verrou = (i > 0) && !laboFait; // i===0 (« Capter ») toujours ouvert
-      a.classList.toggle("verrou", verrou);
+    var regles = [
+      { liste: "signal",      badge: "signal"      },
+      { liste: "coeur",       badge: "coeur_ecg"   },
+      { liste: "labo",        badge: "labo"         },
+      { liste: "pathologies", badge: "pathologies"  },
+      { liste: "metiers",     badge: "metiers"      }
+    ];
+    regles.forEach(function (r) {
+      var fait = (typeof moduleValide === "function") && moduleValide(r.badge);
+      document.querySelectorAll("#sous-liste-" + r.liste + " .sous-item").forEach(function (a, i) {
+        a.classList.toggle("verrou", i > 0 && !fait);
+      });
     });
   }
 

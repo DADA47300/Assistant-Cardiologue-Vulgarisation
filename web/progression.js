@@ -14,11 +14,12 @@ var BADGES = {
   coeur_ecg:   { nom: "Explorateur Anatomique",     icone: "🫀" },
   labo:        { nom: "Technicien de Laboratoire",   icone: "🔬" },
   pathologies: { nom: "Expert Diagnostic",           icone: "🩺" },
+  metiers:     { nom: "Ingénieur Polyvalent",        icone: "🛠️" },
   curieux:     { nom: "Esprit Curieux",              icone: "📸" }
 };
 
 /** Badges obligatoires pour le diplôme (le badge bonus n'en fait pas partie) */
-var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "labo", "pathologies"];
+var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "labo", "pathologies", "metiers"];
 
 /** Badges bonus (récompenses supplémentaires, non requis pour le diplôme) */
 var BADGES_BONUS = ["curieux"];

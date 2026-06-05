@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Les métiers de l'ingénieur — Lis un cœur</title>
+  <meta name="description" content="Simule deux métiers d'ingénieur : transmets un ECG à travers un réseau et construis l'interface du médecin.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Spécifique à metiers.html ──────────────────────────────────── */
+
+    /* --- Segmented controls : qualité réseau --- */
+    .net-seg-ctrl {
+      display: flex; width: 100%; background: #f1f5f9;
+      border-radius: 10px; padding: 4px; gap: 3px;
+    }
+    .net-seg-ctrl .net-seg-btn {
+      -webkit-appearance: none; appearance: none;
+      flex: 1; padding: 10px 8px;
+      background: transparent; border: none; outline: none; box-shadow: none;
+      border-radius: 7px; color: #64748b; font-weight: 600; cursor: pointer;
+      transition: color 0.15s; text-align: center; line-height: 1.3;
+    }
+    .net-seg-ctrl .net-seg-btn:hover  { color: #334155; }
+    .net-seg-ctrl .net-seg-btn:focus  { outline: none; box-shadow: none; }
+    .net-seg-ctrl .net-seg-btn.actif  {
+      background: #ffffff; font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.06);
+    }
+    .net-seg-ctrl .net-seg-btn[data-reseau="edge"].actif  { color: #dc2626; }
+    .net-seg-ctrl .net-seg-btn[data-reseau="4g"].actif    { color: #d97706; }
+    .net-seg-ctrl .net-seg-btn[data-reseau="fibre"].actif { color: #059669; }
+
+    /* --- Badge perte de paquets --- */
+    .perte-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 99px;
+      font-family: var(--titre); font-weight: 700; font-size: 0.88rem;
+      transition: all 0.3s;
+    }
+    .perte-badge.mauvais { background: #fef2f2; color: #dc2626; }
+    .perte-badge.moyen   { background: #fffbeb; color: #d97706; }
+    .perte-badge.parfait { background: #f0fdf4; color: #059669; }
+
+    /* --- Graphe réseau --- */
+    #graphe-reseau { width: 100%; height: 240px; }
+
+    /* ── Étape 2 — Constructeur d'interface ─────────────────────────── */
+
+    /* Grille panneau + écran */
+    .build-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 640px) { .build-container { grid-template-columns: 1fr; } }
+
+    /* Boutons "Build" */
+    .build-panel { display: flex; flex-direction: column; gap: 12px; }
+    .build-btn {
+      -webkit-appearance: none; appearance: none;
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; width: 100%;
+      border: 2px solid #e2e8f0; border-radius: 14px;
+      background: #ffffff; cursor: pointer; text-align: left;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+      transition: border-color .2s, transform .1s, box-shadow .2s, opacity .2s;
+    }
+    .build-btn:hover:not(:disabled) {
+      border-color: var(--signal); transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(14,159,110,.13);
+    }
+    .build-btn:focus { outline: none; }
+    .build-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .build-btn .build-num {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: #f1f5f9; display: flex; align-items: center; justify-content: center;
+      font-family: var(--titre); font-weight: 800; font-size: 1rem; color: var(--encre-doux);
+      transition: background .25s, color .25s;
+    }
+    .build-btn.fait .build-num { background: var(--signal); color: white; }
+    .build-btn.fait              { border-color: rgba(14,159,110,.4); background: #f9fefb; }
+    .build-btn .build-texte { display: flex; flex-direction: column; }
+    .build-btn .build-titre { font-family: var(--titre); font-weight: 700; font-size: 0.95rem; color: var(--encre); }
+    .build-btn .build-sous  { font-size: 0.78rem; color: var(--encre-doux); margin-top: 2px; line-height: 1.3; }
+
+    /* Faux navigateur */
+    .ecran-wrapper {
+      border-radius: 14px; overflow: hidden;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 8px 28px rgba(0,0,0,.08);
+    }
+    .ecran-barre-titre {
+      background: #f1f5f9; padding: 9px 12px;
+      display: flex; align-items: center; gap: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .ecran-barre-titre .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .ecran-url-bar {
+      flex: 1; background: white; border-radius: 5px; padding: 3px 9px;
+      font-size: 0.73rem; color: #94a3b8; font-family: monospace;
+      border: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden;
+    }
+    .ecran-contenu {
+      background: #ffffff; min-height: 260px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Arial, sans-serif; transition: background 0.4s;
+    }
+    .ecran-vide { color: #cbd5e1; font-size: 0.88rem; text-align: center; padding: 40px 20px; }
+
+    /* ── État 1 : HTML brut — imite le rendu navigateur par défaut (aucun style) ── */
+    .ecran-html-brut {
+      padding: 14px; width: 100%; box-sizing: border-box;
+      font-family: 'Times New Roman', Times, serif; font-size: 14px;
+      color: #000; background: #fff; line-height: 1.5;
+    }
+    .ecran-html-brut h1  { font-size: 20px; margin: 0 0 6px; font-weight: bold; }
+    .ecran-html-brut p   { margin: 3px 0; }
+    .ecran-html-brut svg { display: block; fill: #000; }
+    /* Canvas invisible tant que le CSS n'est pas activé */
+    .ecran-html-brut #ecg-canvas-medecin { display: none; }
+
+    /* ── État 2 : CSS appliqué ── */
+    .ecran-contenu.avec-css {
+      background: #fbfaf6;
+      background-image:
+        linear-gradient(rgba(14,159,110,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,159,110,.07) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+    .ecran-contenu.avec-css .ecran-html-brut {
+      background: white; border-radius: 14px;
+      padding: 20px 22px; text-align: center;
+      box-shadow: 0 4px 18px rgba(0,0,0,.09);
+      max-width: 240px; margin: 20px auto;
+      font-family: var(--texte);
+    }
+    /* Canvas visible et dimensionné dès l'état CSS */
+    .ecran-contenu.avec-css .ecran-html-brut #ecg-canvas-medecin {
+      display: block; width: 100%; height: 50px;
+      margin: 8px 0 4px; border-radius: 6px;
+    }
+    .ecran-contenu.avec-css .ecran-html-brut h1 {
+      font-size: 0.88rem; font-weight: 700; color: var(--encre);
+      font-family: var(--titre); margin-bottom: 6px;
+    }
+    .ecran-contenu.avec-css .ecran-html-brut p.age   { font-size: 0.75rem; color: var(--encre-doux); margin: 0 0 8px; }
+    .ecran-contenu.avec-css .ecran-html-brut p.bpm   {
+      font-size: 1.7rem; font-weight: 800; color: var(--battement);
+      font-family: var(--titre); margin: 0 0 6px; line-height: 1;
+    }
+    .ecran-contenu.avec-css .ecran-html-brut p.etat  {
+      font-size: 0.73rem; color: #059669;
+      background: #f0fdf4; border-radius: 99px;
+      padding: 3px 10px; display: inline-block; margin-bottom: 10px;
+    }
+    .ecran-contenu.avec-css .ecran-html-brut svg { fill: var(--battement); margin: 0 auto; }
+
+    /* ── État 3 : JS activé — pulsation ── */
+    @keyframes pulsation-medecin {
+      0%,100% { transform: scale(1); }
+      30%     { transform: scale(1.24); }
+      60%     { transform: scale(1.06); }
+    }
+    .coeur-pulse-medecin { animation: pulsation-medecin 0.83s ease-in-out infinite; }
+
+    /* --- Cartes de présentation des filières --- */
+    .metier-carte {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 16px; border-radius: 12px;
+      border: 1px solid #e2e8f0; background: white;
+      margin-bottom: 12px;
+    }
+    .metier-carte .mc-icone { font-size: 2rem; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+    .metier-carte .mc-corps { display: flex; flex-direction: column; }
+    .metier-carte .mc-titre { font-family: var(--titre); font-weight: 700; font-size: 0.95rem; color: var(--encre); }
+    .metier-carte .mc-desc  { font-size: 0.83rem; color: var(--encre-doux); margin-top: 4px; line-height: 1.45; }
+  </style>
+</head>
+<body>
+
+  <nav class="barre">
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <header class="mission">
+      <h1>🏗️ Les métiers de l'ingénieur</h1>
+      <p>Le signal ECG est capté, nettoyé, analysé. Mais qui le <strong>transmet</strong> au médecin ?
+         Qui <strong>construit</strong> l'interface qu'il voit sur son écran ?
+         Aujourd'hui, tu incarnes deux ingénieurs de l'ENSEIRB-MATMECA.</p>
+    </header>
+
+    <!-- Barre d'étapes -->
+    <div class="etapes" id="etapes">
+      <div class="pastille" data-etape="0"><span class="num">1</span> Réseaux & Télécoms</div>
+      <div class="pastille" data-etape="1"><span class="num">2</span> Génie Logiciel</div>
+    </div>
+
+    <!-- ================================================================
+         ÉTAPE 0 — Ingénieur Réseaux & Télécoms
+         ================================================================ -->
+    <section class="carte etape" id="etape0">
+      <h2>Étape 1 — Ingénieur Réseaux & Télécoms : Transmettre l'ECG</h2>
+      <p class="explication">
+        Le patient est à Bordeaux, le cardiologue est à Paris.
+        Le signal ECG doit traverser le réseau pour arriver intact.
+        <strong>Choisis la qualité du réseau</strong> et observe ce qui arrive au médecin.
+      </p>
+
+      <!-- Sélecteur de réseau -->
+      <div style="margin: 18px 0 12px;">
+        <div class="net-seg-ctrl" id="groupe-reseau">
+          <button class="net-seg-btn actif" data-reseau="edge" type="button">
+            📡 Edge<br><small style="font-weight:400; font-size:0.72rem;">Réseau 2G — Mauvais</small>
+          </button>
+          <button class="net-seg-btn" data-reseau="4g" type="button">
+            📶 4G<br><small style="font-weight:400; font-size:0.72rem;">Mobile — Moyen</small>
+          </button>
+          <button class="net-seg-btn" data-reseau="fibre" type="button">
+            ⚡ Fibre<br><small style="font-weight:400; font-size:0.72rem;">Filaire — Parfait</small>
+          </button>
+        </div>
+      </div>
+
+      <!-- Badge info perte -->
+      <div style="margin-bottom: 14px;">
+        <span class="perte-badge mauvais" id="perte-info">⚠️ 40 % des données perdues</span>
+      </div>
+
+      <!-- Graphe Plotly -->
+      <div id="graphe-reseau"></div>
+
+      <!-- Message contextuel -->
+      <div id="explication-reseau" class="message pas-encore" style="margin-top: 14px;">
+        😱 Des <strong>paquets de données</strong> se sont perdus en route.
+        Le tracé arrive avec des trous — le médecin ne peut pas poser de diagnostic fiable !
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+        <button class="bouton cache" id="btnVersEtape2">Passer au Génie Logiciel →</button>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         ÉTAPE 1 — Ingénieur Génie Logiciel
+         ================================================================ -->
+    <section class="carte etape cache" id="etape1">
+      <h2>Étape 2 — Ingénieur Génie Logiciel : Construire l'interface</h2>
+      <p class="explication">
+        Le signal arrive intact, bravo ! Maintenant il faut créer le <strong>site web</strong>
+        que le médecin utilisera pour le lire.
+        Construis l'interface étape par étape, exactement comme un vrai développeur.
+      </p>
+
+      <div class="build-container" style="margin-top: 20px;">
+
+        <!-- Panneau de contrôle -->
+        <div class="build-panel">
+          <button class="build-btn" id="btn-html" type="button">
+            <span class="build-num">1</span>
+            <span class="build-texte">
+              <span class="build-titre">🧱 Ajouter le HTML</span>
+              <span class="build-sous">Pose le squelette : texte brut, structure sans aucun style</span>
+            </span>
+          </button>
+          <button class="build-btn" id="btn-css" type="button" disabled>
+            <span class="build-num">2</span>
+            <span class="build-texte">
+              <span class="build-titre">🎨 Appliquer le CSS</span>
+              <span class="build-sous">Ajoute couleurs, ombres et le fond quadrillé papier ECG</span>
+            </span>
+          </button>
+          <button class="build-btn" id="btn-js" type="button" disabled>
+            <span class="build-num">3</span>
+            <span class="build-texte">
+              <span class="build-titre">⚡ Activer le JavaScript</span>
+              <span class="build-sous">Donne de la vie à la page — le cœur se met à battre !</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Faux écran du médecin -->
+        <div class="ecran-wrapper">
+          <div class="ecran-barre-titre">
+            <span class="dot" style="background:#ef4444;"></span>
+            <span class="dot" style="background:#f59e0b;"></span>
+            <span class="dot" style="background:#22c55e;"></span>
+            <span class="ecran-url-bar">medecin.hopital-bordeaux.fr/patient</span>
+          </div>
+          <div class="ecran-contenu" id="ecran-medecin">
+            <div class="ecran-vide" id="ecran-vide">
+              <span style="font-size:2.5rem; display:block; margin-bottom:10px;">🖥️</span>
+              Page vide…<br>En attente du code HTML !
+            </div>
+            <div class="ecran-html-brut cache" id="ecran-contenu-html">
+              <h1>Patient 1 — M. Dupont</h1>
+              <p>Âge : 62 ans</p>
+              <p class="bpm">BPM: <span id="bpm-valeur">--</span></p>
+              <p class="etat">✅ Rythme normal</p>
+              <canvas id="ecg-canvas-medecin" width="220" height="50"></canvas>
+              <svg id="coeur-svg-medecin"
+                   viewBox="0 0 100 88" width="72" height="63"
+                   xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 82 C28 66 4 50 4 27 C4 13 15 4 27 4 C37 4 45 10 50 19 C55 10 63 4 73 4 C85 4 96 13 96 27 C96 50 72 66 50 82Z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explication contextuelle des étapes build -->
+      <div id="explication-build" style="margin-top: 18px; display: none;"></div>
+
+      <!-- Zone finale (injectée par JS après les 3 étapes) -->
+      <div id="zone-fin-metiers" class="cache"></div>
+    </section>
+
+    <!-- ================================================================
+         BILAN FINAL
+         ================================================================ -->
+    <section class="carte cache" id="badge-metiers-section"
+             style="text-align:center; border: 2px solid var(--signal);
+                    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);">
+      <div style="font-size:2.8rem; margin-bottom:10px;">🏗️💻</div>
+      <h2 style="color:var(--signal-fonce); margin:0 0 10px;">Mission accomplie, ingénieur !</h2>
+      <p style="color:var(--encre-doux); max-width:500px; margin:0 auto 24px; line-height:1.6;">
+        Tu viens de simuler deux métiers réels pratiqués à l'ENSEIRB-MATMECA.
+        Les mêmes compétences qu'on t'a montrées aujourd'hui sont utilisées chaque jour
+        dans les hôpitaux connectés, les ambulances, les montres médicales…
+      </p>
+
+      <!-- Cartes filières -->
+      <div style="max-width:520px; margin: 0 auto 28px; text-align:left;">
+        <div class="metier-carte">
+          <span class="mc-icone">📡</span>
+          <div class="mc-corps">
+            <span class="mc-titre">Réseaux & Télécommunications</span>
+            <span class="mc-desc">
+              Concevoir les protocoles qui garantissent qu'aucun paquet de données médicales
+              ne se perd, même en mobilité, en zone rurale ou par satellite.
+            </span>
+          </div>
+        </div>
+        <div class="metier-carte">
+          <span class="mc-icone">💻</span>
+          <div class="mc-corps">
+            <span class="mc-titre">Informatique & Génie Logiciel</span>
+            <span class="mc-desc">
+              Construire les interfaces, les algorithmes et les applications qui transforment
+              un flux de données brutes en outil utilisable au quotidien par un médecin.
+            </span>
+          </div>
+        </div>
+        <div class="metier-carte">
+          <span class="mc-icone">🩺</span>
+          <div class="mc-corps">
+            <span class="mc-titre">Et toi dans tout ça ?</span>
+            <span class="mc-desc">
+              En choisissant une filière à l'ENSEIRB-MATMECA, tu peux travailler à la croisée
+              de la tech et du médical — un secteur en pleine croissance où chaque ligne de code
+              peut réellement sauver des vies.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <a href="index.html?badge=metiers" class="bouton" style="display:inline-block; text-decoration:none;">
+        ← Retour à l'accueil &amp; obtenir mon badge
+      </a>
+    </section>
+
+    <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <script src="progression.js"></script>
+  <script src="lib/plotly-basic.min.js"></script>
+  <script src="signaux.js"></script>
+
+  <script>
+  /* =====================================================================
+     MÉTIERS — Script principal
+     ===================================================================== */
+
+  /* ================================================================
+     0) Constantes & état
+     ================================================================ */
+  var FE    = 200;
+  var DUREE = 8;   // secondes de signal affiché
+
+  var etapeActuelle = 0;
+  var etapeMax      = 0;
+
+  /* ================================================================
+     1) Navigation entre étapes (verrouillage linéaire)
+     ================================================================ */
+  function majPastilles() {
+    document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+      var e = Number(p.dataset.etape);
+      p.classList.toggle("active", e === etapeActuelle);
+      p.classList.toggle("verrou", e > etapeMax);
+      p.classList.toggle("faite",  e < etapeMax && e !== etapeActuelle);
+    });
+  }
+
+  function allerEtape(n) {
+    if (n > etapeMax) return;
+    etapeActuelle = n;
+    [0, 1].forEach(function (i) {
+      var sec = document.getElementById("etape" + i);
+      if (sec) sec.classList.toggle("cache", i !== n);
+    });
+    document.getElementById("badge-metiers-section").classList.add("cache");
+    majPastilles();
+  }
+
+  document.querySelectorAll("#etapes .pastille").forEach(function (p) {
+    p.addEventListener("click", function () {
+      var n = Number(p.dataset.etape);
+      if (n <= etapeMax) allerEtape(n);
+    });
+  });
+
+  /* ================================================================
+     2) Étape 1 — Réseaux & Télécoms : simulation de perte de paquets
+     ──────────────────────────────────────────────────────────────────
+     On génère l'ECG une seule fois (graine fixe → reproductible).
+     À chaque changement de réseau, on applique une perte aléatoire
+     en remplaçant des valeurs par null. Plotly connectgaps:false
+     transforme ces null en vrai trous dans le tracé.
+     ================================================================ */
+  var TAUX_PERTE = { edge: 0.40, "4g": 0.15, fibre: 0.00 };
+
+  var ecgBase = genererECG({ bpm: 72, duree: DUREE, fe: FE, graine: 42 });
+
+  var LAYOUT_RESEAU = {
+    margin:        { l: 20, r: 14, t: 8, b: 36 },
+    xaxis:         { title: "temps (s)", range: [0, DUREE], fixedrange: true,
+                     gridcolor: "#eef2ef", zeroline: false },
+    yaxis:         { fixedrange: true, showticklabels: false,
+                     gridcolor: "#f3f6f4", zeroline: false },
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor:  "rgba(0,0,0,0)",
+    font:          { family: "Atkinson, sans-serif", color: "#4b6058", size: 12 },
+    showlegend:    false,
+    dragmode:      false
+  };
+  var CFG_RESEAU = { displayModeBar: false, responsive: true };
+
+  function appliquerPertePaquets(yOriginal, taux) {
+    return yOriginal.map(function (v) {
+      return Math.random() < taux ? null : v;
+    });
+  }
+
+  function tracerSignalReseau(reseau) {
+    var taux    = TAUX_PERTE[reseau];
+    var yTrace  = appliquerPertePaquets(ecgBase.y, taux);
+    var couleur = reseau === "edge" ? "#ef4444" : (reseau === "4g" ? "#f59e0b" : "#0e9f6e");
+
+    Plotly.react("graphe-reseau", [{
+      x: ecgBase.t, y: yTrace,
+      type: "scatter", mode: "lines",
+      connectgaps: false,
+      line: { color: couleur, width: 1.8 },
+      hoverinfo: "none"
+    }], LAYOUT_RESEAU, CFG_RESEAU);
+
+    var badge  = document.getElementById("perte-info");
+    var expl   = document.getElementById("explication-reseau");
+    var btnSuiv = document.getElementById("btnVersEtape2");
+
+    if (reseau === "edge") {
+      badge.textContent = "⚠️ 40 % des données perdues";
+      badge.className   = "perte-badge mauvais";
+      expl.innerHTML    = "😱 Des <strong>paquets de données</strong> se sont perdus en route. Le tracé arrive avec des trous — impossible de poser un diagnostic fiable !";
+      expl.className    = "message pas-encore";
+      btnSuiv.classList.add("cache");
+    } else if (reseau === "4g") {
+      badge.textContent = "⚠️ 15 % des données perdues";
+      badge.className   = "perte-badge moyen";
+      expl.innerHTML    = "🧐 Mieux ! Il reste encore quelques trous. En situation critique, même 5 % de perte peut induire un mauvais diagnostic.";
+      expl.className    = "message pas-encore";
+      btnSuiv.classList.add("cache");
+    } else {
+      badge.textContent = "✅ 0 % de perte — Signal parfait !";
+      badge.className   = "perte-badge parfait";
+      expl.innerHTML    = "🎉 Le signal arrive <strong>parfaitement intact</strong>. Le médecin peut analyser chaque battement sans ambiguïté. C'est le boulot de l'ingénieur réseaux : garantir zéro perte.";
+      expl.className    = "message bon";
+      btnSuiv.classList.remove("cache");
+    }
+  }
+
+  document.querySelectorAll("#groupe-reseau .net-seg-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll("#groupe-reseau .net-seg-btn").forEach(function (b) {
+        b.classList.remove("actif");
+      });
+      btn.classList.add("actif");
+      tracerSignalReseau(btn.dataset.reseau);
+    });
+  });
+
+  document.getElementById("btnVersEtape2").addEventListener("click", function () {
+    etapeMax = Math.max(etapeMax, 1);
+    allerEtape(1);
+  });
+
+  /* ================================================================
+     3) Étape 2 — Génie Logiciel : construction progressive de l'UI
+     ──────────────────────────────────────────────────────────────────
+     Chaque clic déverrouille le suivant et modifie l'écran de
+     prévisualisation par ajout de classes CSS, sans jamais recréer
+     le DOM (pattern progressif / addatif).
+     ================================================================ */
+  var buildEtat  = { html: false, css: false, js: false };
+
+  /* ── Canvas ECG mini pour la prévisualisation ─────────────────── */
+  var _ecgAnimId = null;
+  var _ecgOffset = 0;
+
+  function dessinerLignePlate() {
+    var canvas = document.getElementById("ecg-canvas-medecin");
+    if (!canvas) return;
+    if (canvas.offsetWidth > 0) canvas.width = canvas.offsetWidth;
+    canvas.height = 50;
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2);
+    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.stroke();
+  }
+
+  function demarrerECGCanvas() {
+    if (_ecgAnimId) return;
+    var canvas = document.getElementById("ecg-canvas-medecin");
+    if (!canvas) return;
+    if (canvas.offsetWidth > 0) canvas.width = canvas.offsetWidth;
+    canvas.height = 50;
+    var ctx     = canvas.getContext("2d");
+    var total   = ecgBase.y.length;
+    var VISIBLE = Math.round(FE * 1.5); // 1,5 s de signal visible
+
+    function frame() {
+      var w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = "#0e9f6e";
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      for (var i = 0; i < w; i++) {
+        var idx = (_ecgOffset + Math.floor(i * VISIBLE / w)) % total;
+        var v   = ecgBase.y[idx];
+        var y   = h / 2 - v * (h * 0.4);
+        if (i === 0) ctx.moveTo(i, y);
+        else         ctx.lineTo(i, y);
+      }
+      ctx.stroke();
+      _ecgOffset = (_ecgOffset + 3) % total;
+      _ecgAnimId = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  function animerBPM() {
+    var span = document.getElementById("bpm-valeur");
+    if (!span) return;
+    var t0 = performance.now();
+    var DUR = 1400;
+    function step(now) {
+      var p = Math.min((now - t0) / DUR, 1);
+      p = 1 - Math.pow(1 - p, 3); // ease-out cubique
+      span.textContent = Math.round(p * 72);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var MESSAGES_BUILD = {
+    html: "🧱 <strong>HTML ajouté !</strong> Tu vois le contenu brut : du texte empilé, le cœur en noir et blanc, aucun style. Le HTML c'est le squelette — le <em>sens</em> sans l'apparence.",
+    css:  "🎨 <strong>CSS appliqué !</strong> Couleurs, ombres, fond quadrillé… tout ça c'est du CSS. Sans lui, le web ressemblerait à un document Word des années 90.",
+    js:   "⚡ <strong>JavaScript activé !</strong> Le cœur bat ! JS donne de la <em>vie</em> aux pages web : il exécute des actions, réagit aux événements et anime les éléments en temps réel."
+  };
+
+  function mettreAJourBuild(etape) {
+    var ecranDiv = document.getElementById("ecran-medecin");
+    var vide     = document.getElementById("ecran-vide");
+    var htmlDiv  = document.getElementById("ecran-contenu-html");
+    var coeur    = document.getElementById("coeur-svg-medecin");
+    var expl     = document.getElementById("explication-build");
+    var btnCSS   = document.getElementById("btn-css");
+    var btnJS    = document.getElementById("btn-js");
+    var btnHTML  = document.getElementById("btn-html");
+
+    if (etape === "html" && !buildEtat.html) {
+      buildEtat.html = true;
+      vide.classList.add("cache");
+      htmlDiv.classList.remove("cache");
+      btnHTML.classList.add("fait");
+      btnCSS.disabled = false;
+      expl.style.display = "block";
+      expl.innerHTML  = MESSAGES_BUILD.html;
+      expl.className  = "message pas-encore";
+    }
+
+    if (etape === "css" && !buildEtat.css && buildEtat.html) {
+      buildEtat.css = true;
+      ecranDiv.classList.add("avec-css");
+      btnCSS.classList.add("fait");
+      btnJS.disabled  = false;
+      expl.innerHTML  = MESSAGES_BUILD.css;
+      expl.className  = "message pas-encore";
+      // Dessiner la ligne plate après que le navigateur a rendu le canvas visible
+      requestAnimationFrame(function () { requestAnimationFrame(dessinerLignePlate); });
+    }
+
+    if (etape === "js" && !buildEtat.js && buildEtat.css) {
+      buildEtat.js = true;
+      validerModule("metiers");
+      if (coeur) coeur.classList.add("coeur-pulse-medecin");
+      demarrerECGCanvas();
+      animerBPM();
+      btnJS.classList.add("fait");
+      expl.innerHTML  = MESSAGES_BUILD.js;
+      expl.className  = "message bon";
+      setTimeout(afficherFinMetiers, 700);
+    }
+  }
+
+  function afficherFinMetiers() {
+    var zone = document.getElementById("zone-fin-metiers");
+    zone.classList.remove("cache");
+    zone.innerHTML =
+      '<div class="message bon" style="margin-bottom: 16px;">' +
+        '🎉 <strong>Interface complète !</strong> Tu viens de reproduire en trois clics ' +
+        'ce que font les ingénieurs logiciels au quotidien. HTML + CSS + JS = le trio magique du web.' +
+      '</div>' +
+      '<div style="display:flex; justify-content:flex-end;">' +
+        '<button class="bouton" id="btn-voir-bilan">Voir mon bilan d\'ingénieur →</button>' +
+      '</div>';
+
+    document.getElementById("btn-voir-bilan").addEventListener("click", afficherBadgeMetiers);
+    zone.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function afficherBadgeMetiers() {
+    var section = document.getElementById("badge-metiers-section");
+    section.classList.remove("cache");
+    setTimeout(function () {
+      section.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }
+
+  document.getElementById("btn-html").addEventListener("click", function () { mettreAJourBuild("html"); });
+  document.getElementById("btn-css").addEventListener("click",  function () { mettreAJourBuild("css");  });
+  document.getElementById("btn-js").addEventListener("click",   function () { mettreAJourBuild("js");   });
+
+  /* ================================================================
+     4) Initialisation
+     ================================================================ */
+  majPastilles();
+  tracerSignalReseau("edge");
+
+  </script>
+</body>
+</html>
