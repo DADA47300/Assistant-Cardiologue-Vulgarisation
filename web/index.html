@@ -15,6 +15,8 @@
 
   <main class="page">
     <header class="mission">
+      <span class="mission-trace" aria-hidden="true"></span>
+      <a class="mission-progress" id="mission-progress" href="#section-progression">🏅 0 / 5 badges</a>
       <h1>❤️ Deviens ingénieur biomédical le temps d'un atelier</h1>
       <p>Aujourd'hui, ta mission : construire l'outil qui lit un cœur et détecte une maladie.
          Tout ce qu'on découvre ici — les signaux, le bruit, les filtres — sert à ça.
@@ -22,13 +24,17 @@
     </header>
 
     <!-- ── Tronc commun (quête principale) ── -->
-    <div class="etapes" style="flex-direction:column; gap:14px;">
-      <div class="pastille pastille-expandable" id="lien-signal">
-        <div class="pastille-tete">
-          <span class="num" id="badge-signal">★</span>
+    <h3 class="section-titre">🎯 Ta quête principale</h3>
+    <div class="etapes etapes-colonne parcours">
+      <div class="pastille pastille-expandable module-signal" id="lien-signal">
+        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-signal">
+          <span class="module-node">
+            <span class="module-emoji" aria-hidden="true">🌊</span>
+            <span class="num" id="badge-signal">1</span>
+          </span>
           <span class="pastille-texte"><strong>C'est quoi un signal ?</strong> — Joue avec l'amplitude, la fréquence et la période.</span>
-          <span class="pastille-chevron">▾</span>
-        </div>
+          <span class="pastille-chevron" aria-hidden="true">▾</span>
+        </button>
         <div class="sous-liste" id="sous-liste-signal">
           <div class="sous-liste-inner">
             <a class="sous-item" href="signal.html?etape=0"><span class="si-num">1</span> Le Tinder des signaux</a>
@@ -39,12 +45,15 @@
         </div>
       </div>
 
-      <div class="pastille pastille-expandable" id="lien-coeur">
-        <div class="pastille-tete">
-          <span class="num" id="badge-coeur-ecg">★</span>
+      <div class="pastille pastille-expandable module-coeur" id="lien-coeur">
+        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-coeur">
+          <span class="module-node">
+            <span class="module-emoji" aria-hidden="true">🫀</span>
+            <span class="num" id="badge-coeur-ecg">2</span>
+          </span>
           <span class="pastille-texte"><strong>Le cœur et l'ECG</strong> — Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.</span>
-          <span class="pastille-chevron">▾</span>
-        </div>
+          <span class="pastille-chevron" aria-hidden="true">▾</span>
+        </button>
         <div class="sous-liste" id="sous-liste-coeur">
           <div class="sous-liste-inner">
             <a class="sous-item" href="coeur.html?etape=0"><span class="si-num">1</span> L'anatomie du cœur</a>
@@ -53,12 +62,15 @@
         </div>
       </div>
 
-      <div class="pastille pastille-expandable" id="lien-labo">
-        <div class="pastille-tete">
-          <span class="num" id="badge-labo">★</span>
+      <div class="pastille pastille-expandable module-labo" id="lien-labo">
+        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-labo">
+          <span class="module-node">
+            <span class="module-emoji" aria-hidden="true">🔬</span>
+            <span class="num" id="badge-labo">3</span>
+          </span>
           <span class="pastille-texte"><strong>Le Labo ECG</strong> — Capter, nettoyer, zoomer, puis repérer les battements.</span>
-          <span class="pastille-chevron">▾</span>
-        </div>
+          <span class="pastille-chevron" aria-hidden="true">▾</span>
+        </button>
         <div class="sous-liste" id="sous-liste-labo">
           <div class="sous-liste-inner">
             <a class="sous-item" href="labo.html?etape=0"><span class="si-num">1</span> Capter le signal</a>
@@ -69,12 +81,15 @@
         </div>
       </div>
 
-      <div class="pastille pastille-expandable" id="lien-pathologies">
-        <div class="pastille-tete">
-          <span class="num" id="badge-pathologies">★</span>
+      <div class="pastille pastille-expandable module-pathologies" id="lien-pathologies">
+        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-pathologies">
+          <span class="module-node">
+            <span class="module-emoji" aria-hidden="true">🩺</span>
+            <span class="num" id="badge-pathologies">4</span>
+          </span>
           <span class="pastille-texte"><strong>Détective des pathologies</strong> — Diagnostique tes patients et affronte le patient mystère.</span>
-          <span class="pastille-chevron">▾</span>
-        </div>
+          <span class="pastille-chevron" aria-hidden="true">▾</span>
+        </button>
         <div class="sous-liste" id="sous-liste-pathologies">
           <div class="sous-liste-inner">
             <a class="sous-item" href="pathologies.html?etape=0"><span class="si-num">1</span> Comprendre</a>
@@ -84,12 +99,15 @@
         </div>
       </div>
 
-      <div class="pastille pastille-expandable" id="lien-metiers">
-        <div class="pastille-tete">
-          <span class="num" id="badge-metiers">★</span>
+      <div class="pastille pastille-expandable module-metiers" id="lien-metiers">
+        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-metiers">
+          <span class="module-node">
+            <span class="module-emoji" aria-hidden="true">🛠️</span>
+            <span class="num" id="badge-metiers">5</span>
+          </span>
           <span class="pastille-texte"><strong>Les métiers de l'ingénieur</strong> — Applique tes connaissances au Réseau et au Web.</span>
-          <span class="pastille-chevron">▾</span>
-        </div>
+          <span class="pastille-chevron" aria-hidden="true">▾</span>
+        </button>
         <div class="sous-liste" id="sous-liste-metiers">
           <div class="sous-liste-inner">
             <a class="sous-item" href="metiers.html?etape=0"><span class="si-num">1</span> Réseaux &amp; Télécoms (Transmettre la donnée)</a>
@@ -100,24 +118,35 @@
     </div>
 
     <!-- ── Missions secondaires (bonus) ── -->
-    <h3 style="font-family:var(--titre); font-weight:800; font-size:1.05rem; color:var(--encre-doux);
-               margin:32px 0 10px; letter-spacing:-0.01em;">🌟 Missions Secondaires <em style="font-weight:400;">(Bonus)</em></h3>
-    <div class="etapes bonus" style="flex-direction:column; gap:10px;">
-      <a class="pastille" id="lien-spectro" href="spectro.html" style="text-decoration:none;">
-        <span class="num" id="badge-curieux">★</span>
-        <span><strong>La photo du son</strong> — Lis un spectrogramme et traque le parasite caché.</span>
+    <h3 class="section-titre">🌟 Missions secondaires <em>(Bonus)</em></h3>
+    <div class="etapes etapes-colonne bonus">
+      <a class="pastille pastille-bonus module-curieux" id="lien-spectro" href="spectro.html">
+        <span class="module-node">
+          <span class="module-emoji" aria-hidden="true">🎧</span>
+          <span class="num" id="badge-curieux">★</span>
+        </span>
+        <span class="pastille-texte"><strong>La photo du son</strong> — Lis un spectrogramme et traque le parasite caché.</span>
       </a>
-      <a class="pastille" id="lien-matlab" href="reels.html" style="text-decoration:none;">
-        <span class="num" id="badge-matlab">★</span>
-        <span><strong>Dans les coulisses de Matlab</strong> — Explore de vrais signaux cardiaques issus d'un vrai capteur.</span>
+      <a class="pastille pastille-bonus module-matlab" id="lien-matlab" href="reels.html">
+        <span class="module-node">
+          <span class="module-emoji" aria-hidden="true">💻</span>
+          <span class="num" id="badge-matlab">★</span>
+        </span>
+        <span class="pastille-texte"><strong>Dans les coulisses de Matlab</strong> — Explore de vrais signaux cardiaques issus d'un vrai capteur.</span>
       </a>
-      <a class="pastille" id="lien-montre" href="montre.html" style="text-decoration:none;">
-        <span class="num" id="badge-montre">★</span>
-        <span><strong>La montre qui voit le sang</strong> — Découvre comment les montres connectées mesurent ton cœur avec de la lumière.</span>
+      <a class="pastille pastille-bonus module-montre" id="lien-montre" href="montre.html">
+        <span class="module-node">
+          <span class="module-emoji" aria-hidden="true">⌚</span>
+          <span class="num" id="badge-montre">★</span>
+        </span>
+        <span class="pastille-texte"><strong>La montre qui voit le sang</strong> — Découvre comment les montres connectées mesurent ton cœur avec de la lumière.</span>
       </a>
-      <a class="pastille" id="lien-piano" href="piano.html" style="text-decoration:none;">
-        <span class="num" id="badge-filtre">★</span>
-        <span><strong>Le Piano Anti-Parasite</strong> — Vise un parasite par sa fréquence et fais-le disparaître au filtre.</span>
+      <a class="pastille pastille-bonus module-filtre" id="lien-piano" href="piano.html">
+        <span class="module-node">
+          <span class="module-emoji" aria-hidden="true">🎹</span>
+          <span class="num" id="badge-filtre">★</span>
+        </span>
+        <span class="pastille-texte"><strong>Le Piano Anti-Parasite</strong> — Vise un parasite par sa fréquence et fais-le disparaître au filtre.</span>
       </a>
     </div>
 
@@ -208,43 +237,29 @@
     document.getElementById("progression-compteur").textContent =
       nbObligatoiresValides + " / " + nbObligatoires + " badge" + (nbObligatoiresValides > 1 ? "s" : "");
 
-    // Marquer les modules complétés dans la liste des étapes
-    if (moduleValide("signal")) {
-      var numSignal = document.getElementById("badge-signal");
-      if (numSignal) { numSignal.style.background = "var(--signal)"; numSignal.style.color = "#fff"; }
+    // Rappel de progression dans le bandeau mission
+    var miniProg = document.getElementById("mission-progress");
+    if (miniProg) {
+      miniProg.textContent = "🏅 " + nbObligatoiresValides + " / " + nbObligatoires + " badges";
+      miniProg.classList.toggle("complet", nbObligatoiresValides === nbObligatoires);
     }
-    if (moduleValide("coeur_ecg")) {
-      var numCoeur = document.getElementById("badge-coeur-ecg");
-      if (numCoeur) { numCoeur.style.background = "var(--signal)"; numCoeur.style.color = "#fff"; }
-    }
-    if (moduleValide("labo")) {
-      var numLabo = document.getElementById("badge-labo");
-      if (numLabo) { numLabo.style.background = "var(--signal)"; numLabo.style.color = "#fff"; }
-    }
-    if (moduleValide("curieux")) {
-      var numCurieux = document.getElementById("badge-curieux");
-      if (numCurieux) { numCurieux.style.background = "var(--attention)"; numCurieux.style.color = "#fff"; }
-    }
-    if (moduleValide("matlab")) {
-      var numMatlab = document.getElementById("badge-matlab");
-      if (numMatlab) { numMatlab.style.background = "var(--attention)"; numMatlab.style.color = "#fff"; }
-    }
-    if (moduleValide("montre")) {
-      var numMontre = document.getElementById("badge-montre");
-      if (numMontre) { numMontre.style.background = "var(--attention)"; numMontre.style.color = "#fff"; }
-    }
-    if (moduleValide("filtre")) {
-      var numFiltre = document.getElementById("badge-filtre");
-      if (numFiltre) { numFiltre.style.background = "var(--attention)"; numFiltre.style.color = "#fff"; }
-    }
-    if (moduleValide("pathologies")) {
-      var numPatho = document.getElementById("badge-pathologies");
-      if (numPatho) { numPatho.style.background = "var(--signal)"; numPatho.style.color = "#fff"; }
-    }
-    if (moduleValide("metiers")) {
-      var numMetiers = document.getElementById("badge-metiers");
-      if (numMetiers) { numMetiers.style.background = "var(--signal)"; numMetiers.style.color = "#fff"; }
-    }
+
+    // Marquer les modules complétés dans la liste des étapes (état "fait")
+    var liaisons = [
+      { badge: "signal",      lien: "lien-signal"      },
+      { badge: "coeur_ecg",   lien: "lien-coeur"       },
+      { badge: "labo",        lien: "lien-labo"        },
+      { badge: "pathologies", lien: "lien-pathologies" },
+      { badge: "metiers",     lien: "lien-metiers"     },
+      { badge: "curieux",     lien: "lien-spectro"     },
+      { badge: "matlab",      lien: "lien-matlab"      },
+      { badge: "montre",      lien: "lien-montre"      },
+      { badge: "filtre",      lien: "lien-piano"       }
+    ];
+    liaisons.forEach(function (x) {
+      var carte = document.getElementById(x.lien);
+      if (carte) carte.classList.toggle("fait", moduleValide(x.badge));
+    });
   }
 
   /** Gère l'apparition du bouton diplôme ou de la zone diplôme */
@@ -343,7 +358,10 @@
   document.querySelectorAll(".pastille-tete").forEach(function (tete) {
     tete.addEventListener("click", function () {
       var parent = tete.closest(".pastille-expandable");
-      if (parent) parent.classList.toggle("ouvert");
+      if (parent) {
+        var ouvert = parent.classList.toggle("ouvert");
+        tete.setAttribute("aria-expanded", ouvert ? "true" : "false");
+      }
     });
   });
 

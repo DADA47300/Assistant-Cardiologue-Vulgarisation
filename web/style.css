@@ -893,6 +893,13 @@ a.pastille:hover {
   padding: 10px 14px;
   cursor: pointer;
   transition: background 0.15s ease;
+  /* reset pour <button> */
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
 }
 .pastille-tete:hover { background: #f3f9f6; }
 .pastille-texte { flex: 1; }
@@ -955,3 +962,171 @@ a.pastille:hover {
 .sous-item.verrou .si-num { background: #e5e7eb; color: #9aa6a0; }
 .sous-item.verrou:hover .si-num { background: #e5e7eb; color: #9aa6a0; }
 .sous-item.verrou::after { content: "🔒"; margin-left: auto; font-size: 0.82rem; }
+/* =====================================================================
+   ACCUEIL — Refonte « parcours / skill-tree »
+   Bloc 100 % scopé à la page d'accueil (classes dédiées) : n'affecte
+   aucune autre page du site.
+   ===================================================================== */
+
+/* --- Tracé ECG en fond du bandeau mission --- */
+.mission { position: relative; overflow: hidden; padding-bottom: 64px; }
+.mission h1, .mission p { position: relative; z-index: 1; }
+.mission-trace {
+  position: absolute;
+  left: 0; right: 0; bottom: 8px;
+  height: 50px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='50' viewBox='0 0 240 50'%3E%3Cpath d='M0 33 H64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 H150 l90 0' fill='none' stroke='%23eafff5' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* --- Pastille de progression dans le héros (coin haut-droit) --- */
+.mission-progress {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #ffffff;
+  text-decoration: none;
+  /* fond semi-transparent : le tracé du signal reste visible à travers */
+  background: rgba(11, 70, 50, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+.mission-progress:hover { background: rgba(11, 70, 50, 0.45); transform: translateY(-1px); }
+.mission-progress.complet { background: #ffffff; color: var(--signal-fonce); border-color: #ffffff; }
+
+/* --- Titres de section (quête principale / missions secondaires) --- */
+.section-titre {
+  font-family: var(--titre);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--encre);
+  letter-spacing: -0.01em;
+  margin: 30px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-titre em { font-style: normal; font-weight: 400; color: var(--encre-doux); font-size: 0.9em; }
+
+/* --- Conteneur de modules en colonne --- */
+.etapes-colonne { flex-direction: column; gap: 14px; margin-bottom: 6px; }
+.etapes-colonne.bonus { gap: 12px; }
+
+/* --- Identité couleur par module --- */
+.module-signal      { --accent: #0891b2; --accent-soft: #e0f5fa; }
+.module-coeur       { --accent: #e11d48; --accent-soft: #fde7ec; }
+.module-labo        { --accent: #7c3aed; --accent-soft: #efe8fd; }
+.module-pathologies { --accent: #0e9f6e; --accent-soft: #e6f8ef; }
+.module-metiers     { --accent: #d97706; --accent-soft: #fdeed7; }
+.module-curieux     { --accent: #4f46e5; --accent-soft: #e8e7fc; }
+.module-matlab      { --accent: #0b7a55; --accent-soft: #e3f4ec; }
+.module-montre      { --accent: #0ea5e9; --accent-soft: #e3f3fd; }
+.module-filtre      { --accent: #db2777; --accent-soft: #fce4f0; }
+
+/* Liseré coloré à gauche de chaque module */
+.etapes-colonne .pastille { border-left: 4px solid var(--accent, var(--bord)); }
+
+/* --- Tuile thématique + numéro d'étape (le « nœud » du parcours) --- */
+.module-node {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 46px;
+}
+.module-emoji {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  background: var(--accent-soft, #eef2ef);
+  border: 1.5px solid var(--accent, var(--bord));
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.etapes .module-node .num {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--titre);
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #ffffff;
+  background: var(--accent, var(--encre-doux));
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(22, 48, 42, 0.18);
+}
+
+/* --- État « module terminé » --- */
+.etapes-colonne .pastille.fait { border-left-color: var(--signal); }
+.pastille.fait .module-emoji { background: #e6f8ef; border-color: var(--signal); }
+.etapes .pastille.fait .module-node .num { background: var(--signal); font-size: 0; }
+.etapes .pastille.fait .module-node .num::after { content: "✓"; font-size: 0.8rem; line-height: 1; }
+
+/* --- Rail vertical reliant les modules de la quête principale --- */
+.parcours { position: relative; }
+.parcours .pastille-expandable { position: relative; overflow: visible; }
+.parcours .sous-liste-inner { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+.parcours .pastille-expandable:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 37px;
+  bottom: -14px;
+  width: 3px;
+  height: 14px;
+  transform: translateX(-50%);
+  background: var(--bord);
+  border-radius: 99px;
+  z-index: 0;
+}
+.parcours .pastille-expandable.fait::before { background: var(--signal); }
+
+/* --- Pastilles bonus : aspect distinct (bordure pointillée) --- */
+.pastille-bonus { border-style: dashed; text-decoration: none; color: var(--encre-doux); }
+a.pastille-bonus:hover { background: var(--accent-soft, #f3f9f6); }
+
+/* --- Accessibilité : focus clavier visible --- */
+.pastille-tete:focus-visible {
+  outline: 3px solid var(--accent, var(--signal));
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+.sous-item:focus-visible,
+a.pastille:focus-visible,
+.mission-progress:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* --- Ajustements mobile --- */
+@media (max-width: 640px) {
+  .parcours .pastille-expandable:not(:last-child)::before { left: 35px; }
+  .section-titre { font-size: 1.05rem; }
+  /* Le titre passe sur plusieurs lignes : on remet la pastille dans le flux */
+  .mission-progress {
+    position: static;
+    margin-top: 14px;
+  }
+  .mission-trace { opacity: 0.4; }
+}
