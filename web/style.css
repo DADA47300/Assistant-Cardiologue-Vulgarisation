@@ -394,41 +394,6 @@ body {
   to   { transform: scale(1); opacity: 1; }
 }
 
-/* --- Badge bonus (visuellement distinct : couleur ambre) --- */
-.badge-tag-bonus {
-  display: inline-block;
-  font-family: var(--titre);
-  font-weight: 700;
-  font-size: 0.68rem;
-  color: var(--attention);
-  background: rgba(217, 119, 6, 0.10);
-  padding: 1px 7px;
-  border-radius: 6px;
-  margin-left: 6px;
-  vertical-align: middle;
-  letter-spacing: 0.02em;
-}
-.badge-carte.bonus.obtenu {
-  border-color: var(--attention);
-  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
-}
-.badge-carte.bonus.obtenu::before {
-  background: linear-gradient(135deg, rgba(217, 119, 6, 0.03) 0%, rgba(245, 158, 11, 0.05) 100%);
-}
-.badge-carte.bonus.obtenu:hover {
-  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.15);
-}
-.badge-carte.bonus.obtenu .badge-icone {
-  background: linear-gradient(135deg, var(--attention) 0%, #f59e0b 100%);
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
-}
-.badge-carte.bonus.obtenu .badge-etat {
-  color: var(--attention);
-}
-.badge-carte.bonus.obtenu .badge-coche {
-  background: var(--attention);
-}
-
 /* --- Zone diplôme (améliorée) --- */
 .diplome-zone {
   margin-top: 30px;

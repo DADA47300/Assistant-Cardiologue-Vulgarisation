@@ -369,6 +369,101 @@
       </div>
     </section>
 
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 6 — DÉCOMPOSITION / SYNTHÈSE (clarifie le spectre)
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-synthese">
+      <h2>🧩 6. Construire un signal — le spectre, autrement</h2>
+      <p>On vient de <em>lire</em> des spectres en direct. Mais d'où vient cette idée ?
+         L'idée géniale (due à <strong>Fourier</strong>) : <strong>n'importe quel signal périodique
+         peut se fabriquer en empilant des sinus purs</strong> de fréquences multiples.
+         Le spectre n'est rien d'autre que la <strong>liste de ces ingrédients</strong>.</p>
+
+      <div class="def-box">
+        <strong>À retenir :</strong> en haut on voit le signal <em>dans le temps</em> (ce qu'on entendrait),
+        en bas son <em>spectre</em> (de quelles fréquences il est fait). Ce sont deux façons de regarder
+        <strong>le même signal</strong>.
+      </div>
+
+      <p>Monte les curseurs pour ajouter des « harmoniques » : regarde la vague se transformer
+         pendant que des barres apparaissent dans le spectre.</p>
+
+      <div class="zone-jeu">
+        <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin-bottom:4px;">Le signal dans le temps</div>
+        <canvas id="canvas-synth-temps" style="height:170px;"></canvas>
+        <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin:14px 0 4px;">Son spectre (les ingrédients)</div>
+        <canvas id="canvas-synth-spectre" style="height:150px;"></canvas>
+
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Fondamentale (f) : <strong id="val-h1">1.0</strong></label>
+            <input type="range" id="slide-h1" min="0" max="1" step="0.05" value="1">
+          </div>
+          <div class="controle">
+            <label>Harmonique (2f) : <strong id="val-h2">0.0</strong></label>
+            <input type="range" id="slide-h2" min="0" max="1" step="0.05" value="0">
+          </div>
+          <div class="controle">
+            <label>Harmonique (3f) : <strong id="val-h3">0.0</strong></label>
+            <input type="range" id="slide-h3" min="0" max="1" step="0.05" value="0">
+          </div>
+          <div class="controle">
+            <label>Harmonique (4f) : <strong id="val-h4">0.0</strong></label>
+            <input type="range" id="slide-h4" min="0" max="1" step="0.05" value="0">
+          </div>
+        </div>
+        <p id="msg-synth" style="font-family:var(--titre);font-weight:700;font-size:0.92rem;margin:10px 0 0;min-height:24px;color:var(--encre-doux);"></p>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 7 — LE BRUIT (notion générale)
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-bruit">
+      <h2>🔇 7. Le bruit — l'ennemi du signal</h2>
+      <p>Dans la vraie vie, aucun signal n'est parfait. En chemin, il ramasse des
+         <strong>perturbations indésirables</strong> : c'est le <strong>bruit</strong>.
+         Un micro qui grésille, une ligne électrique qui ronfle, une connexion qui bouge…
+         le bruit <strong>se superpose</strong> à l'information utile et la rend difficile à lire.</p>
+
+      <div class="def-box">
+        <strong>Bruit :</strong> toute composante <em>indésirable</em> qui s'ajoute au signal utile
+        et dégrade l'information.
+        <br><strong>Filtrer :</strong> retirer le bruit en gardant l'essentiel du signal —
+        sans jamais le récupérer parfaitement.
+      </div>
+
+      <p>Ci-dessous, le <strong>même signal</strong> dans deux états : en haut tel qu'on le reçoit (bruité),
+         en bas après filtrage. Le pointillé gris rappelle le signal d'origine « propre ».</p>
+
+      <div class="zone-jeu">
+        <div class="bruit-legende">
+          <div class="bruit-leg-item"><span class="bruit-leg-couleur" style="background:#94a3b8;"></span>Signal propre (référence)</div>
+          <div class="bruit-leg-item"><span class="bruit-leg-couleur" style="background:#e11d48;"></span>Bruité</div>
+          <div class="bruit-leg-item"><span class="bruit-leg-couleur" style="background:#2563eb;"></span>Filtré</div>
+        </div>
+
+        <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin-bottom:4px;">🔴 Tel qu'on le reçoit (bruité)</div>
+        <canvas id="canvas-bruit-sale" style="height:160px;"></canvas>
+        <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin:14px 0 4px;">🔵 Après filtrage (nettoyé)</div>
+        <canvas id="canvas-bruit-propre" style="height:160px;"></canvas>
+
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Niveau de bruit : <strong id="val-bruit">0.5</strong></label>
+            <input type="range" id="slide-bruit" min="0" max="1" step="0.05" value="0.5">
+          </div>
+        </div>
+        <button id="btn-bruit-son" class="bouton-action inactif">🔊 Écouter (propre + bruit)</button>
+        <p id="msg-bruit" style="font-family:var(--titre);font-weight:700;font-size:0.92rem;margin:10px 0 0;min-height:24px;"></p>
+      </div>
+
+      <p style="font-size:0.9rem; color:var(--encre-doux);">
+        💡 Chaque type de signal a ses propres bruits, avec des origines bien à eux —
+        on verra ceux du signal cardiaque (ECG) un peu plus loin.
+      </p>
+    </section>
+
     <!-- Bandeau de badge obtenu -->
     <section class="carte cache" id="badge-obtenu-section"
       style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid var(--signal);text-align:center;">
@@ -744,6 +839,187 @@
   genererNouvelleCible();
   animer();
 
+  </script>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       AJOUTS : moteur des sections 6 (synthèse/spectre) et 7 (bruit).
+       Code autonome (IIFE) : ne modifie rien des scripts ci-dessus.
+       ════════════════════════════════════════════════════════════════ -->
+  <script>
+  /* ════════════════════════════════════
+     SECTION 6 — SYNTHÈSE / DÉCOMPOSITION
+     Un signal = somme de sinus → on le voit dans le temps ET en spectre
+     ════════════════════════════════════ */
+  (function () {
+    'use strict';
+    var cT = document.getElementById('canvas-synth-temps');
+    var cS = document.getElementById('canvas-synth-spectre');
+    if (!cT || !cS) return;
+    cT.width = 600; cT.height = 170;
+    cS.width = 600; cS.height = 150;
+    var xT = cT.getContext('2d'), xS = cS.getContext('2d');
+
+    var sliders = [1, 2, 3, 4].map(function (n) { return document.getElementById('slide-h' + n); });
+    var valeurs = [1, 2, 3, 4].map(function (n) { return document.getElementById('val-h' + n); });
+    var msg = document.getElementById('msg-synth');
+
+    function axe(ctx, w, h) {
+      ctx.save(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.restore();
+    }
+
+    function dessiner() {
+      var a = sliders.map(function (s) { return parseFloat(s.value); });
+      valeurs.forEach(function (v, i) { v.textContent = a[i].toFixed(1); });
+
+      /* --- Signal dans le temps (somme des harmoniques) --- */
+      var W = cT.width, H = cT.height;
+      xT.clearRect(0, 0, W, H);
+      axe(xT, W, H);
+      var maxA = a.reduce(function (s, v) { return s + v; }, 0) || 1;
+      xT.save(); xT.beginPath(); xT.strokeStyle = '#7c3aed'; xT.lineWidth = 3;
+      for (var x = 0; x < W; x++) {
+        var t = (x / W) * 2; // 2 périodes de la fondamentale à l'écran
+        var y = 0;
+        for (var k = 0; k < 4; k++) { y += a[k] * Math.sin(2 * Math.PI * (k + 1) * t); }
+        var py = H / 2 - (y / maxA) * (H / 2 - 12);
+        x === 0 ? xT.moveTo(x, py) : xT.lineTo(x, py);
+      }
+      xT.stroke(); xT.restore();
+
+      /* --- Spectre (une barre par harmonique) --- */
+      var Ws = cS.width, Hs = cS.height, base = Hs - 22;
+      xS.clearRect(0, 0, Ws, Hs);
+      xS.save(); xS.strokeStyle = '#cbd5e1'; xS.lineWidth = 1;
+      xS.beginPath(); xS.moveTo(0, base); xS.lineTo(Ws, base); xS.stroke(); xS.restore();
+      var nb = 4, slot = Ws / (nb + 1), bw = 34;
+      for (var i = 0; i < nb; i++) {
+        var bx = slot * (i + 1) - bw / 2;
+        var bh = a[i] * (Hs - 40);
+        var ratio = i / nb;
+        xS.fillStyle = 'rgb(' + Math.round(59 + ratio * 50) + ',' +
+                                Math.round(130 - ratio * 90) + ',' +
+                                Math.round(246 - ratio * 29) + ')';
+        xS.fillRect(bx, base - bh, bw, bh);
+        xS.fillStyle = '#64748b'; xS.font = '11px sans-serif'; xS.textAlign = 'center';
+        xS.fillText((i + 1) + 'f', slot * (i + 1), Hs - 7);
+      }
+      xS.textAlign = 'left';
+
+      var actives = a.filter(function (v) { return v > 0.05; }).length;
+      if (actives <= 1) msg.textContent = 'Une seule fréquence → un sinus pur, une seule barre.';
+      else msg.textContent = actives + ' fréquences mélangées → un signal plus riche, ' + actives + ' barres dans le spectre.';
+    }
+
+    sliders.forEach(function (s) { s.addEventListener('input', dessiner); });
+    dessiner();
+  }());
+
+  /* ════════════════════════════════════
+     SECTION 7 — LE BRUIT (notion générale)
+     Même signal : bruité (haut) vs filtré (bas), + écoute optionnelle
+     ════════════════════════════════════ */
+  (function () {
+    'use strict';
+    var cSale = document.getElementById('canvas-bruit-sale');
+    var cProp = document.getElementById('canvas-bruit-propre');
+    if (!cSale || !cProp) return;
+    cSale.width = 600; cSale.height = 160;
+    cProp.width = 600; cProp.height = 160;
+    var xSale = cSale.getContext('2d'), xProp = cProp.getContext('2d');
+
+    var slB = document.getElementById('slide-bruit');
+    var vB  = document.getElementById('val-bruit');
+    var msg = document.getElementById('msg-bruit');
+    var btn = document.getElementById('btn-bruit-son');
+
+    /* hasard reproductible (même bruit à chaque dessin pour un niveau donné) */
+    function rng(seed) {
+      var s = seed >>> 0;
+      return function () {
+        s |= 0; s = (s + 0x6D2B79F5) | 0;
+        var t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function signalPropre(t) { return Math.sin(2 * Math.PI * 2 * t) + 0.4 * Math.sin(2 * Math.PI * 4 * t); }
+    function axe(ctx, w, h) {
+      ctx.save(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.restore();
+    }
+
+    function dessiner() {
+      var niv = parseFloat(slB.value);
+      vB.textContent = niv.toFixed(1);
+      var W = cSale.width, H = cSale.height, N = 600, amp = (H / 2 - 14) * 0.6;
+
+      var propre = new Array(N), sale = new Array(N);
+      var h = rng(20);
+      for (var i = 0; i < N; i++) {
+        var t = (i / N) * 2;
+        var p = signalPropre(t);
+        propre[i] = p;
+        var ronflement = 0.25 * niv * Math.sin(2 * Math.PI * 30 * t); // interférence régulière
+        var gresil     = niv * 0.9 * (h() * 2 - 1);                   // aléatoire
+        sale[i] = p + ronflement + gresil;
+      }
+      /* Filtrage : moyenne glissante (lissage) */
+      var filtre = new Array(N), demi = 4;
+      for (var j = 0; j < N; j++) {
+        var s = 0, c = 0;
+        for (var k = j - demi; k <= j + demi; k++) { if (k >= 0 && k < N) { s += sale[k]; c++; } }
+        filtre[j] = s / c;
+      }
+
+      function trace(ctx, data, couleur) {
+        ctx.clearRect(0, 0, W, H); axe(ctx, W, H);
+        /* référence propre en pointillé gris */
+        ctx.save(); ctx.beginPath(); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+        for (var i = 0; i < N; i++) { var x = (i / N) * W, y = H / 2 - propre[i] * amp; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+        ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+        /* signal coloré */
+        ctx.save(); ctx.beginPath(); ctx.strokeStyle = couleur; ctx.lineWidth = 2.2;
+        for (var m = 0; m < N; m++) { var xx = (m / N) * W, yy = H / 2 - data[m] * amp; m === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy); }
+        ctx.stroke(); ctx.restore();
+      }
+      trace(xSale, sale, '#e11d48');
+      trace(xProp, filtre, '#2563eb');
+
+      if (niv < 0.15) { msg.style.color = 'var(--signal-fonce)'; msg.textContent = '✅ Peu de bruit : le signal est déjà presque propre.'; }
+      else if (niv < 0.6) { msg.style.color = 'var(--signal-fonce)'; msg.textContent = 'Le filtrage récupère bien la forme du signal malgré le bruit.'; }
+      else { msg.style.color = 'var(--battement)'; msg.textContent = '⚠️ Beaucoup de bruit : même filtré, le signal reste imparfait.'; }
+    }
+
+    slB.addEventListener('input', dessiner);
+    dessiner();
+
+    /* --- Écoute : tonalité propre + bruit dosé par le curseur --- */
+    var actx = null, osc = null, gain = null, noiseSrc = null, noiseGain = null, on = false;
+    btn.addEventListener('click', function () {
+      if (!actx) {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = actx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 330;
+        gain = actx.createGain(); gain.gain.value = 0.15;
+        osc.connect(gain); gain.connect(actx.destination); osc.start();
+        var taille = actx.sampleRate * 2, buf = actx.createBuffer(1, taille, actx.sampleRate), d = buf.getChannelData(0);
+        for (var i = 0; i < taille; i++) d[i] = (Math.random() * 2 - 1);
+        noiseSrc = actx.createBufferSource(); noiseSrc.buffer = buf; noiseSrc.loop = true;
+        noiseGain = actx.createGain(); noiseGain.gain.value = 0;
+        noiseSrc.connect(noiseGain); noiseGain.connect(actx.destination); noiseSrc.start();
+      }
+      on = !on;
+      if (on) {
+        actx.resume();
+        noiseGain.gain.value = parseFloat(slB.value) * 0.12;
+        btn.textContent = '🔇 Couper le son'; btn.classList.remove('inactif');
+      } else {
+        actx.suspend();
+        btn.textContent = '🔊 Écouter (propre + bruit)'; btn.classList.add('inactif');
+      }
+    });
+    slB.addEventListener('input', function () { if (noiseGain && on) noiseGain.gain.value = parseFloat(slB.value) * 0.12; });
+  }());
   </script>
 </body>
 </html>

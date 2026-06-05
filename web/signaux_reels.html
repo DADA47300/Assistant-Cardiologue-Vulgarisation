@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vrais signaux ECG — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+
+    /* ══════════════════════════════════════════
+       STYLES LOCAUX — signaux_reels.html
+       ══════════════════════════════════════════ */
+
+    /* ── Boîtes de définition (réutilisées des autres pages) ── */
+    .def-box {
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      border-left: 4px solid var(--signal);
+      border-radius: 0 12px 12px 0;
+      padding: 14px 18px; margin: 14px 0; font-size: .97rem;
+    }
+    .def-box strong { color: var(--signal-fonce); }
+    .def-box.rouge  { background: linear-gradient(135deg,#fff1f2,#ffe4e6); border-left-color: var(--battement); }
+    .def-box.rouge strong { color: #9b1230; }
+    .def-box.orange { background: linear-gradient(135deg,#fffbeb,#fef3c7); border-left-color: #d97706; }
+    .def-box.orange strong { color: #92400e; }
+
+    /* ── Checklist ── */
+    .checklist { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 22px; }
+    .chk {
+      display:flex; align-items:center; gap:6px; font-size:.84rem;
+      color:var(--encre-doux); background:#f3f6f4; padding:5px 11px;
+      border-radius:20px; border:1px solid var(--bord); transition:all .3s;
+    }
+    .chk.fait { background:#e6f8ef; color:var(--signal-fonce); border-color:var(--signal); font-weight:700; }
+    .chk .ico { font-size:.88rem; }
+
+    /* ── Grille d'annotations (style diff-puce des autres pages) ── */
+    .diff-grille {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .diff-puce {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 12px 14px; border-radius: 12px;
+      background: var(--carte); border: 1.5px solid var(--bord);
+    }
+    .diff-puce .diff-icone { font-size:1.4rem; flex:none; margin-top:1px; }
+    .diff-puce .diff-texte { font-size:.84rem; color:var(--encre-doux); line-height:1.5; }
+    .diff-puce .diff-texte strong { color:var(--encre); font-family:var(--titre); }
+
+    /* ══════════════════════════════════════════
+       DÉFI — cartes à retourner
+       ══════════════════════════════════════════ */
+    .defi-intro {
+      background: #f3f6f4;
+      border-left: 3px solid var(--signal);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 0 0 18px;
+      font-size: .95rem;
+      color: var(--encre-doux);
+    }
+    .defi-intro strong { color: var(--encre); }
+
+    .defi-grille {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 0 0 16px;
+    }
+    @media (max-width: 680px) { .defi-grille { grid-template-columns: 1fr; } }
+
+    .defi-carte {
+      border: 2px solid var(--bord);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, transform .1s;
+      background: var(--carte);
+      position: relative;
+    }
+    .defi-carte:hover { border-color: var(--signal); transform: translateY(-2px); box-shadow: var(--ombre); }
+    .defi-carte.selectionnee { border-color: var(--signal); box-shadow: 0 0 0 3px rgba(14,159,110,.18); }
+    .defi-carte.bonne  { border-color: var(--signal) !important; background: #f0fdf4; }
+    .defi-carte.mauvaise { border-color: var(--battement) !important; background: #fff1f2; }
+
+    .defi-img-zone {
+      background: #0d1a14;
+      position: relative;
+      overflow: hidden;
+    }
+    .defi-img-zone img {
+      display: block;
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      object-position: center;
+      filter: blur(0px);
+      transition: filter .3s;
+    }
+    /* Avant révélation : image légèrement floutée + masque "?" */
+    .defi-carte:not(.revelee) .defi-img-zone img { filter: blur(3px) brightness(0.7); }
+    .defi-masque {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #fff; font-size: 2.2rem; font-weight: 800;
+      font-family: var(--titre);
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+    .defi-masque .defi-masque-sous { font-size: .78rem; opacity: .8; margin-top: 4px; }
+    .defi-carte.revelee .defi-masque { opacity: 0; }
+
+    .defi-label {
+      padding: 10px 14px;
+      font-family: var(--titre); font-weight: 700;
+      font-size: .88rem; color: var(--encre);
+    }
+    .defi-label .defi-sous { font-size:.76rem; color:var(--encre-doux); font-weight:400; display:block; margin-top:2px; }
+
+    .defi-resultat {
+      min-height: 44px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-family: var(--titre); font-weight: 700; font-size: .92rem;
+      background: #f3f6f4; color: var(--encre-doux);
+      transition: background .25s, color .25s;
+      margin-bottom: 14px;
+    }
+    .defi-resultat.bon  { background: #e6f8ef; color: var(--signal-fonce); }
+    .defi-resultat.mal  { background: #fff1f2; color: #9b1230; }
+
+    /* ══════════════════════════════════════════
+       VISIONNEUSE DE SIGNAUX — zoom interactif
+       ══════════════════════════════════════════ */
+    .signal-section { margin-bottom: 0; }
+
+    .signal-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      font-family: var(--titre); font-weight: 700; font-size: .9rem;
+    }
+    .signal-header.sain   { background: #f0fdf4; color: var(--signal-fonce); border-bottom: 2px solid #86efac; }
+    .signal-header.fa     { background: #fffbeb; color: #92400e;             border-bottom: 2px solid #fcd34d; }
+    .signal-header.fv     { background: #fff1f2; color: #9b1230;             border-bottom: 2px solid #fca5a5; }
+
+    /* Zone image avec overflow caché pour le zoom */
+    .signal-img-wrapper {
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+      cursor: zoom-in;
+      /* hauteur fixe pour l'affichage */
+      height: 220px;
+    }
+    .signal-img-wrapper img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform-origin: center center;
+      transition: transform .25s ease;
+      user-select: none;
+      pointer-events: none;
+    }
+    .signal-img-wrapper.zoomed { cursor: zoom-out; }
+
+    /* Bouton zoom flottant */
+    .btn-zoom {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: rgba(255,255,255,.92);
+      border: 1.5px solid var(--bord);
+      border-radius: 8px;
+      padding: 5px 9px;
+      font-size: .85rem;
+      cursor: pointer;
+      font-family: var(--titre); font-weight: 700;
+      transition: background .15s, border-color .15s;
+      z-index: 4;
+      line-height: 1;
+    }
+    .btn-zoom:hover { background: #fff; border-color: var(--signal); }
+
+    /* Slider de zoom */
+    .zoom-controle {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px 12px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+    }
+    .zoom-controle label { font-size: .8rem; color: var(--encre-doux); font-weight: 700; font-family: var(--titre); white-space: nowrap; }
+    .zoom-controle input[type=range] { flex: 1; accent-color: var(--signal); }
+    .zoom-controle .zoom-val { font-family: var(--titre); font-weight: 700; font-size: .88rem; min-width: 42px; text-align: right; color: var(--encre); }
+
+    /* Panneau d'annotations (apparaît sous l'image) */
+    .signal-annot {
+      border-top: 1px dashed #e2e8f0;
+      padding: 12px 16px;
+    }
+    .signal-annot-titre {
+      font-family: var(--titre); font-weight: 700; font-size: .92rem;
+      color: var(--encre); margin: 0 0 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .annot-puce {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: .83rem; color: var(--encre-doux); margin-bottom: 6px; line-height: 1.45;
+    }
+    .annot-puce:last-child { margin-bottom: 0; }
+    .annot-puce .ap-ico { font-size: 1rem; flex: none; margin-top: 1px; }
+    .annot-puce strong { color: var(--encre); font-family: var(--titre); }
+
+    /* Panneau info pathologie (couleur selon type) */
+    .info-patho {
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: 14px 0 0;
+      font-size: .9rem;
+      border: 2px solid;
+    }
+    .info-patho.sain   { background: #f0fdf4; border-color: #86efac; color: var(--signal-fonce); }
+    .info-patho.fa     { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+    .info-patho.fv     { background: #fff1f2; border-color: #fca5a5; color: #9b1230; }
+    .info-patho-titre { font-family: var(--titre); font-weight: 800; font-size: 1rem; display: block; margin-bottom: 5px; }
+    .info-patho p { margin: 4px 0; line-height: 1.5; }
+
+    /* ══════════════════════════════════════════
+       SECTION BILAN RÉCAP
+       ══════════════════════════════════════════ */
+    .recap-grille {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .recap-item {
+      text-align: center;
+      padding: 16px 12px;
+      background: var(--carte);
+      border: 1.5px solid var(--bord);
+      border-radius: 14px;
+    }
+    .recap-item .ri-icone { font-size: 1.8rem; display: block; margin-bottom: 6px; }
+    .recap-item .ri-titre {
+      font-family: var(--titre); font-weight: 700; font-size: .9rem;
+      color: var(--encre); display: block; margin-bottom: 3px;
+    }
+    .recap-item .ri-sous { font-size: .78rem; color: var(--encre-doux); line-height: 1.4; }
+
+    /* Timeline parcours */
+    .timeline {
+      position: relative;
+      margin: 18px 0 0;
+      padding-left: 28px;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 10px; top: 6px; bottom: 6px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--signal) 0%, var(--battement) 100%);
+      border-radius: 2px;
+    }
+    .tl-item {
+      position: relative;
+      margin-bottom: 16px;
+      padding-left: 6px;
+    }
+    .tl-item:last-child { margin-bottom: 0; }
+    .tl-item::before {
+      content: "";
+      position: absolute;
+      left: -22px; top: 5px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--signal);
+      border: 2px solid var(--carte);
+      box-shadow: 0 0 0 2px var(--signal);
+    }
+    .tl-titre {
+      font-family: var(--titre); font-weight: 700; font-size: .92rem;
+      color: var(--encre); display: flex; align-items: center; gap: 6px;
+    }
+    .tl-sous { font-size: .8rem; color: var(--encre-doux); margin-top: 2px; line-height: 1.4; }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════ */
+    @media (max-width: 640px) {
+      .diff-grille { grid-template-columns: 1fr; }
+      .recap-grille { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 400px) {
+      .recap-grille { grid-template-columns: 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ══ BARRE DE NAVIGATION ══ -->
+<nav class="barre">
+  <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+  <a class="lien" href="index.html">← Accueil</a>
+</nav>
+
+<main class="page">
+
+  <!-- ══ BANDEAU DE MISSION ══ -->
+  <header class="mission">
+    <h1>📡 Retour à la réalité — vrais signaux ECG</h1>
+    <p>Tout ce qu'on a appris jusqu'ici — les filtres, le fenêtrage, la détection des pics R —
+      on l'a fait sur des <em>signaux simulés</em>. Voici maintenant des <strong>vrais enregistrements ECG</strong>,
+      traités sur MATLAB. À toi de reconnaître ce que tu as appris !</p>
+  </header>
+
+  <!-- ── Checklist ── -->
+  <div class="checklist">
+    <span class="chk" id="chk-defi"><span class="ico">○</span> Défi réussi</span>
+    <span class="chk" id="chk-sain"><span class="ico">○</span> Signal sain analysé</span>
+    <span class="chk" id="chk-fa"><span class="ico">○</span> FA analysée</span>
+    <span class="chk" id="chk-fv"><span class="ico">○</span> FV analysée</span>
+    <span class="chk" id="chk-bilan"><span class="ico">○</span> Bilan lu</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       SECTION 1 — DÉFI : reconnais le signal sain
+       ════════════════════════════════════════════════════ -->
+  <section class="carte" id="sec-defi">
+    <h2>🎯 1. Défi — lequel est le signal sain ?</h2>
+    <p class="explication">
+      Trois enregistrements ECG filtrés sous MATLAB. L'un provient d'un cœur qui bat normalement,
+      les deux autres sont pathologiques. <strong>Clique sur celui que tu penses être le signal sain</strong>.
+    </p>
+
+    <div class="defi-intro">
+      💡 <strong>Rappel :</strong> un signal ECG sain est <em>régulier</em>, avec des pics R bien nets
+      et espacés de façon constante. Une pathologie se traduit souvent par un rythme irrégulier,
+      des amplitudes chaotiques ou une perte de structure visible.
+    </div>
+
+    <!-- 3 cartes mystère -->
+    <div class="defi-grille" id="defi-grille">
+
+      <div class="defi-carte" data-id="sain" onclick="choisirDefi(this)">
+        <div class="defi-img-zone">
+          <img src="signal_sain.jpg" alt="Signal A">
+          <div class="defi-masque">
+            <span>A</span>
+            <span class="defi-masque-sous">Clique pour choisir</span>
+          </div>
+        </div>
+        <div class="defi-label">
+          Signal A
+          <span class="defi-sous">ECG filtré passe-bande</span>
+        </div>
+      </div>
+
+      <div class="defi-carte" data-id="fa" onclick="choisirDefi(this)">
+        <div class="defi-img-zone">
+          <img src="fibrillation_auriculaire.jpg" alt="Signal B">
+          <div class="defi-masque">
+            <span>B</span>
+            <span class="defi-masque-sous">Clique pour choisir</span>
+          </div>
+        </div>
+        <div class="defi-label">
+          Signal B
+          <span class="defi-sous">ECG filtré passe-bande</span>
+        </div>
+      </div>
+
+      <div class="defi-carte" data-id="fv" onclick="choisirDefi(this)">
+        <div class="defi-img-zone">
+          <img src="fibrillation_ventriculaire.jpg" alt="Signal C">
+          <div class="defi-masque">
+            <span>C</span>
+            <span class="defi-masque-sous">Clique pour choisir</span>
+          </div>
+        </div>
+        <div class="defi-label">
+          Signal C
+          <span class="defi-sous">ECG filtré passe-bande</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="defi-resultat" id="defi-resultat">
+      👆 Clique sur le signal que tu penses être sain…
+    </div>
+
+    <div class="boutons-ligne">
+      <button class="bouton cache" id="btn-voir-signaux" onclick="allerVersSignaux()">
+        🔬 Explorer les signaux en détail →
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════
+       SECTION 2 — SIGNAL SAIN
+       ════════════════════════════════════════════════════ -->
+  <section class="carte signal-section cache" id="sec-sain">
+    <div class="signal-header sain">
+      💚 Signal A — ECG d'un cœur sain (72 bpm)
+    </div>
+
+    <!-- Visionneuse avec zoom -->
+    <div class="signal-img-wrapper" id="wrap-sain" onclick="toggleZoom('wrap-sain')">
+      <img src="signal_sain.jpg" alt="ECG sain après filtrage passe-bande 5-15 Hz" id="img-sain">
+      <button class="btn-zoom" onclick="event.stopPropagation(); toggleZoom('wrap-sain')">🔍 Zoom</button>
+    </div>
+    <div class="zoom-controle">
+      <label for="zoom-sain">Zoom :</label>
+      <input type="range" id="zoom-sain" min="1" max="4" step="0.1" value="1"
+             oninput="appliquerZoom('img-sain', this.value); document.getElementById('zv-sain').textContent = Math.round(this.value*100)+'%'">
+      <span class="zoom-val" id="zv-sain">100%</span>
+    </div>
+
+    <!-- Annotations -->
+    <div class="signal-annot">
+      <div class="signal-annot-titre">🔍 Ce qu'on observe sur ce signal :</div>
+      <div class="annot-puce">
+        <span class="ap-ico">📏</span>
+        <span><strong>Durée :</strong> environ 210 secondes (~3,5 min). On voit des centaines de battements — la machine a tout analysé automatiquement.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">📐</span>
+        <span><strong>Régularité :</strong> les oscillations ont une amplitude et un espacement à peu près constants sur toute la durée → rythme cardiaque stable.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">⚙️</span>
+        <span><strong>Filtrage :</strong> le filtre passe-bande 5-15 Hz a conservé les fréquences des pics R (~10-20 Hz) tout en supprimant la dérive basse fréquence et le bruit 50 Hz.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">📊</span>
+        <span><strong>Amplitude :</strong> l'axe Y affiche des valeurs en ×10⁶ — c'est l'unité brute du fichier de données. L'important c'est la <em>forme</em>, pas la valeur absolue.</span>
+      </div>
+    </div>
+
+    <div class="info-patho sain">
+      <span class="info-patho-titre">✅ Diagnostic : cœur sain</span>
+      <p>Rythme sinusal normal. Les pics R sont régulièrement espacés et ont une amplitude homogène.
+         Ce type de signal est la <strong>référence</strong> à laquelle on compare les signaux pathologiques.</p>
+    </div>
+
+    <div style="margin-top:14px;">
+      <button class="bouton" onclick="cocherEtSuivre('chk-sain', 'sec-fa')">
+        ✅ J'ai analysé ce signal — suivant →
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════
+       SECTION 3 — FIBRILLATION AURICULAIRE
+       ════════════════════════════════════════════════════ -->
+  <section class="carte signal-section cache" id="sec-fa">
+    <div class="signal-header fa">
+      🟠 Signal B — Fibrillation Auriculaire (FA)
+    </div>
+
+    <div class="signal-img-wrapper" id="wrap-fa" onclick="toggleZoom('wrap-fa')">
+      <img src="fibrillation_auriculaire.jpg" alt="ECG fibrillation auriculaire" id="img-fa">
+      <button class="btn-zoom" onclick="event.stopPropagation(); toggleZoom('wrap-fa')">🔍 Zoom</button>
+    </div>
+    <div class="zoom-controle">
+      <label for="zoom-fa">Zoom :</label>
+      <input type="range" id="zoom-fa" min="1" max="4" step="0.1" value="1"
+             oninput="appliquerZoom('img-fa', this.value); document.getElementById('zv-fa').textContent = Math.round(this.value*100)+'%'">
+      <span class="zoom-val" id="zv-fa">100%</span>
+    </div>
+
+    <div class="signal-annot">
+      <div class="signal-annot-titre">🔍 Ce qu'on observe sur ce signal :</div>
+      <div class="annot-puce">
+        <span class="ap-ico">📏</span>
+        <span><strong>Durée :</strong> ~1800 secondes (30 min) — un enregistrement long pour capturer l'évolution de la pathologie.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">〰️</span>
+        <span><strong>Signal chaotique :</strong> pas de pics R clairement identifiables. L'amplitude oscille de façon irrégulière — l'activité électrique des oreillettes est désorganisée.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">🔀</span>
+        <span><strong>Variabilité extrême :</strong> contrairement au signal sain, il n'y a pas de période stable. Le tracé ressemble à du "bruit" — mais c'est bien de l'activité cardiaque !</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">⚠️</span>
+        <span><strong>Conséquence :</strong> sans pics R identifiables, la <strong>détection automatique échoue</strong> ou donne des résultats erronés. C'est là que le traitement du signal est crucial.</span>
+      </div>
+    </div>
+
+    <div class="info-patho fa">
+      <span class="info-patho-titre">🟠 Diagnostic : Fibrillation Auriculaire (FA)</span>
+      <p>Les oreillettes "tremblent" au lieu de se contracter normalement (~300-600 impulsions/min désorganisées).
+         Le signal ECG perd toute régularité. C'est l'arythmie la plus fréquente — 1 million de personnes en France.</p>
+      <p>Traitement possible : médicaments anticoagulants, cardioversion électrique, ou ablation par cathéter.</p>
+    </div>
+
+    <div style="margin-top:14px;">
+      <button class="bouton" onclick="cocherEtSuivre('chk-fa', 'sec-fv')">
+        ✅ J'ai analysé ce signal — suivant →
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════
+       SECTION 4 — FIBRILLATION VENTRICULAIRE
+       ════════════════════════════════════════════════════ -->
+  <section class="carte signal-section cache" id="sec-fv">
+    <div class="signal-header fv">
+      🔴 Signal C — Fibrillation Ventriculaire (FV)
+    </div>
+
+    <div class="signal-img-wrapper" id="wrap-fv" onclick="toggleZoom('wrap-fv')">
+      <img src="fibrillation_ventriculaire.jpg" alt="ECG fibrillation ventriculaire" id="img-fv">
+      <button class="btn-zoom" onclick="event.stopPropagation(); toggleZoom('wrap-fv')">🔍 Zoom</button>
+    </div>
+    <div class="zoom-controle">
+      <label for="zoom-fv">Zoom :</label>
+      <input type="range" id="zoom-fv" min="1" max="4" step="0.1" value="1"
+             oninput="appliquerZoom('img-fv', this.value); document.getElementById('zv-fv').textContent = Math.round(this.value*100)+'%'">
+      <span class="zoom-val" id="zv-fv">100%</span>
+    </div>
+
+    <div class="signal-annot">
+      <div class="signal-annot-titre">🔍 Ce qu'on observe sur ce signal :</div>
+      <div class="annot-puce">
+        <span class="ap-ico">📏</span>
+        <span><strong>Durée :</strong> ~500 secondes. On distingue <strong>deux phases nettes</strong> : avant ~220 s (rythme perturbé) et après ~220 s (chaos total).</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">⚡</span>
+        <span><strong>Transition brutale :</strong> le signal "bascule" vers ~220 s — c'est probablement le <em>déclenchement</em> de la FV. On voit l'amplitude exploser puis devenir chaotique.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">🌊</span>
+        <span><strong>Oscillations rapides et irrégulières :</strong> les ventricules tremblent (~200-300 fois/min) sans jamais se contracter efficacement. Plus de débit sanguin.</span>
+      </div>
+      <div class="annot-puce">
+        <span class="ap-ico">🚨</span>
+        <span><strong>Urgence vitale :</strong> sans défibrillateur dans les minutes suivant le déclenchement, ce signal est fatal. C'est la principale cause de mort subite.</span>
+      </div>
+    </div>
+
+    <div class="info-patho fv">
+      <span class="info-patho-titre">🔴 Diagnostic : Fibrillation Ventriculaire (FV)</span>
+      <p>Les ventricules cessent de se contracter de façon synchronisée. Le cœur ne pompe plus le sang.
+         Sans intervention immédiate (défibrillateur), le patient est en arrêt cardiaque.</p>
+      <p>C'est pour ça que les moniteurs cardiaques en réanimation ont des <strong>alarmes automatiques</strong>
+        basées sur la détection de ce pattern — exactement ce que vous avez appris à programmer.</p>
+    </div>
+
+    <div style="margin-top:14px;">
+      <button class="bouton" onclick="cocherEtSuivre('chk-fv', 'sec-bilan')">
+        ✅ J'ai analysé ce signal — voir le bilan →
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════
+       SECTION 5 — BILAN COMPARATIF
+       ════════════════════════════════════════════════════ -->
+  <section class="carte cache" id="sec-bilan">
+    <h2>📋 3. Comparaison rapide — les 3 signaux face à face</h2>
+
+    <div class="diff-grille">
+      <div class="diff-puce">
+        <span class="diff-icone">💚</span>
+        <div class="diff-texte">
+          <strong>ECG sain</strong><br>
+          Régulier, pics R nets, espacement constant. La détection automatique fonctionne parfaitement. BPM stable.
+        </div>
+      </div>
+      <div class="diff-puce">
+        <span class="diff-icone">🟠</span>
+        <div class="diff-texte">
+          <strong>Fibrillation Auriculaire</strong><br>
+          Rythme irrégulier mais le cœur "fonctionne" encore. Activité oreillettes chaotique, ventricules répondent de façon aléatoire.
+        </div>
+      </div>
+      <div class="diff-puce">
+        <span class="diff-icone">🔴</span>
+        <div class="diff-texte">
+          <strong>Fibrillation Ventriculaire</strong><br>
+          Urgence absolue. Pas de débit sanguin. Signal chaotique à haute fréquence. Transition visible sur l'enregistrement.
+        </div>
+      </div>
+    </div>
+
+    <!-- Note sur le filtrage passe-bande -->
+    <div class="def-box orange" style="margin-top:8px;">
+      <strong>Pourquoi un filtre passe-bande 5-15 Hz ?</strong>
+      L'énergie des pics R se concentre autour de 10-15 Hz. En coupant en dessous de 5 Hz (dérive)
+      et au-dessus de 15 Hz (bruit haute fréquence et 50 Hz), on isole exactement la bande utile
+      pour la détection des battements — sans déformer leur forme.
+    </div>
+
+    <div style="margin-top:14px;">
+      <button class="bouton" onclick="validerBilan()">
+        ✅ Bilan lu — terminer →
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════
+       SECTION 6 — RÉCAP DU PARCOURS
+       ════════════════════════════════════════════════════ -->
+  <section class="carte cache" id="sec-recap">
+    <h2>🗺️ 4. Ce que tu as appris — le parcours complet</h2>
+    <p class="explication">
+      En partant de zéro, tu as reconstruit toute la chaîne de traitement d'un signal ECG.
+      Voilà ce que font vraiment les ingénieurs en télécommunications biomédicales.
+    </p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-titre">🌊 Le signal</div>
+        <div class="tl-sous">Amplitude, fréquence, période, spectre, échantillonnage. Un signal, c'est de l'information dans le temps.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-titre">🫀 Le cœur et l'ECG</div>
+        <div class="tl-sous">Les ondes P, QRS, T correspondent à des événements électriques précis. L'ECG, c'est la signature électrique du cœur.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-titre">📡 L'acquisition</div>
+        <div class="tl-sous">Les électrodes captent, mais elles captent aussi les parasites. La source du bruit détermine le filtre à appliquer.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-titre">📊 Le spectrogramme</div>
+        <div class="tl-sous">Voir les fréquences dans le temps permet de localiser les bruits avant de les supprimer.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-titre">🔧 Le traitement</div>
+        <div class="tl-sous">Fenêtrage, filtrage passe-haut + passe-bas + coupe-bande, détection des pics R. Chaque étape a une raison précise.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-titre">🩺 Les pathologies</div>
+        <div class="tl-sous">FA, FV, bradycardie, tachycardie… Le signal ECG porte la signature de chaque trouble.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-titre">📡 Vrais signaux MATLAB</div>
+        <div class="tl-sous">Des données réelles, traitées avec les mêmes outils. Ce que tu as vu ici, c'est ce que font les ingénieurs chaque jour.</div>
+      </div>
+    </div>
+
+    <div class="def-box" style="margin-top:18px;">
+      <strong>Et maintenant ?</strong> Les techniques que tu as explorées — traitement du signal, filtrage,
+      détection d'événements — s'appliquent bien au-delà de l'ECG :
+      <strong>imagerie médicale</strong> (IRM, scanner), <strong>télécommunications</strong> (Wi-Fi, 5G),
+      <strong>audio</strong> (compression MP3), <strong>sismologie</strong>, <strong>traitement de la parole</strong>…
+      C'est ça, les télécommunications.
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════════════════════════════
+       BADGE
+       ════════════════════════════════════════════════════ -->
+  <section class="carte cache" id="badge-obtenu-section"
+    style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid var(--signal);text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">🏅📡</div>
+    <h2 style="color:var(--signal-fonce);margin:0 0 6px;">Badge obtenu : Ingénieur Biomédical !</h2>
+    <p style="color:var(--encre-doux);margin:0 0 18px;">
+      Tu as analysé de vrais signaux ECG, reconnu les pathologies et bouclé le parcours complet.
+      Tu sais maintenant ce que font les ingénieurs en traitement du signal.
+    </p>
+    <a href="index.html?badge=signaux_reels" class="bouton" style="display:inline-block;text-decoration:none;">
+      ← Retour à l'accueil pour voir ton badge
+    </a>
+  </section>
+
+  <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+
+</main>
+
+<!-- ══════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════ -->
+<script src="progression.js"></script>
+<script>
+/* =====================================================================
+   signaux_reels.html — Logique interactive
+   ===================================================================== */
+
+  /* ── Défi : choisir le signal sain ── */
+  var defiResolu = false;
+
+  function choisirDefi(carte) {
+    if (defiResolu) return;
+
+    var id = carte.dataset.id;
+    var res = document.getElementById('defi-resultat');
+
+    // Révéler toutes les cartes
+    document.querySelectorAll('.defi-carte').forEach(function (c) {
+      c.classList.add('revelee');
+      c.onclick = null; // désactiver
+    });
+
+    if (id === 'sain') {
+      carte.classList.add('bonne');
+      res.className = 'defi-resultat bon';
+      res.innerHTML = '✅ Bravo ! Le <strong>Signal A</strong> est bien le signal sain. ' +
+        'Régulier, amplitude homogène — exactement comme ce qu\'on a simulé dans le labo.';
+      cocherChk('chk-defi');
+    } else {
+      carte.classList.add('mauvaise');
+      document.querySelector('.defi-carte[data-id="sain"]').classList.add('bonne');
+      res.className = 'defi-resultat mal';
+      if (id === 'fa') {
+        res.innerHTML = '❌ Pas tout à fait. Ce signal est une <strong>Fibrillation Auriculaire</strong> — ' +
+          'le rythme est irrégulier et chaotique. Le signal sain, c\'est le A. Regarde les détails ci-dessous !';
+      } else {
+        res.innerHTML = '❌ Pas tout à fait. Ce signal est une <strong>Fibrillation Ventriculaire</strong> — ' +
+          'une urgence ! Les oscillations sont anarchiques. Le signal sain, c\'est le A.';
+      }
+      cocherChk('chk-defi');
+    }
+
+    defiResolu = true;
+    document.getElementById('btn-voir-signaux').classList.remove('cache');
+  }
+
+  function allerVersSignaux() {
+    var sec = document.getElementById('sec-sain');
+    sec.classList.remove('cache');
+    setTimeout(function () {
+      sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  /* ── Zoom sur les images ── */
+  var zoomEtats = {}; // { 'wrap-sain': false, ... }
+
+  function toggleZoom(wrapperId) {
+    var wrapper = document.getElementById(wrapperId);
+    var img = wrapper.querySelector('img');
+    var estZoome = wrapper.classList.contains('zoomed');
+
+    if (estZoome) {
+      wrapper.classList.remove('zoomed');
+      img.style.transform = 'scale(1)';
+      img.style.transformOrigin = 'center center';
+      // Remettre le slider à 1
+      var sliders = { 'wrap-sain': 'zoom-sain', 'wrap-fa': 'zoom-fa', 'wrap-fv': 'zoom-fv' };
+      var slider = document.getElementById(sliders[wrapperId]);
+      if (slider) {
+        slider.value = 1;
+        var idVal = wrapperId.replace('wrap-', 'zv-');
+        var valEl = document.getElementById(idVal);
+        if (valEl) valEl.textContent = '100%';
+      }
+    } else {
+      wrapper.classList.add('zoomed');
+      img.style.transform = 'scale(2)';
+      img.style.transformOrigin = 'center center';
+      var sliders2 = { 'wrap-sain': 'zoom-sain', 'wrap-fa': 'zoom-fa', 'wrap-fv': 'zoom-fv' };
+      var slider2 = document.getElementById(sliders2[wrapperId]);
+      if (slider2) {
+        slider2.value = 2;
+        var idVal2 = wrapperId.replace('wrap-', 'zv-');
+        var valEl2 = document.getElementById(idVal2);
+        if (valEl2) valEl2.textContent = '200%';
+      }
+    }
+  }
+
+  function appliquerZoom(imgId, valeur) {
+    var img = document.getElementById(imgId);
+    if (!img) return;
+    var scale = parseFloat(valeur);
+    img.style.transform = 'scale(' + scale + ')';
+    img.style.transformOrigin = 'center center';
+    // Sync wrapper zoomed class
+    var wrapper = img.closest('.signal-img-wrapper');
+    if (wrapper) wrapper.classList.toggle('zoomed', scale > 1.05);
+  }
+
+  /* ── Navigation et checklist ── */
+  function cocherChk(id) {
+    var el = document.getElementById(id);
+    if (el && !el.classList.contains('fait')) {
+      el.classList.add('fait');
+      el.querySelector('.ico').textContent = '✓';
+    }
+    verifierBadge();
+  }
+
+  function cocherEtSuivre(chkId, sectId) {
+    cocherChk(chkId);
+    var sec = document.getElementById(sectId);
+    if (sec) {
+      sec.classList.remove('cache');
+      setTimeout(function () {
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }
+
+  function validerBilan() {
+    cocherChk('chk-bilan');
+    var recap = document.getElementById('sec-recap');
+    if (recap) {
+      recap.classList.remove('cache');
+      // Valider le module et afficher le badge
+      validerModule('signaux_reels');
+      var badge = document.getElementById('badge-obtenu-section');
+      if (badge) {
+        badge.classList.remove('cache');
+        setTimeout(function () {
+          badge.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 400);
+      }
+    }
+  }
+
+  function verifierBadge() {
+    var ids = ['chk-defi', 'chk-sain', 'chk-fa', 'chk-fv', 'chk-bilan'];
+    var tout = ids.every(function (id) {
+      var el = document.getElementById(id);
+      return el && el.classList.contains('fait');
+    });
+    if (tout) {
+      validerModule('signaux_reels');
+      var badge = document.getElementById('badge-obtenu-section');
+      if (badge) badge.classList.remove('cache');
+    }
+  }
+
+  /* ── Mode révision (badge déjà obtenu) ── */
+  if (typeof moduleValide === 'function' && moduleValide('signaux_reels')) {
+    ['sec-sain', 'sec-fa', 'sec-fv', 'sec-bilan', 'sec-recap', 'badge-obtenu-section'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('cache');
+    });
+    ['chk-defi', 'chk-sain', 'chk-fa', 'chk-fv', 'chk-bilan'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) { el.classList.add('fait'); el.querySelector('.ico').textContent = '✓'; }
+    });
+    document.getElementById('btn-voir-signaux').classList.remove('cache');
+    document.querySelectorAll('.defi-carte').forEach(function (c) {
+      c.classList.add('revelee');
+      c.onclick = null;
+      if (c.dataset.id === 'sain') c.classList.add('bonne');
+    });
+    var res = document.getElementById('defi-resultat');
+    if (res) {
+      res.className = 'defi-resultat bon';
+      res.innerHTML = '✅ Le <strong>Signal A</strong> est le signal sain.';
+    }
+    defiResolu = true;
+  }
+
+</script>
+</body>
+</html>

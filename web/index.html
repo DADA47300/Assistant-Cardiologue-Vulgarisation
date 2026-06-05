@@ -88,6 +88,11 @@
         </div>
       </div>
 
+      <a class="pastille" id="lien-reels" href="reels.html" style="text-decoration:none;">
+        <span class="num" id="badge-reels">★</span>
+        <span><strong>Retour au réel</strong> <em>(bonus)</em> — Observe des vrais signaux cardiaques et repère ce qui cloche.</span>
+      </a>
+
       <div class="pastille pastille-expandable" id="lien-metiers">
         <div class="pastille-tete">
           <span class="num" id="badge-metiers">★</span>
@@ -138,12 +143,18 @@
      ===================================================================== */
 
   /** Ordre d'affichage des badges sur l'index */
+  /* Badge bonus de la page "Retour au réel" — défini ici pour ne pas modifier progression.js */
+  if (typeof BADGES !== "undefined" && !BADGES.reels) {
+    BADGES.reels = { nom: "Lecteur de vrais cœurs", icone: "💓" };
+  }
+
   var ORDRE_MODULES = [
     { id: "signal",      module: "C'est quoi un signal ?" },
     { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
     { id: "labo",        module: "Le Labo ECG" },
     { id: "curieux",     module: "La photo du son (bonus)", bonus: true },
     { id: "pathologies", module: "Détective des pathologies" },
+    { id: "reels",       module: "Retour au réel (bonus)", bonus: true },
     { id: "metiers",     module: "Les métiers de l'ingénieur" }
   ];
 
@@ -203,6 +214,10 @@
     if (moduleValide("curieux")) {
       var numCurieux = document.getElementById("badge-curieux");
       if (numCurieux) { numCurieux.style.background = "var(--attention)"; numCurieux.style.color = "#fff"; }
+    }
+    if (moduleValide("reels")) {
+      var numReels = document.getElementById("badge-reels");
+      if (numReels) { numReels.style.background = "var(--attention)"; numReels.style.color = "#fff"; }
     }
     if (moduleValide("pathologies")) {
       var numPatho = document.getElementById("badge-pathologies");
