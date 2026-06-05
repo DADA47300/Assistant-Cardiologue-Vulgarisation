@@ -193,10 +193,80 @@
       75% { transform: translateX(4px); }
     }
 
+    /* --- Bouton Son toggle --- */
+    .btn-son {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px; height: 48px;
+      border: 2px solid #e2e8f0;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 1.4rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      transition: border-color .2s, background .2s, transform .1s, box-shadow .2s;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .btn-son:hover {
+      border-color: var(--signal);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(14,159,110,.15);
+    }
+    .btn-son:active { transform: scale(.92); }
+    .btn-son.actif {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-color: var(--signal);
+      box-shadow: 0 0 0 3px rgba(14,159,110,.15), 0 2px 8px rgba(0,0,0,.08);
+    }
+    .btn-son .son-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%; transform: translateX(-50%);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--encre-doux);
+      white-space: nowrap;
+      font-family: var(--titre);
+      letter-spacing: .02em;
+    }
+    .btn-son.actif .son-label { color: var(--signal-fonce); }
+    /* Ondes sonores animées */
+    .btn-son .ondes {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 100%; height: 100%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .btn-son.actif .ondes { opacity: 1; }
+    .btn-son .ondes::before,
+    .btn-son .ondes::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 100%; height: 100%;
+      border: 2px solid var(--signal);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+      animation: pulse-onde 2s ease-out infinite;
+    }
+    .btn-son .ondes::after { animation-delay: 1s; }
+    @keyframes pulse-onde {
+      0%   { transform: translate(-50%, -50%) scale(1);   opacity: .5; }
+      100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+    }
+
     @media (max-width: 640px) {
       .patho-selecteur { grid-template-columns: 1fr; }
       .coeur-emoji { font-size: 5rem; }
       #graphe-patho { height: 220px; }
+      .btn-son { width: 40px; height: 40px; font-size: 1.2rem; }
     }
   </style>
 </head>
@@ -245,13 +315,13 @@
           <span class="em">🐢</span>
           <span class="infos"><span class="ti">Bradycardie</span><span class="so">< 60 bpm, trop lent</span></span>
         </button>
-        <button class="patho-btn" data-patho="fibr" type="button">
-          <span class="em">⚡</span>
-          <span class="infos"><span class="ti">Fibrillation</span><span class="so">Chaotique, tout tremble</span></span>
-        </button>
         <button class="patho-btn" data-patho="extra" type="button">
           <span class="em">💥</span>
           <span class="infos"><span class="ti">Extrasystole</span><span class="so">Battement « raté »</span></span>
+        </button>
+        <button class="patho-btn" data-patho="fibr" type="button">
+          <span class="em">⚡</span>
+          <span class="infos"><span class="ti">Fibrillation</span><span class="so">Chaotique, tout tremble</span></span>
         </button>
       </div>
 
@@ -260,6 +330,11 @@
         <div class="coeur-emoji" id="coeur-emoji">❤️</div>
         <div class="coeur-bpm-label"><span id="coeur-bpm-val">72</span> <span class="unite">bpm</span></div>
         <div class="coeur-etat normal" id="coeur-etat">Rythme normal</div>
+        <button class="btn-son actif" id="btn-son" type="button" title="Désactiver le son du cœur">
+          <span id="btn-son-icone">🔊</span>
+          <span class="ondes"></span>
+          <span class="son-label" id="btn-son-label">Son on</span>
+        </button>
       </div>
 
       <!-- ECG correspondant + point rouge synchronisé -->
@@ -632,6 +707,8 @@
     picsPulses = {};
     coeurEl.style.transform = "scale(1)";
     pointRouge.style.opacity = "0";
+    // Arrêter tous les sons en cours
+    arreterSonFibrillation();
   }
 
   /** Déclenche une pulsation du cœur (scale up rapide puis retour) */
@@ -640,6 +717,8 @@
     setTimeout(function () {
       coeurEl.style.transform = "scale(1)";
     }, 120);
+    // Son synchronisé avec la pulsation
+    jouerBattement();
   }
 
   /**
@@ -730,10 +809,16 @@
     if (estFibrillation) {
       picsActuels = [];
       hasardFibr  = creerHasard(99);
-    } else if (signalActuel) {
-      picsActuels = detecterPicsR(signalActuel.y, FE);
+      // Démarrer le son de fibrillation si le son est activé
+      if (sonActif) demarrerSonFibrillation();
     } else {
-      picsActuels = [];
+      // Arrêter le son fibrillation si on quitte cet état
+      arreterSonFibrillation();
+      if (signalActuel) {
+        picsActuels = detecterPicsR(signalActuel.y, FE);
+      } else {
+        picsActuels = [];
+      }
     }
 
     animDebut  = null;
@@ -1269,6 +1354,214 @@
      8) Initialisation de l'Étape 1
      ================================================================ */
   selectionnerPatho("normal");
+
+  /* ================================================================
+     10) Module Audio — Son du cœur en temps réel (Web Audio API)
+     ================================================================
+     Synthèse de sons cardiaques "lub-dub" synchronisés avec l'animation.
+     Chaque pathologie a une signature sonore distincte.
+     Son désactivé par défaut (autoplay policy). */
+
+  var audioCtx       = null;   // AudioContext (créé au premier clic)
+  var sonActif       = true;   // état mute/unmute (activé par défaut)
+  var masterGain     = null;   // nœud gain principal
+  var fibrNoiseNode  = null;   // source de bruit pour la fibrillation
+  var fibrGainNode   = null;   // gain de la fibrillation
+  var fibrLFONode    = null;   // LFO pour la modulation fibrillation
+  var fibrInterval   = null;   // intervalle pour les clics aléatoires fibrillation
+
+  /** Initialise l'AudioContext si nécessaire */
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.6;
+    masterGain.connect(audioCtx.destination);
+  }
+
+  /**
+   * Joue un son de battement cardiaque ("lub-dub").
+   * Appelée automatiquement par pulserCoeur().
+   */
+  function jouerBattement() {
+    if (!sonActif || !audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    var now = audioCtx.currentTime;
+    var p   = PATHOLOGIES[pathoActuelle];
+
+    // Adapter le timbre selon la pathologie
+    var freqS1 = 55, freqS2 = 95;
+    var volS1 = 0.7, volS2 = 0.45;
+    var delaiS2 = 0.12;
+
+    if (pathoActuelle === 'tachy') {
+      freqS1 = 65; freqS2 = 110;
+      volS1 = 0.6; volS2 = 0.4;
+      delaiS2 = 0.09;  // sons plus rapprochés
+    } else if (pathoActuelle === 'brady') {
+      freqS1 = 45; freqS2 = 80;
+      volS1 = 0.8; volS2 = 0.5;
+      delaiS2 = 0.16;  // sons plus espacés, plus profonds
+    } else if (pathoActuelle === 'extra') {
+      // L'extrasystole utilise le son normal par défaut
+      // Le battement prématuré aura naturellement un timbre
+      // légèrement différent car la pulsation arrive plus tôt
+      freqS1 = 55; freqS2 = 95;
+    }
+
+    // --- S1 ("lub") : coup sourd basse fréquence ---
+    jouerComposante(now, freqS1, 0.10, volS1);
+    // Harmonique basse pour enrichir
+    jouerComposante(now, freqS1 * 0.5, 0.08, volS1 * 0.3);
+
+    // --- S2 ("dub") : son légèrement plus aigu ---
+    jouerComposante(now + delaiS2, freqS2, 0.08, volS2);
+    jouerComposante(now + delaiS2, freqS2 * 1.5, 0.06, volS2 * 0.2);
+  }
+
+  /**
+   * Joue une composante sonore individuelle (oscillateur + enveloppe).
+   * @param {number} quand   - audioCtx.currentTime pour le déclenchement
+   * @param {number} freq    - fréquence en Hz
+   * @param {number} duree   - durée en secondes
+   * @param {number} volume  - amplitude (0-1)
+   */
+  function jouerComposante(quand, freq, duree, volume) {
+    var osc  = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+
+    osc.type      = 'sine';
+    osc.frequency.setValueAtTime(freq, quand);
+    // Glissando descendant pour un son plus naturel
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, quand + duree);
+
+    gain.gain.setValueAtTime(0.001, quand);
+    // Attaque rapide
+    gain.gain.exponentialRampToValueAtTime(volume, quand + 0.008);
+    // Décroissance naturelle
+    gain.gain.exponentialRampToValueAtTime(0.001, quand + duree);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start(quand);
+    osc.stop(quand + duree + 0.01);
+  }
+
+  /**
+   * Démarre le son continu de fibrillation (bruit modulé + clics aléatoires).
+   */
+  function demarrerSonFibrillation() {
+    if (!sonActif || !audioCtx) return;
+    if (fibrNoiseNode) return; // déjà en cours
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Créer un buffer de bruit blanc
+    var tailleBuf = audioCtx.sampleRate * 2;
+    var buf       = audioCtx.createBuffer(1, tailleBuf, audioCtx.sampleRate);
+    var donnees   = buf.getChannelData(0);
+    for (var i = 0; i < tailleBuf; i++) {
+      donnees[i] = (Math.random() * 2 - 1) * 0.3;
+    }
+
+    fibrNoiseNode = audioCtx.createBufferSource();
+    fibrNoiseNode.buffer = buf;
+    fibrNoiseNode.loop   = true;
+
+    // Filtre passe-bande pour un grondement cardiaque
+    var filtre = audioCtx.createBiquadFilter();
+    filtre.type = 'bandpass';
+    filtre.frequency.value = 80;
+    filtre.Q.value = 2;
+
+    // Gain avec modulation LFO pour l'irrégularité
+    fibrGainNode = audioCtx.createGain();
+    fibrGainNode.gain.value = 0.15;
+
+    // LFO pour moduler l'amplitude (effet de tremblement)
+    fibrLFONode = audioCtx.createOscillator();
+    fibrLFONode.type = 'sine';
+    fibrLFONode.frequency.value = 4.5; // modulation rapide
+    var lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 0.08;
+    fibrLFONode.connect(lfoGain);
+    lfoGain.connect(fibrGainNode.gain);
+
+    fibrNoiseNode.connect(filtre);
+    filtre.connect(fibrGainNode);
+    fibrGainNode.connect(masterGain);
+
+    fibrNoiseNode.start();
+    fibrLFONode.start();
+
+    // Clics/pops aléatoires pour simuler les micro-contractions chaotiques
+    fibrInterval = setInterval(function() {
+      if (!sonActif || !audioCtx) return;
+      var now = audioCtx.currentTime;
+      var freq = 40 + Math.random() * 60;
+      jouerComposante(now, freq, 0.03 + Math.random() * 0.04, 0.15 + Math.random() * 0.2);
+    }, 150 + Math.random() * 200);
+  }
+
+  /**
+   * Arrête le son de fibrillation.
+   */
+  function arreterSonFibrillation() {
+    if (fibrNoiseNode) {
+      try { fibrNoiseNode.stop(); } catch(e) {}
+      fibrNoiseNode = null;
+    }
+    if (fibrLFONode) {
+      try { fibrLFONode.stop(); } catch(e) {}
+      fibrLFONode = null;
+    }
+    fibrGainNode = null;
+    if (fibrInterval) {
+      clearInterval(fibrInterval);
+      fibrInterval = null;
+    }
+  }
+
+  /* --- Bouton Son toggle --- */
+  var btnSon      = document.getElementById('btn-son');
+  var btnSonIcone = document.getElementById('btn-son-icone');
+  var btnSonLabel = document.getElementById('btn-son-label');
+
+  btnSon.addEventListener('click', function() {
+    initAudio();
+    sonActif = !sonActif;
+
+    if (sonActif) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      btnSon.classList.add('actif');
+      btnSonIcone.textContent = '🔊';
+      btnSonLabel.textContent = 'Son on';
+      btnSon.title = 'Désactiver le son du cœur';
+      // Si on est en fibrillation, démarrer le son
+      if (estFibrillation) demarrerSonFibrillation();
+    } else {
+      btnSon.classList.remove('actif');
+      btnSonIcone.textContent = '🔇';
+      btnSonLabel.textContent = 'Son off';
+      btnSon.title = 'Activer le son du cœur';
+      arreterSonFibrillation();
+    }
+  });
+
+  // Tentative d'initialisation immédiate de l'audio au chargement
+  initAudio();
+  if (sonActif && estFibrillation) demarrerSonFibrillation();
+
+  // Listener de secours : si le navigateur a bloqué l'autoplay (AudioContext 'suspended'),
+  // le premier clic réactivera l'AudioContext.
+  function reprendreAudioAuPremierClic() {
+    document.removeEventListener('click', reprendreAudioAuPremierClic, true);
+    document.removeEventListener('touchstart', reprendreAudioAuPremierClic, true);
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  document.addEventListener('click', reprendreAudioAuPremierClic, true);
+  document.addEventListener('touchstart', reprendreAudioAuPremierClic, true);
 
   </script>
 </body>
