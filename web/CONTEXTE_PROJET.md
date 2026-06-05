@@ -202,21 +202,6 @@ Note pour l'agent : Pour le module pathologies, tu devras utiliser ou étendre g
 
 ## 9. Idée directrice à poursuivre & TODO
 
-**Idée de navigation en « mini-parties »** : chaque module est découpé en
-sous-étapes qu'on déclenche entre deux passages à l'oral (montrer → manipuler → expliquer),
-conformément à la règle pédagogique « jamais plus de 10-15 min sans manipulation ». Ce découpage
-est reflété par des sous-listes dépliables sur l'accueil `index.html`.
-
-Restant à construire (par ordre de priorité) :
-
-1. **Les Métiers de l'Ingénieur (Bloc 5 - metiers.html)** : Des mini-jeux illustrant les filières.
-   - *Filière Réseaux/Télécoms :* Simuler l'envoi de l'ECG. Si le réseau est mauvais (perte de paquets), le tracé arrive avec des trous. L'élève doit réparer la connexion.
-   - *Filière Informatique/Génie Logiciel :* L'élève construit l'interface du médecin de zéro. Il clique pour ajouter le HTML (squelette gris), utilise des curseurs pour le CSS (arrondis, couleurs), et clique pour activer le JS (le cœur se met à battre).
-2. **Bilan et Livre d'Or (Bloc 6 - avis.html)** : Une page de feedback de fin d'atelier.
-   - Notation de 1 à 5 étoiles pour chaque grand module.
-   - Zones de texte (facultatives) : "Ce que j'ai préféré" et "Ce qui était difficile à comprendre".
-   - Le bouton "Envoyer" de ce formulaire déclenche l'animation de confettis et l'apparition du diplôme final.
-3. **Intégration du Badge Curieux** : Ajouter ce 5ème badge dans `progression.js` pour récompenser l'exploration des modules bonus (`spectro.html` et potentiellement d'autres à venir).
 ---
 
 ## 10. Conventions à respecter quand tu modifies

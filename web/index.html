@@ -111,6 +111,14 @@
         <span class="num" id="badge-matlab">★</span>
         <span><strong>Dans les coulisses de Matlab</strong> — Explore de vrais signaux cardiaques issus d'un vrai capteur.</span>
       </a>
+      <a class="pastille" id="lien-montre" href="montre.html" style="text-decoration:none;">
+        <span class="num" id="badge-montre">★</span>
+        <span><strong>La montre qui voit le sang</strong> — Découvre comment les montres connectées mesurent ton cœur avec de la lumière.</span>
+      </a>
+      <a class="pastille" id="lien-piano" href="piano.html" style="text-decoration:none;">
+        <span class="num" id="badge-filtre">★</span>
+        <span><strong>Le Piano Anti-Parasite</strong> — Vise un parasite par sa fréquence et fais-le disparaître au filtre.</span>
+      </a>
     </div>
 
     <!-- =================== SECTION PROGRESSION =================== -->
@@ -154,8 +162,10 @@
     { id: "labo",        module: "Le Labo ECG" },
     { id: "pathologies", module: "Détective des pathologies" },
     { id: "metiers",     module: "Les métiers de l'ingénieur" },
-    { id: "curieux",     module: "Détective du Son",   bonus: true },
-    { id: "matlab",      module: "Expert Matlab",      bonus: true }
+    { id: "curieux",     module: "Détective du Son",        bonus: true },
+    { id: "matlab",      module: "Expert Matlab",            bonus: true },
+    { id: "montre",      module: "La montre qui voit le sang", bonus: true },
+    { id: "filtre",      module: "Le Piano Anti-Parasite",   bonus: true }
   ];
 
   /** Construit la grille de badges */
@@ -218,6 +228,14 @@
     if (moduleValide("matlab")) {
       var numMatlab = document.getElementById("badge-matlab");
       if (numMatlab) { numMatlab.style.background = "var(--attention)"; numMatlab.style.color = "#fff"; }
+    }
+    if (moduleValide("montre")) {
+      var numMontre = document.getElementById("badge-montre");
+      if (numMontre) { numMontre.style.background = "var(--attention)"; numMontre.style.color = "#fff"; }
+    }
+    if (moduleValide("filtre")) {
+      var numFiltre = document.getElementById("badge-filtre");
+      if (numFiltre) { numFiltre.style.background = "var(--attention)"; numFiltre.style.color = "#fff"; }
     }
     if (moduleValide("pathologies")) {
       var numPatho = document.getElementById("badge-pathologies");

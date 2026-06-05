@@ -16,14 +16,16 @@ var BADGES = {
   pathologies: { nom: "Expert Diagnostic",             icone: "🩺" },
   metiers:     { nom: "Ingénieur Polyvalent",          icone: "🛠️" },
   curieux:     { nom: "Détective du Son",   icone: "🎧" },
-  matlab:      { nom: "Expert Matlab",      icone: "💻" }
+  matlab:      { nom: "Expert Matlab",      icone: "💻" },
+  montre:      { nom: "Ingénieur Biomédical", icone: "⌚" },
+  filtre:      { nom: "Dompteur de Fréquences", icone: "🎹" }
 };
 
 /** Badges obligatoires pour le diplôme (les badges bonus n'en font pas partie) */
 var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "labo", "pathologies", "metiers"];
 
 /** Badges bonus (missions secondaires, non requis pour le diplôme) */
-var BADGES_BONUS = ["curieux", "matlab"];
+var BADGES_BONUS = ["curieux", "matlab", "montre", "filtre"];
 
 /** Clé sessionStorage pour stocker les badges */
 var CLE_PROGRESSION = "lisuncoeur_badges";

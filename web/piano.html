@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Le Piano Anti-Parasite — Lis un cœur</title>
+  <meta name="description" content="Mission bonus : apprends à viser un parasite par sa fréquence et à le supprimer avec un filtre, au piano.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ============================================================
+       SPÉCIFIQUE À piano.html (le réutilisable irait dans style.css)
+       ============================================================ */
+
+    /* --- Le clavier (vraie octave : touches blanches + noires) --- */
+    .clavier-cadre { max-width: 560px; margin: 18px auto 6px; }
+    .clavier {
+      position: relative;
+      display: flex;
+      height: 170px;
+      border: 2px solid var(--encre);
+      border-radius: 6px 6px 14px 14px;
+      background: var(--encre);          /* fine moulure sombre, façon piano */
+      box-shadow: var(--ombre);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    /* Touches blanches */
+    .touche {
+      position: relative;
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      padding: 10px 4px 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #f3f5f2 100%);
+      border-right: 1px solid var(--bord);
+      border-bottom: 4px solid #d7ddd6;
+      cursor: pointer;
+      font-family: var(--titre);
+      color: var(--encre);
+      transition: transform .06s ease, background .06s ease;
+      z-index: 1;
+    }
+    .touche:last-child  { border-right: none; border-radius: 0 0 12px 0; }
+    .touche:first-child { border-radius: 0 0 0 12px; }
+    .touche.enfoncee {
+      transform: translateY(2px);
+      background: linear-gradient(180deg, #d8f3e8 0%, #bfe9d6 100%);
+      border-bottom-color: var(--signal);
+    }
+
+    /* Touches noires (posées par-dessus ; position en % réglée en JS) */
+    .touche-noire {
+      position: absolute;
+      top: 0;
+      width: 8%;
+      height: 62%;
+      transform: translateX(-50%);       /* centrée sur la frontière entre 2 blanches */
+      background: linear-gradient(180deg, #24463d 0%, var(--encre) 72%);
+      border: 1px solid #0c1d18;
+      border-radius: 0 0 5px 5px;
+      box-shadow: 0 3px 5px rgba(0,0,0,.35);
+      cursor: pointer;
+      z-index: 3;
+      transition: height .06s ease, background .06s ease;
+    }
+    .touche-noire.enfoncee {
+      height: 59%;
+      background: linear-gradient(180deg, var(--signal) 0%, var(--signal-fonce) 90%);
+    }
+
+    .touche-note   { font-weight: 800; font-size: 1.02rem; }
+    .touche-lettre {
+      font-family: var(--texte);
+      font-size: .72rem;
+      color: var(--encre-doux);
+      background: #eef1ee;
+      border: 1px solid var(--bord);
+      border-radius: 6px;
+      padding: 1px 7px;
+    }
+    .touche.enfoncee .touche-lettre { background: #fff; border-color: var(--signal); }
+
+    .lecteur-note {
+      text-align: center;
+      font-family: var(--titre);
+      font-weight: 800;
+      color: var(--signal-fonce);
+      min-height: 1.5em;
+      margin-top: 8px;
+    }
+    .lecteur-note .hz { color: var(--encre-doux); font-weight: 400; }
+
+    /* --- Console anti-parasite --- */
+    .jukebox {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 4px 0 16px;
+    }
+    .jukebox .choix-parasite {
+      flex: 1 1 auto;
+    }
+    .bouton.secondaire.actif {
+      background: var(--signal);
+      color: #fff;
+      border-color: var(--signal);
+    }
+
+    /* --- Le spectre --- */
+    .spectre-cadre {
+      background: #0f231e;
+      border-radius: var(--rayon);
+      padding: 12px 12px 6px;
+      margin: 14px 0 6px;
+      box-shadow: inset 0 1px 6px rgba(0,0,0,.4);
+    }
+    .spectre-cadre canvas { display: block; width: 100%; height: auto; }
+    .spectre-legende {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--texte);
+      font-size: .8rem;
+      color: #9fc7b6;
+      margin-top: 4px;
+    }
+
+    /* --- Le filtre (curseur) --- */
+    .filtre-bloc { margin-top: 18px; }
+    .filtre-bloc label {
+      display: block;
+      font-family: var(--titre);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .curseur-filtre {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--signal) 0%, #c9e8db 100%);
+      outline: none;
+    }
+    .curseur-filtre::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--carte);
+      border: 3px solid var(--signal);
+      box-shadow: var(--ombre);
+      cursor: pointer;
+    }
+    .curseur-filtre::-moz-range-thumb {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--carte);
+      border: 3px solid var(--signal);
+      box-shadow: var(--ombre);
+      cursor: pointer;
+    }
+    .curseur-bornes {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--texte);
+      font-size: .82rem;
+      color: var(--encre-doux);
+      margin-top: 6px;
+    }
+    .lecteur-coupure {
+      text-align: center;
+      font-family: var(--titre);
+      font-weight: 800;
+      margin: 10px 0 2px;
+      color: var(--encre);
+    }
+
+    .pas-jouer-info {
+      text-align: center;
+      color: var(--encre-doux);
+      font-style: italic;
+      font-family: var(--texte);
+    }
+  </style>
+</head>
+<body>
+  <nav class="barre">
+    <!-- Lien de navigation : index.html NU (règle des badges §6) -->
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <span class="lien">Mission bonus 🎹</span>
+  </nav>
+
+  <main class="page">
+    <header class="mission">
+      <h1>🎹 Le Piano Anti-Parasite</h1>
+      <p>Un parasite, c'est juste une fréquence qui s'est invitée dans ton signal.
+         Mission bonus : apprends à le <strong>viser par sa fréquence</strong> et à le faire
+         disparaître avec un filtre — sans abîmer la musique. C'est exactement le geste que
+         tu refais au Labo pour nettoyer un ECG.</p>
+    </header>
+
+    <!-- ========================== CLAVIER ========================== -->
+    <section class="carte">
+      <h2>1. Joue, et écoute les fréquences</h2>
+      <p>Une note <strong>grave</strong> = une <strong>basse fréquence</strong> (la corde vibre lentement).
+         Une note <strong>aiguë</strong> = une <strong>haute fréquence</strong> (elle vibre vite).
+         Clique sur les touches (blanches <em>et</em> noires) ou tape les lettres
+         <strong>A&nbsp;Z&nbsp;E&nbsp;R&nbsp;T&nbsp;Y&nbsp;U&nbsp;I</strong> de ton clavier.</p>
+
+      <div class="clavier-cadre">
+        <div class="clavier" id="clavier" role="group" aria-label="Clavier de piano"></div>
+      </div>
+      <div class="lecteur-note" id="lecteur-note">Appuie sur une touche…</div>
+    </section>
+
+    <!-- ====================== CONSOLE ANTI-PARASITE ====================== -->
+    <section class="carte">
+      <h2>2. La console anti-parasite</h2>
+      <p>Voici une jolie musique… mais un parasite s'y est glissé. Écoute comme c'est
+         désagréable. Le son que tu entends est en réalité une <strong>somme de fréquences</strong> :
+         la musique (en bas) <em>plus</em> le parasite (tout en haut).</p>
+
+      <div class="jukebox" id="jukebox" role="group" aria-label="Choix du parasite">
+        <button class="bouton secondaire choix-parasite actif" data-parasite="sifflement">🔔 Sifflement aigu</button>
+        <button class="bouton secondaire choix-parasite" data-parasite="gresillement">📻 Grésillement</button>
+        <button class="bouton secondaire choix-parasite" data-parasite="bip">📡 Bip strident</button>
+      </div>
+
+      <button class="bouton" id="btn-piste" style="width:100%;">
+        <span class="lbl">▶︎ Écouter la piste endommagée</span>
+      </button>
+
+      <!-- Le spectre temps réel -->
+      <div class="spectre-cadre">
+        <canvas id="spectre" width="640" height="150" aria-label="Spectre des fréquences en direct"></canvas>
+        <div class="spectre-legende"><span>← graves</span><span>aigus →</span></div>
+      </div>
+      <p class="pas-jouer-info" id="hint-spectre">Lance la piste pour voir le spectre s'animer.</p>
+
+      <!-- Le filtre passe-bas -->
+      <div class="filtre-bloc">
+        <label for="curseur">🎚️ Filtre anti-aigus (fréquence de coupure)</label>
+        <input type="range" id="curseur" class="curseur-filtre" min="0" max="100" value="100" step="1"
+               aria-describedby="lecteur-coupure">
+        <div class="curseur-bornes">
+          <span>🔇 coupe les aigus</span>
+          <span>tout passe 🔊</span>
+        </div>
+        <div class="lecteur-coupure" id="lecteur-coupure">Coupure : tout passe</div>
+        <p class="message" id="message-filtre" style="display:none;"></p>
+      </div>
+
+      <p style="margin-top:18px; color:var(--encre-doux);">
+        💡 Le trait blanc qui descend dans le spectre, c'est ta coupure : <strong>tout ce qui est
+        à sa droite (les aigus) est supprimé</strong>. Le but : descendre juste assez pour effacer
+        le parasite, mais pas trop, sinon la musique devient sourde.</p>
+    </section>
+
+    <!-- ====================== VALIDATION / BADGE ====================== -->
+    <section class="carte cache" id="carte-reussite">
+      <h2>🏆 Mission réussie !</h2>
+      <p>Tu viens de faire le geste d'un ingénieur du signal : <strong>connaître la fréquence
+         d'un parasite pour le viser et l'enlever</strong>, sans toucher à l'information utile.</p>
+      <p style="color:var(--encre-doux);">⚙️ Petit pont vers le Labo : ici, le parasite était
+         <em>aigu</em>, donc un filtre « anti-aigus » (passe-bas) suffit. Le grésillement du
+         secteur 50&nbsp;Hz dans un ECG, lui, est <em>grave</em> : on utilise l'autre type de filtre.
+         Mais l'idée reste la même — viser une fréquence précise.</p>
+
+      <button class="bouton" id="btn-valider" style="width:100%;">🎖️ Valider ma mission bonus</button>
+
+      <!-- Apparaît APRÈS validation. Seul lien autorisé à porter ?badge= (règle §6). -->
+      <div id="zone-retour" class="cache" style="margin-top:14px;">
+        <a class="bouton secondaire" href="index.html?badge=filtre" style="width:100%; box-sizing:border-box; text-align:center;">
+          ↩︎ Retour à l'accueil pour voir ton badge
+        </a>
+      </div>
+    </section>
+
+    <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <!-- Progression manager (gère les badges) -->
+  <script src="progression.js"></script>
+
+  <script>
+  /* =====================================================================
+     PIANO ANTI-PARASITE
+     - 100 % hors-ligne, Web Audio API native (aucune dépendance réseau).
+     - Le clavier (bac à sable) sonne en direct.
+     - La console joue une musique + un parasite aigu, tous deux passés dans
+       un filtre passe-bas (BiquadFilterNode) piloté par le curseur.
+     - Le spectre est dessiné depuis un AnalyserNode placé APRÈS le filtre :
+       on voit donc les barres aiguës disparaître quand on filtre.
+     ===================================================================== */
+
+  /* ------- Contexte audio (créé/réveillé au premier geste utilisateur) ------- */
+  var AC = null;
+  function ctx() {
+    if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); }
+    if (AC.state === "suspended") { AC.resume(); }
+    return AC;
+  }
+
+  /* =====================================================================
+     1) LE CLAVIER (bac à sable)
+     ===================================================================== */
+  var NOTES = [
+    { nom: "Do",  freq: 261.63, touche: "a" },
+    { nom: "Ré",  freq: 293.66, touche: "z" },
+    { nom: "Mi",  freq: 329.63, touche: "e" },
+    { nom: "Fa",  freq: 349.23, touche: "r" },
+    { nom: "Sol", freq: 392.00, touche: "t" },
+    { nom: "La",  freq: 440.00, touche: "y" },
+    { nom: "Si",  freq: 493.88, touche: "u" },
+    { nom: "Do",  freq: 523.25, touche: "i" }
+  ];
+
+  var notesActives = {};   // id -> { osc, gain }
+  var lecteurNote = document.getElementById("lecteur-note");
+
+  function jouerNote(freq, id, nom) {
+    if (notesActives[id]) return;
+    var c = ctx();
+    var osc = c.createOscillator();
+    var g = c.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    var t = c.currentTime;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.28, t + 0.012);  // attaque
+    g.gain.linearRampToValueAtTime(0.20, t + 0.18);   // léger decay -> sustain
+    osc.connect(g).connect(c.destination);
+    osc.start();
+    notesActives[id] = { osc: osc, gain: g };
+    lecteurNote.innerHTML = "🎵 " + nom + " <span class=\"hz\">— " + Math.round(freq) + " Hz</span>";
+  }
+
+  function arreterNote(id) {
+    var n = notesActives[id];
+    if (!n) return;
+    var c = ctx();
+    var t = c.currentTime;
+    n.gain.gain.cancelScheduledValues(t);
+    n.gain.gain.setValueAtTime(n.gain.gain.value, t);
+    n.gain.gain.linearRampToValueAtTime(0.0001, t + 0.25);  // release
+    n.osc.stop(t + 0.3);
+    delete notesActives[id];
+  }
+
+  /* Notes noires (dièses). Chacune se pose sur la frontière APRÈS la blanche
+     d'indice "apres". Dans une octave : noires après Do, Ré, (rien entre Mi-Fa),
+     Fa, Sol, La, (rien entre Si-Do aigu). */
+  var NOTES_NOIRES = [
+    { nom: "Do♯",  freq: 277.18, apres: 0 },
+    { nom: "Ré♯",  freq: 311.13, apres: 1 },
+    { nom: "Fa♯",  freq: 369.99, apres: 3 },
+    { nom: "Sol♯", freq: 415.30, apres: 4 },
+    { nom: "La♯",  freq: 466.16, apres: 5 }
+  ];
+
+  var clavier = document.getElementById("clavier");
+  var nbBlanches = NOTES.length;
+
+  /* Attache les gestes souris + tactile à une touche (blanche ou noire) */
+  function cablerTouche(el, freq, id, nom) {
+    function presser(e) { if (e) { e.preventDefault(); } el.classList.add("enfoncee"); jouerNote(freq, id, nom); }
+    function relacher() { el.classList.remove("enfoncee"); arreterNote(id); }
+    el.addEventListener("mousedown", presser);
+    el.addEventListener("mouseup", relacher);
+    el.addEventListener("mouseleave", relacher);
+    el.addEventListener("touchstart", presser, { passive: false });
+    el.addEventListener("touchend", function (e) { e.preventDefault(); relacher(); }, { passive: false });
+  }
+
+  /* Touches blanches (avec lettre du clavier physique) */
+  NOTES.forEach(function (note, i) {
+    var b = document.createElement("button");
+    b.className = "touche";
+    b.dataset.id = "k" + i;
+    b.dataset.freq = note.freq;
+    b.dataset.nom = note.nom;
+    b.setAttribute("aria-label", note.nom + " (touche " + note.touche.toUpperCase() + ")");
+    b.innerHTML = '<span class="touche-note">' + note.nom + '</span>' +
+                  '<span class="touche-lettre">' + note.touche.toUpperCase() + '</span>';
+    cablerTouche(b, note.freq, b.dataset.id, note.nom);
+    clavier.appendChild(b);
+  });
+
+  /* Touches noires (posées par-dessus, jouables à la souris/au tactile).
+     Position = frontière (apres+1)/nbBlanches en % de la largeur du clavier. */
+  NOTES_NOIRES.forEach(function (note, i) {
+    var n = document.createElement("button");
+    n.className = "touche-noire";
+    n.dataset.id = "n" + i;
+    n.setAttribute("aria-label", note.nom);
+    n.style.left = (((note.apres + 1) / nbBlanches) * 100) + "%";
+    cablerTouche(n, note.freq, n.dataset.id, note.nom);
+    clavier.appendChild(n);
+  });
+
+  /* Jeu au clavier physique (AZERTY) */
+  var toucheVersBouton = {};
+  NOTES.forEach(function (note, i) {
+    toucheVersBouton[note.touche] = document.querySelector('.touche[data-id="k' + i + '"]');
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.repeat) return;
+    var b = toucheVersBouton[e.key.toLowerCase()];
+    if (!b) return;
+    b.classList.add("enfoncee");
+    jouerNote(parseFloat(b.dataset.freq), b.dataset.id, b.dataset.nom);
+  });
+  document.addEventListener("keyup", function (e) {
+    var b = toucheVersBouton[e.key.toLowerCase()];
+    if (!b) return;
+    b.classList.remove("enfoncee");
+    arreterNote(b.dataset.id);
+  });
+
+  /* =====================================================================
+     2) LA CONSOLE ANTI-PARASITE
+     ===================================================================== */
+  var curseur       = document.getElementById("curseur");
+  var lecteurCoupure = document.getElementById("lecteur-coupure");
+  var messageFiltre = document.getElementById("message-filtre");
+  var btnPiste      = document.getElementById("btn-piste");
+  var hintSpectre   = document.getElementById("hint-spectre");
+  var canvas        = document.getElementById("spectre");
+  var ctx2d         = canvas.getContext("2d");
+
+  var FREQ_MIN = 200, FREQ_MAX = 16000;   // bornes de la fréquence de coupure
+  var FREQ_AFFICHEE_MAX = 14000;          // borne droite du spectre dessiné
+  var ZONE_PUR_BAS = 1200, ZONE_PUR_HAUT = 3500;  // "sweet spot" : parasite parti, musique gardée
+
+  var enLecture   = false;
+  var raf         = null;
+  var biquad      = null;
+  var analyser    = null;
+  var freqData    = null;
+  var sources     = [];          // oscillateurs / bruit à arrêter
+  var parasiteType = "sifflement";
+  var aTrouvePur  = false;
+
+  /* Curseur (0..100) -> fréquence de coupure (échelle logarithmique) */
+  function curseurVersFreq(v) {
+    var min = Math.log(FREQ_MIN), max = Math.log(FREQ_MAX);
+    return Math.exp(min + (max - min) * (v / 100));
+  }
+  function coupureCourante() { return curseurVersFreq(parseFloat(curseur.value)); }
+
+  /* Petit buffer de bruit blanc (pour le grésillement) */
+  function bufferBruit(c) {
+    var n = Math.floor(c.sampleRate * 1.5);
+    var buf = c.createBuffer(1, n, c.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < n; i++) { d[i] = Math.random() * 2 - 1; }
+    return buf;
+  }
+
+  /* Construit la chaîne audio : sources -> filtre passe-bas -> analyseur -> sortie */
+  function construireGraphe() {
+    var c = ctx();
+
+    biquad = c.createBiquadFilter();
+    biquad.type = "lowpass";
+    biquad.frequency.value = coupureCourante();
+    biquad.Q.value = 0.7;
+
+    analyser = c.createAnalyser();
+    analyser.fftSize = 2048;
+    freqData = new Uint8Array(analyser.frequencyBinCount);
+
+    biquad.connect(analyser);
+    analyser.connect(c.destination);
+
+    // La musique : un accord de Do majeur (Do, Mi, Sol, Do aigu)
+    [261.63, 329.63, 392.00, 523.25].forEach(function (f) {
+      var o = c.createOscillator();
+      o.type = "triangle";
+      o.frequency.value = f;
+      var g = c.createGain();
+      g.gain.value = 0.09;
+      o.connect(g).connect(biquad);
+      o.start();
+      sources.push(o);
+    });
+
+    // Le parasite (toujours dans les aigus -> un passe-bas peut le viser)
+    if (parasiteType === "gresillement") {
+      var src = c.createBufferSource();
+      src.buffer = bufferBruit(c);
+      src.loop = true;
+      var hp = c.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = 5000;        // ne garde que le souffle aigu
+      var pg = c.createGain();
+      pg.gain.value = 0.30;
+      src.connect(hp).connect(pg).connect(biquad);
+      src.start();
+      sources.push(src);
+    } else {
+      var fParasite = (parasiteType === "bip") ? 12000 : 9500;
+      var po = c.createOscillator();
+      po.type = "sine";
+      po.frequency.value = fParasite;
+      var pgn = c.createGain();
+      pgn.gain.value = 0.13;
+      po.connect(pgn).connect(biquad);
+      po.start();
+      sources.push(po);
+    }
+  }
+
+  function demarrer() {
+    if (enLecture) return;
+    ctx();
+    construireGraphe();
+    enLecture = true;
+    btnPiste.querySelector(".lbl").textContent = "⏸ Arrêter la piste";
+    hintSpectre.style.display = "none";
+    dessinerSpectre();
+    majFiltre();   // applique l'état (coupure + message) tout de suite
+  }
+
+  function arreter() {
+    if (!enLecture) return;
+    sources.forEach(function (s) { try { s.stop(); } catch (e) {} });
+    sources = [];
+    enLecture = false;
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    btnPiste.querySelector(".lbl").textContent = "▶︎ Écouter la piste endommagée";
+    hintSpectre.style.display = "";
+    messageFiltre.style.display = "none";
+    effacerSpectre();
+  }
+
+  btnPiste.addEventListener("click", function () {
+    if (enLecture) { arreter(); } else { demarrer(); }
+  });
+
+  /* Jukebox : change le type de parasite */
+  document.querySelectorAll(".choix-parasite").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll(".choix-parasite").forEach(function (x) { x.classList.remove("actif"); });
+      b.classList.add("actif");
+      parasiteType = b.dataset.parasite;
+      if (enLecture) { arreter(); demarrer(); }  // relance avec le nouveau parasite
+    });
+  });
+
+  /* Le curseur : déplace la fréquence de coupure du passe-bas */
+  curseur.addEventListener("input", majFiltre);
+
+  function majFiltre() {
+    var coupure = coupureCourante();
+    if (biquad) {
+      biquad.frequency.setTargetAtTime(coupure, ctx().currentTime, 0.02);
+    }
+
+    // Lecture de la coupure
+    if (parseFloat(curseur.value) >= 99) {
+      lecteurCoupure.textContent = "Coupure : tout passe";
+    } else {
+      lecteurCoupure.textContent = "Coupure : " + Math.round(coupure).toLocaleString("fr-FR") + " Hz";
+    }
+
+    if (!enLecture) { messageFiltre.style.display = "none"; return; }
+
+    // Message d'état + déblocage de la validation
+    messageFiltre.style.display = "";
+    if (coupure >= ZONE_PUR_BAS && coupure <= ZONE_PUR_HAUT) {
+      messageFiltre.className = "message bon";
+      messageFiltre.textContent = "🎵 Pur ! Tu as visé le parasite sans abîmer la musique.";
+      if (!aTrouvePur) { aTrouvePur = true; debloquerValidation(); }
+    } else if (coupure > ZONE_PUR_HAUT) {
+      messageFiltre.className = "message pas-encore";
+      messageFiltre.textContent = "😖 Le parasite aigu siffle encore… descends un peu le filtre.";
+    } else {
+      messageFiltre.className = "message pas-encore";
+      messageFiltre.textContent = "🔉 Trop coupé : la musique devient sourde. Remonte un peu.";
+    }
+  }
+
+  /* =====================================================================
+     LE SPECTRE (dessiné depuis l'AnalyserNode, après le filtre)
+     ===================================================================== */
+  function effacerSpectre() {
+    ctx2d.fillStyle = "#0f231e";
+    ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function dessinerSpectre() {
+    if (!enLecture) return;
+    raf = requestAnimationFrame(dessinerSpectre);
+
+    analyser.getByteFrequencyData(freqData);
+    var W = canvas.width, H = canvas.height;
+
+    ctx2d.fillStyle = "#0f231e";
+    ctx2d.fillRect(0, 0, W, H);
+
+    var binHz   = ctx().sampleRate / analyser.fftSize;
+    var binsMax = Math.min(freqData.length, Math.floor(FREQ_AFFICHEE_MAX / binHz));
+    var nbBarres = 56;
+    var parBarre = binsMax / nbBarres;
+    var largeur  = W / nbBarres;
+
+    for (var i = 0; i < nbBarres; i++) {
+      // moyenne du groupe de bins
+      var debut = Math.floor(i * parBarre), fin = Math.floor((i + 1) * parBarre);
+      var somme = 0, n = 0;
+      for (var j = debut; j < fin; j++) { somme += freqData[j]; n++; }
+      var val = n ? somme / n : 0;
+      var h = (val / 255) * (H - 8);
+
+      // fréquence représentée par cette barre (pour colorer la zone "aigus")
+      var fBarre = (i + 0.5) * parBarre * binHz;
+      ctx2d.fillStyle = (fBarre > 6000) ? "#f0a85a" : "#34d399";  // attention / signal
+      ctx2d.fillRect(i * largeur + 1, H - h, largeur - 2, h);
+    }
+
+    // Trait vertical = fréquence de coupure
+    var coupure = coupureCourante();
+    if (coupure < FREQ_AFFICHEE_MAX) {
+      var x = (coupure / FREQ_AFFICHEE_MAX) * W;
+      ctx2d.strokeStyle = "rgba(255,255,255,.85)";
+      ctx2d.lineWidth = 2;
+      ctx2d.setLineDash([5, 4]);
+      ctx2d.beginPath();
+      ctx2d.moveTo(x, 0);
+      ctx2d.lineTo(x, H);
+      ctx2d.stroke();
+      ctx2d.setLineDash([]);
+
+      ctx2d.fillStyle = "rgba(255,255,255,.9)";
+      ctx2d.font = "11px sans-serif";
+      var label = "coupure";
+      var lx = Math.min(x + 5, W - 52);
+      ctx2d.fillText(label, lx, 13);
+    }
+  }
+
+  effacerSpectre();   // fond initial propre
+
+  /* =====================================================================
+     3) VALIDATION & BADGE (règle §6 : ?badge= seulement sur le bouton final)
+     ===================================================================== */
+  var carteReussite = document.getElementById("carte-reussite");
+  var btnValider    = document.getElementById("btn-valider");
+  var zoneRetour    = document.getElementById("zone-retour");
+
+  function debloquerValidation() {
+    carteReussite.classList.remove("cache");
+    carteReussite.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  btnValider.addEventListener("click", function () {
+    // validerModule() affiche déjà le toast de badge en interne.
+    if (typeof validerModule === "function") { validerModule("filtre"); }
+    if (typeof lancerConfettis === "function") { lancerConfettis(); }
+    btnValider.style.display = "none";
+    zoneRetour.classList.remove("cache");
+  });
+  </script>
+</body>
+</html>
