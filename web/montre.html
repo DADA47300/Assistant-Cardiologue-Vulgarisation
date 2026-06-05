@@ -111,129 +111,110 @@
     @media (max-width: 640px) { .sim-conteneur { grid-template-columns: 1fr; } }
 
     /* ─────────────────────────────────
-       DESSIN CSS — Gauche
+       SCÈNE COMPOSITE — Gauche (PPG optique)
        ───────────────────────────────── */
     .sim-gauche {
       display: flex; flex-direction: column; align-items: center; gap: 0;
     }
 
-    /* Dos de la montre */
-    .montre-dos {
-      width: 148px; height: 96px;
-      background: linear-gradient(160deg, #2d3748 0%, #1a202c 100%);
-      border-radius: 20px;
-      border: 2px solid #4a5568;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: flex-end;
-      padding-bottom: 14px;
+    /* Conteneur de la scène composite (image + vidéo + SVG overlay) */
+    .scene-composite {
       position: relative;
-    }
-    .montre-dos::before {
-      content: "Dos de la montre";
-      position: absolute; top: 10px;
-      font-size: 0.60rem; color: #718096;
-      font-family: var(--texte); letter-spacing: 0.05em; text-transform: uppercase;
-    }
-    /* Rivet gauche / droit de la montre */
-    .montre-dos::after {
-      content: "";
-      position: absolute; bottom: 30px;
-      left: 50%; transform: translateX(-50%);
-      width: 38px; height: 6px;
-      background: #2d3748; border-radius: 3px;
-      box-shadow: 0 0 0 1.5px #4a5568;
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 300 / 340;
+      overflow: hidden;
+      border-radius: 16px;
     }
 
-    .capteur-bloc {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    /* Image peau — remplit la zone « tissus » */
+    .scene-peau {
+      position: absolute;
+      left: 0; right: 0;
+      top: 22%;   /* sous la montre */
+      bottom: 0;
+      z-index: 1;
     }
-    .led-anneau {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid #374151;
-      display: flex; align-items: center; justify-content: center;
-      background: #111827;
-      transition: border-color 0.3s, box-shadow 0.3s;
+    .scene-peau img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 0 0 14px 14px;
     }
-    .led {
-      width: 16px; height: 16px; border-radius: 50%;
-      background: #1f2937;
-      border: 1.5px solid #374151;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    .led-txt { font-size: 0.60rem; color: #718096; font-family: var(--texte); }
-
-    @keyframes glow-led {
-      0%, 100% { background: #34d399; box-shadow: 0 0 8px 3px rgba(52,211,153,0.55); }
-      50%       { background: #6ee7b7; box-shadow: 0 0 18px 8px rgba(52,211,153,0.85); }
-    }
-    .led.actif { animation: glow-led 0.83s ease-in-out infinite; }
-    .led-anneau.actif { border-color: #34d399; }
-
-    /* Faisceau lumineux */
-    .faisceau-zone {
-      width: 40px; height: 34px;
-      display: flex; justify-content: center;
-    }
-    .faisceau {
-      width: 3px; height: 100%;
-      background: transparent;
-      border-radius: 2px;
-      transition: background 0.4s;
-    }
-    .faisceau.actif {
-      background: linear-gradient(180deg, rgba(52,211,153,0.9) 0%, rgba(52,211,153,0.15) 100%);
-      box-shadow: 0 0 6px 2px rgba(52,211,153,0.3);
+    .scene-peau-label {
+      position: absolute;
+      left: 8%; top: 12%;
+      font-family: var(--texte);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #b07a52;
+      text-transform: uppercase;
+      z-index: 2;
+      text-shadow: 0 1px 3px rgba(255,255,255,0.6);
     }
 
-    /* Couche de peau */
-    .peau-bande {
-      width: 148px; height: 12px;
-      background: linear-gradient(90deg, #f9c49a, #f5b682, #f9c49a);
-      border-radius: 6px;
-      border: 1px solid #e8a87c;
-      display: flex; align-items: center; justify-content: center;
+    /* Vidéo vaisseau sanguin — clippée en ellipse, positionnée en bas */
+    .scene-vaisseau {
+      position: absolute;
+      left: 50%;
+      bottom: 6%;
+      transform: translateX(-50%);
+      width: 62%;
+      z-index: 2;
+      transition: transform 0.08s ease-out;
     }
-    .peau-label-txt {
-      font-size: 0.60rem; color: #6b7280;
-      margin: 3px 0 5px; font-family: var(--texte);
+    .scene-vaisseau video {
+      width: 100%;
+      height: auto;
+      display: block;
+      clip-path: ellipse(50% 48% at 50% 50%);
+      border-radius: 50%;
+      filter: saturate(1.3) contrast(1.1);
+    }
+    /* Halo rouge sous le vaisseau */
+    .scene-vaisseau::before {
+      content: '';
+      position: absolute;
+      left: -10%; right: -10%; top: -20%; bottom: -20%;
+      background: radial-gradient(ellipse at center, rgba(225,29,72,0.25) 0%, transparent 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .scene-vaisseau-label {
+      position: absolute;
+      left: 50%;
+      bottom: 2%;
+      transform: translateX(-50%);
+      font-family: var(--texte);
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #7f1d1d;
+      white-space: nowrap;
+      z-index: 3;
     }
 
-    /* Espace retour faisceau */
-    .retour-zone {
-      width: 40px; height: 18px;
-      display: flex; justify-content: center;
+    /* SVG overlay — montre, LED, photons, faisceaux */
+    .scene-svg-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
     }
-    .faisceau-retour {
-      width: 3px; height: 100%;
-      background: transparent;
-      border-radius: 2px;
-      transition: background 0.4s;
+    .scene-svg-overlay svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
-    .faisceau-retour.actif {
-      background: linear-gradient(180deg, rgba(52,211,153,0.12) 0%, rgba(52,211,153,0.4) 100%);
-    }
+    .svg-lbl { font-family: var(--texte); }
 
-    /* Vaisseau sanguin */
-    .vaisseau-wrapper { display: flex; flex-direction: column; align-items: center; }
-    .vaisseau {
-      width: 144px; height: 24px;
-      background: linear-gradient(90deg, #dc2626, #ef4444, #b91c1c, #ef4444, #dc2626);
-      border-radius: 12px;
-      box-shadow: 0 3px 12px rgba(220,38,38,0.45);
-      transform-origin: center center;
-    }
-    .vaisseau-label-txt { font-size: 0.60rem; color: #6b7280; margin-top: 5px; font-family: var(--texte); }
+    #svg-led { transition: fill .3s ease; }
+    #svg-led.led-on { fill: #6ee7b7; }
+    #cone-down, #cone-up { transition: opacity .45s ease; }
+    .photon { fill: url(#gPhoton); }
 
-    @keyframes pulse-vaisseau {
-      0%   { transform: scaleY(1);    box-shadow: 0 3px 12px rgba(220,38,38,0.45); }
-      18%  { transform: scaleY(1.65); box-shadow: 0 6px 20px rgba(220,38,38,0.75); }
-      45%  { transform: scaleY(1.15); box-shadow: 0 4px 14px rgba(220,38,38,0.55); }
-      100% { transform: scaleY(1);    box-shadow: 0 3px 12px rgba(220,38,38,0.45); }
-    }
-    .vaisseau.actif { animation: pulse-vaisseau 0.83s ease-in-out infinite; }
-
-    .btn-capteur-zone { margin-top: 20px; }
+    .btn-capteur-zone { margin-top: 18px; }
 
     /* ─────────────────────────────────
        MONITEUR PPG — Droite
@@ -316,33 +297,84 @@
 
     <div class="sim-conteneur">
 
-      <!-- ── Gauche : dessin CSS ── -->
+      <!-- ── Gauche : scène composite (image + vidéo + SVG overlay) ── -->
       <div class="sim-gauche">
 
-        <div class="montre-dos">
-          <div class="capteur-bloc">
-            <div class="led-anneau" id="led-ring">
-              <div class="led" id="led"></div>
-            </div>
-            <span class="led-txt">LED verte</span>
+        <div class="scene-composite" role="img"
+             aria-label="Coupe : la LED verte éclaire la peau, la lumière rebondit sur le vaisseau sanguin et revient au capteur de la montre.">
+
+          <!-- Couche 1 : Image de la peau -->
+          <div class="scene-peau">
+            <img src="peau.png" alt="Coupe transversale de la peau" draggable="false">
+            <span class="scene-peau-label">PEAU</span>
           </div>
-        </div>
 
-        <div class="faisceau-zone">
-          <div class="faisceau" id="faisceau"></div>
-        </div>
+          <!-- Couche 2 : Vidéo du vaisseau sanguin -->
+          <div class="scene-vaisseau" id="scene-vaisseau">
+            <video src="vaisseau.webm" muted loop playsinline preload="auto"
+                   id="video-vaisseau" aria-label="Vaisseau sanguin pulsant"></video>
+          </div>
+          <span class="scene-vaisseau-label">Vaisseau sanguin</span>
 
-        <span class="peau-label-txt">── Peau ──</span>
-        <div class="peau-bande"></div>
+          <!-- Couche 3 : SVG overlay — montre, LED, photons, faisceaux -->
+          <div class="scene-svg-overlay">
+            <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="gWatch" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#33415a"/><stop offset="1" stop-color="#1a2230"/>
+                </linearGradient>
+                <radialGradient id="gLens" cx="0.35" cy="0.3" r="0.85">
+                  <stop offset="0" stop-color="#26384e"/><stop offset="1" stop-color="#0a1018"/>
+                </radialGradient>
+                <linearGradient id="beamDown" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#6ee7b7" stop-opacity="0.5"/>
+                  <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="beamUp" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0" stop-color="#a7f3d0" stop-opacity="0.38"/>
+                  <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+                </linearGradient>
+                <radialGradient id="gPhoton" cx="0.5" cy="0.5" r="0.5">
+                  <stop offset="0" stop-color="#ecfdf5" stop-opacity="1"/>
+                  <stop offset="0.45" stop-color="#34d399" stop-opacity="0.95"/>
+                  <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="blurLed" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="3.4"/>
+                </filter>
+                <filter id="fBeam" x="-40%" y="-25%" width="180%" height="150%">
+                  <feGaussianBlur stdDeviation="3.6"/>
+                </filter>
+              </defs>
 
-        <div class="retour-zone">
-          <div class="faisceau-retour" id="faisceau-retour"></div>
-        </div>
+              <!-- Faisceaux de lumière (doux et flous) -->
+              <polygon id="cone-down" points="112,68 108,280 172,280" fill="url(#beamDown)" filter="url(#fBeam)" opacity="0"/>
+              <polygon id="cone-up"   points="190,68 128,280 192,280" fill="url(#beamUp)"   filter="url(#fBeam)" opacity="0"/>
 
-        <div class="vaisseau-wrapper">
-          <div class="vaisseau" id="vaisseau"></div>
-          <span class="vaisseau-label-txt">Vaisseau sanguin</span>
-        </div>
+              <!-- Photons (injectés en JS) -->
+              <g id="photons"></g>
+
+              <!-- Montre (au-dessus) -->
+              <rect x="44" y="8" width="212" height="56" rx="16" fill="url(#gWatch)" stroke="#54627a" stroke-width="2"/>
+              <rect x="54" y="13" width="192" height="14" rx="7" fill="#ffffff" opacity="0.07"/>
+              <text class="svg-lbl" x="150" y="23" text-anchor="middle" font-size="8" fill="#8a99ad" letter-spacing="1.5">DOS DE LA MONTRE</text>
+
+              <!-- LED verte -->
+              <circle id="svg-led-glow" cx="112" cy="46" r="16" fill="#34d399" opacity="0" filter="url(#blurLed)"/>
+              <circle cx="112" cy="46" r="12" fill="url(#gLens)" stroke="#3a4656" stroke-width="1.5"/>
+              <circle id="svg-led" cx="112" cy="46" r="7" fill="#1f2937"/>
+              <circle cx="109" cy="43" r="2" fill="#ffffff" opacity="0.5"/>
+              <text class="svg-lbl" x="112" y="82" text-anchor="middle" font-size="8" fill="#4b6058">💡 LED verte</text>
+
+              <!-- Capteur (photodiode) -->
+              <circle cx="190" cy="46" r="11" fill="url(#gLens)" stroke="#3a4656" stroke-width="1.5"/>
+              <circle cx="190" cy="46" r="5.5" fill="#16302a"/>
+              <circle cx="187" cy="43" r="1.6" fill="#ffffff" opacity="0.4"/>
+              <text class="svg-lbl" x="190" y="82" text-anchor="middle" font-size="8" fill="#4b6058">📷 capteur</text>
+            </svg>
+          </div>
+
+        </div><!-- /scene-composite -->
 
         <div class="btn-capteur-zone">
           <button class="bouton" id="btn-capteur" type="button">▶ Activer le capteur</button>
@@ -367,7 +399,7 @@
     <!-- Explication -->
     <div class="expl-ppg">
       Quand le vaisseau <strong>gonfle</strong> (plein de sang), il absorbe la lumière verte.
-      Le capteur voit <strong>moins de lumière</strong> et dessine un creux.
+      Le capteur voit <strong>moins de lumière réfléchie</strong> et dessine un creux.
       À chaque battement, <strong>un creux</strong> !
       L'ordinateur n'a plus qu'à les compter pour calculer ton rythme cardiaque.
     </div>
@@ -456,7 +488,8 @@ document.addEventListener('keydown', function (e) {
 });
 
 function deverrouiller() {
-  if (typeof validerModule === 'function') validerModule('montre');
+  /* Le badge n'est PAS attribué ici : il le sera uniquement au clic sur le
+     bouton final « récupérer mon badge » (via index.html?badge=montre, règle §6). */
 
   /* 1. Fade-out + glissement vers le haut de la section frappe */
   var secFrappe = document.getElementById('sec-frappe');
@@ -484,12 +517,19 @@ var capteurActif = false;
 var ppgAnimId    = null;
 
 var btnCapteur    = document.getElementById('btn-capteur');
-var ledEl         = document.getElementById('led');
-var ledRingEl     = document.getElementById('led-ring');
-var faisceauEl    = document.getElementById('faisceau');
-var faisceauRetEl = document.getElementById('faisceau-retour');
-var vaisseauEl    = document.getElementById('vaisseau');
 var monBpmEl      = document.getElementById('moniteur-bpm');
+
+/* Éléments de la scène composite (PPG optique) */
+var SVGNS         = 'http://www.w3.org/2000/svg';
+var svgLed        = document.getElementById('svg-led');
+var svgLedGlow    = document.getElementById('svg-led-glow');
+var vesselDiv     = document.getElementById('scene-vaisseau');
+var videoVaisseau = document.getElementById('video-vaisseau');
+var coneDown      = document.getElementById('cone-down');
+var coneUp        = document.getElementById('cone-up');
+var photonsG      = document.getElementById('photons');
+var photons       = [];
+var dernierSpawn  = 0;
 var monAttenteEl  = document.getElementById('moniteur-attente');
 var canvasPPG     = document.getElementById('canvas-ppg');
 var ctxPPG        = canvasPPG.getContext('2d');
@@ -498,16 +538,14 @@ btnCapteur.addEventListener('click', function () {
   capteurActif = !capteurActif;
 
   if (capteurActif) {
-    ledEl.classList.add('actif');
-    ledRingEl.classList.add('actif');
-    faisceauEl.classList.add('actif');
-    faisceauRetEl.classList.add('actif');
-    vaisseauEl.classList.add('actif');
+    activerScene();
     monAttenteEl.style.display = 'none';
     canvasPPG.style.display    = 'block';
     monBpmEl.textContent = '72 bpm';
     btnCapteur.textContent = '⏹ Désactiver le capteur';
     btnCapteur.classList.add('secondaire');
+    /* Lancer la vidéo du vaisseau */
+    if (videoVaisseau) { videoVaisseau.currentTime = 0; videoVaisseau.play().catch(function(){}); }
     initCanvas();
     demarrerPPG();
     /* Révéler le bouton de badge après 3 s d'observation */
@@ -516,16 +554,14 @@ btnCapteur.addEventListener('click', function () {
       if (btnFin) { btnFin.style.opacity = '1'; btnFin.style.pointerEvents = 'auto'; }
     }, 3000);
   } else {
-    ledEl.classList.remove('actif');
-    ledRingEl.classList.remove('actif');
-    faisceauEl.classList.remove('actif');
-    faisceauRetEl.classList.remove('actif');
-    vaisseauEl.classList.remove('actif');
+    desactiverScene();
     monAttenteEl.style.display = '';
     canvasPPG.style.display    = 'none';
     monBpmEl.textContent = '-- bpm';
     btnCapteur.textContent = '▶ Activer le capteur';
     btnCapteur.classList.remove('secondaire');
+    /* Pauser la vidéo du vaisseau */
+    if (videoVaisseau) { videoVaisseau.pause(); }
     arreterPPG();
   }
 });
@@ -608,6 +644,9 @@ function demarrerPPG() {
     ctxPPG.stroke();
     ctxPPG.restore();
 
+    /* Animer la scène SVG (photons + gonflement du vaisseau) en phase avec la courbe */
+    updateScene(ppgTemps);
+
     ppgAnimId = requestAnimationFrame(frame);
   }
 
@@ -618,6 +657,93 @@ function arreterPPG() {
   if (ppgAnimId) { cancelAnimationFrame(ppgAnimId); ppgAnimId = null; }
   ppgTemps = 0; ppgDernierTs = null;
   ctxPPG.clearRect(0, 0, canvasPPG.width, canvasPPG.height);
+}
+
+/* ────────────────────────────────────────────────────────
+   4) SCÈNE SVG — Photons de lumière (joue tout seul)
+   Synchronisée avec la courbe PPG via le temps ppgTemps.
+   ──────────────────────────────────────────────────────── */
+function phaseCardiaque(t) { return (t / PERIODE) % 1; }
+
+/* Gonflement du vaisseau : 0 (repos) → 1 (gonflé), un pic par battement */
+function gonflement(t) {
+  var c = Math.cos(2 * Math.PI * phaseCardiaque(t));
+  return Math.pow(Math.max(0, c), 5);
+}
+
+function activerScene() {
+  if (!svgLed) return;
+  coneDown.style.opacity = '1';
+  coneUp.style.opacity   = '1';
+  svgLed.classList.add('led-on');
+  dernierSpawn = 0;
+}
+
+function desactiverScene() {
+  if (!svgLed) return;
+  coneDown.style.opacity = '0';
+  coneUp.style.opacity   = '0';
+  svgLed.classList.remove('led-on');
+  svgLedGlow.setAttribute('opacity', '0');
+  /* Réinitialiser la pulsation du vaisseau */
+  if (vesselDiv) { vesselDiv.style.transform = 'translateX(-50%) scale(1)'; }
+  photons.forEach(function (p) { if (p.el.parentNode) p.el.parentNode.removeChild(p.el); });
+  photons = [];
+}
+
+function spawnPhoton(t) {
+  var jitter = (Math.random() - 0.5) * 18;
+  var el = document.createElementNS(SVGNS, 'circle');
+  el.setAttribute('r', 3.4);
+  el.setAttribute('class', 'photon');
+  photonsG.appendChild(el);
+  photons.push({ el: el, etat: 'descend', t0: t, dur: 0.55,
+                 x0: 112, y0: 68, x1: 150 + jitter, y1: 280, jitter: jitter });
+}
+
+function updateScene(t) {
+  if (!svgLed) return;
+  var s = gonflement(t);
+
+  /* Le vaisseau (vidéo) se gonfle au rythme du cœur ; la LED « respire » avec lui */
+  if (vesselDiv) {
+    var scaleVal = 1 + s * 0.25;  // gonflement de 0% à 25%
+    vesselDiv.style.transform = 'translateX(-50%) scale(' + scaleVal.toFixed(3) + ')';
+  }
+  svgLedGlow.setAttribute('opacity', (0.2 + s * 0.5).toFixed(2));
+
+  /* Émission régulière de photons depuis la LED */
+  if (t - dernierSpawn > 0.085) { dernierSpawn = t; spawnPhoton(t); }
+
+  for (var i = photons.length - 1; i >= 0; i--) {
+    var p  = photons[i];
+    var pr = (t - p.t0) / p.dur;
+
+    if (pr >= 1) {
+      if (p.etat === 'descend') {
+        /* Arrivé au vaisseau : réfléchi… ou absorbé (surtout quand il est gonflé) */
+        var probRetour = 1 - 0.78 * gonflement(t);
+        if (Math.random() < probRetour) {
+          p.etat = 'remonte'; p.t0 = t; p.dur = 0.55;
+          p.x0 = 150 + p.jitter * 0.4; p.y0 = 280; p.x1 = 190; p.y1 = 68;
+        } else {
+          if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+          photons.splice(i, 1);
+        }
+      } else {
+        /* Remonté jusqu'au capteur : « compté », on le retire */
+        if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+        photons.splice(i, 1);
+      }
+      continue;
+    }
+
+    var x = p.x0 + (p.x1 - p.x0) * pr;
+    var y = p.y0 + (p.y1 - p.y0) * pr;
+    p.el.setAttribute('cx', x.toFixed(1));
+    p.el.setAttribute('cy', y.toFixed(1));
+    p.el.setAttribute('opacity', ((p.etat === 'remonte' ? 0.9 : 1) * (1 - 0.12 * pr)).toFixed(2));
+  }
 }
 
 /* Redimensionnement du canvas si la fenêtre change de taille */
