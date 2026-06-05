@@ -15,7 +15,34 @@
 
   <main class="page">
     <header class="mission">
-      <span class="mission-trace" aria-hidden="true"></span>
+      <span class="mission-trace" aria-hidden="true">
+        <svg class="mission-trace-svg" viewBox="0 0 960 50" preserveAspectRatio="none"
+             xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+            <filter id="ecg-glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="2.6" result="flou"/>
+              <feMerge>
+                <feMergeNode in="flou"/>
+                <feMergeNode in="flou"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <!-- Courbe ECG STATIQUE (4 battements identiques) -->
+          <path id="ecg-track"
+                d="M0 33 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0"
+                fill="none" stroke="#eafff5" stroke-width="2.4" stroke-opacity="0.5"
+                stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- Point lumineux qui PARCOURT la courbe en boucle -->
+          <g filter="url(#ecg-glow)">
+            <circle r="3.4" fill="#ffffff" fill-opacity="0.97">
+              <animateMotion dur="4.5s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1" keyTimes="0;1">
+                <mpath href="#ecg-track" xlink:href="#ecg-track"/>
+              </animateMotion>
+            </circle>
+          </g>
+        </svg>
+      </span>
       <a class="mission-progress" id="mission-progress" href="#section-progression">🏅 0 / 5 badges</a>
       <h1>❤️ Deviens ingénieur biomédical le temps d'un atelier</h1>
       <p>Aujourd'hui, ta mission : construire l'outil qui lit un cœur et détecte une maladie.
@@ -371,6 +398,13 @@
       if (a.classList.contains("verrou")) ev.preventDefault();
     });
   });
+
+  // Respect de « prefers-reduced-motion » pour l'animation SVG (SMIL)
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.querySelectorAll(".mission-trace-svg").forEach(function (svg) {
+      if (typeof svg.pauseAnimations === "function") svg.pauseAnimations();
+    });
+  }
 
   // Exécution immédiate au chargement
   mettreAJour();
