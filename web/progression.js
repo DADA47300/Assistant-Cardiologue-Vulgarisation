@@ -12,6 +12,7 @@
 var BADGES = {
   signal:      { nom: "Maître des Ondes",             icone: "🌊" },
   coeur_ecg:   { nom: "Explorateur Anatomique",       icone: "🫀" },
+  sons:        { nom: "Oreille d'Or",                 icone: "👂" },
   labo:        { nom: "Technicien de Laboratoire",     icone: "🔬" },
   pathologies: { nom: "Expert Diagnostic",             icone: "🩺" },
   metiers:     { nom: "Ingénieur Polyvalent",          icone: "🛠️" },
@@ -22,7 +23,7 @@ var BADGES = {
 };
 
 /** Badges obligatoires pour le diplôme (les badges bonus n'en font pas partie) */
-var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "labo", "pathologies", "metiers"];
+var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "sons", "labo", "pathologies", "metiers"];
 
 /** Badges bonus (missions secondaires, non requis pour le diplôme) */
 var BADGES_BONUS = ["curieux", "matlab", "montre", "filtre"];

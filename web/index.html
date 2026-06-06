@@ -43,7 +43,7 @@
           </g>
         </svg>
       </span>
-      <a class="mission-progress" id="mission-progress" href="#section-progression">🏅 0 / 5 badges</a>
+      <a class="mission-progress" id="mission-progress" href="#section-progression">🏅 0 / 6 badges</a>
       <h1>❤️ Deviens ingénieur biomédical le temps d'un atelier</h1>
       <p>Aujourd'hui, ta mission : construire l'outil qui lit un cœur et détecte une maladie.
          Tout ce qu'on découvre ici — les signaux, le bruit, les filtres — sert à ça.
@@ -89,11 +89,28 @@
         </div>
       </div>
 
+      <div class="pastille pastille-expandable module-ecouter" id="lien-ecouter" style="--accent:#0d9488;--accent-soft:#d6f3ef;">
+        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-ecouter">
+          <span class="module-node">
+            <span class="module-emoji" aria-hidden="true">👂</span>
+            <span class="num" id="badge-sons">3</span>
+          </span>
+          <span class="pastille-texte"><strong>Écouter le cœur</strong> — Reconnais un cœur sain et cinq pathologies rien qu'à l'oreille.</span>
+          <span class="pastille-chevron" aria-hidden="true">▾</span>
+        </button>
+        <div class="sous-liste" id="sous-liste-ecouter">
+          <div class="sous-liste-inner">
+            <a class="sous-item" href="ecouter.html#ecoute-base"><span class="si-num">1</span> Le son d'un cœur (poum-ta)</a>
+            <a class="sous-item" href="ecouter.html#ecoute-pathologies"><span class="si-num">2</span> Les six cœurs à écouter</a>
+          </div>
+        </div>
+      </div>
+
       <div class="pastille pastille-expandable module-labo" id="lien-labo">
         <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-labo">
           <span class="module-node">
             <span class="module-emoji" aria-hidden="true">🔬</span>
-            <span class="num" id="badge-labo">3</span>
+            <span class="num" id="badge-labo">4</span>
           </span>
           <span class="pastille-texte"><strong>Le Labo ECG</strong> — Capter, nettoyer, zoomer, puis repérer les battements.</span>
           <span class="pastille-chevron" aria-hidden="true">▾</span>
@@ -112,7 +129,7 @@
         <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-pathologies">
           <span class="module-node">
             <span class="module-emoji" aria-hidden="true">🩺</span>
-            <span class="num" id="badge-pathologies">4</span>
+            <span class="num" id="badge-pathologies">5</span>
           </span>
           <span class="pastille-texte"><strong>Détective des pathologies</strong> — Diagnostique tes patients et affronte le patient mystère.</span>
           <span class="pastille-chevron" aria-hidden="true">▾</span>
@@ -130,7 +147,7 @@
         <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-metiers">
           <span class="module-node">
             <span class="module-emoji" aria-hidden="true">🛠️</span>
-            <span class="num" id="badge-metiers">5</span>
+            <span class="num" id="badge-metiers">6</span>
           </span>
           <span class="pastille-texte"><strong>Les métiers de l'ingénieur</strong> — Applique tes connaissances au Réseau et au Web.</span>
           <span class="pastille-chevron" aria-hidden="true">▾</span>
@@ -186,7 +203,7 @@
       <div class="barre-progression">
         <div class="barre-progression-remplissage" id="barre-remplissage" style="width: 0%;"></div>
       </div>
-      <div class="progression-compteur" id="progression-compteur">0 / 5 badges</div>
+      <div class="progression-compteur" id="progression-compteur">0 / 6 badges</div>
 
       <!-- Grille des 4 badges -->
       <div class="badges-grille" id="badges-grille">
@@ -215,6 +232,7 @@
   var ORDRE_MODULES = [
     { id: "signal",      module: "C'est quoi un signal ?" },
     { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
+    { id: "sons",        module: "Écouter le cœur" },
     { id: "labo",        module: "Le Labo ECG" },
     { id: "pathologies", module: "Détective des pathologies" },
     { id: "metiers",     module: "Les métiers de l'ingénieur" },
@@ -275,6 +293,7 @@
     var liaisons = [
       { badge: "signal",      lien: "lien-signal"      },
       { badge: "coeur_ecg",   lien: "lien-coeur"       },
+      { badge: "sons",        lien: "lien-ecouter"     },
       { badge: "labo",        lien: "lien-labo"        },
       { badge: "pathologies", lien: "lien-pathologies" },
       { badge: "metiers",     lien: "lien-metiers"     },
@@ -329,7 +348,7 @@
         '<div class="diplome-carte">' +
           '<span class="diplome-emoji">🎓</span>' +
           '<h2 class="diplome-titre">Félicitations, tu as réussi !</h2>' +
-          '<p class="diplome-sous-titre">Tu as collecté les 5 badges. Tu obtiens officiellement le titre de :</p>' +
+          '<p class="diplome-sous-titre">Tu as collecté les 6 badges. Tu obtiens officiellement le titre de :</p>' +
           '<div class="diplome-cadre">INGÉNIEUR BIOMÉDICAL JUNIOR</div>' +
           '<div class="diplome-action">' +
             '<p>🚀 Appelle un animateur de l\'ENSEIRB-MATMECA pour valider ton diplôme papier !</p>' +

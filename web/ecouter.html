@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Écouter le cœur — Lis un cœur</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Spécifique à la page « Écouter le cœur » ─────────────────── */
+
+    /* Le cœur qui bat */
+    .scene-ecoute {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+      background: #060d10; border-radius: 14px; padding: 18px; margin: 4px 0 14px;
+    }
+    .coeur-viz {
+      flex: 0 0 auto; width: 110px; text-align: center; user-select: none;
+    }
+    .coeur-emoji {
+      font-size: 4.4rem; line-height: 1; display: inline-block;
+      transform: scale(1); transition: transform .09s ease-out;
+      filter: drop-shadow(0 0 10px rgba(225,29,72,.45));
+    }
+    .coeur-rythme {
+      margin-top: 4px; font-family: var(--titre); font-weight: 700;
+      font-size: .82rem; color: rgba(255,255,255,.7);
+    }
+    /* La bande « phono » qui défile */
+    .strip-zone { flex: 1 1 280px; min-width: 240px; }
+    .strip-zone canvas { display: block; width: 100%; height: 130px; border-radius: 10px; }
+
+    /* Boutons de pathologie */
+    .rythmes-grille { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 4px 0 6px; }
+    .rythme-btn {
+      border: 2.5px solid var(--bord); border-radius: 16px; background: var(--carte);
+      cursor: pointer; padding: 14px 8px; display: flex; flex-direction: column;
+      align-items: center; gap: 5px; transition: border-color .15s, transform .1s, box-shadow .15s;
+      font-family: var(--texte); -webkit-tap-highlight-color: transparent; text-align: center;
+    }
+    .rythme-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+    .rythme-btn:active { transform: scale(.97); }
+    .rythme-btn.actif { border-color: var(--signal); background: #f3fbf8; }
+    .rythme-btn .em { font-size: 1.9rem; line-height: 1; }
+    .rythme-btn .ti { font-family: var(--titre); font-weight: 700; font-size: .86rem; color: var(--encre); }
+    /* Le bouton FV est mis en garde dès le départ */
+    .rythme-btn.urgence { border-color: var(--battement); }
+    .rythme-btn.urgence.actif { background: #fdf0f3; }
+
+    .def-box {
+      background: #f3f6f4; border-left: 3px solid var(--signal);
+      border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 4px 0 16px;
+      font-size: .94rem; color: var(--encre-doux);
+    }
+
+    /* Panneau de description qui se met à jour */
+    .desc-panneau {
+      border: 2px solid var(--bord); border-radius: 14px; padding: 16px 18px;
+      margin: 12px 0 0; min-height: 96px; transition: border-color .2s, background .2s;
+    }
+    .desc-panneau h3 { margin: 0 0 6px; font-family: var(--titre); }
+    .desc-panneau p { margin: 0; color: var(--encre-doux); }
+    .desc-panneau.urgence { border-color: var(--battement); background: #fdf0f3; }
+    .desc-panneau.urgence h3 { color: var(--battement); }
+
+    .compteur-ecoute {
+      margin: 16px 0 0; font-family: var(--titre); font-weight: 700;
+      color: var(--encre-doux); text-align: center;
+    }
+    .note-synthese {
+      font-size: .8rem; color: var(--encre-doux); opacity: .85;
+      margin: 10px 2px 0; font-style: italic;
+    }
+    @media (max-width: 600px) { .rythmes-grille { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <nav class="barre">
+    <a class="marque" href="index.html">Lis un <span>cœur</span></a>
+    <a class="lien" href="index.html">← Accueil</a>
+  </nav>
+
+  <main class="page">
+
+    <header class="mission">
+      <h1>🔊 Écouter le cœur</h1>
+      <p>Avant de lire la moindre courbe, un médecin commence par <strong>écouter</strong>. Avec un simple
+         stéthoscope, le cœur raconte déjà beaucoup : son rythme, ses ratés, ses urgences. Ici tu vas entendre
+         un cœur en bonne santé, puis cinq cœurs malades — et apprendre à les reconnaître <strong>à l'oreille</strong>.</p>
+    </header>
+
+    <!-- ── 1. Le son d'un cœur ──────────────────────────────────── -->
+    <section class="carte" id="ecoute-base">
+      <h2>1. Le son d'un cœur : « poum-ta »</h2>
+      <div class="def-box">
+        À chaque battement, le cœur fait <strong>deux bruits</strong>. Le premier, le « <strong>poum</strong> » (B1),
+        c'est la fermeture des grosses valves quand le cœur se contracte et propulse le sang. Le second, le
+        « <strong>ta</strong> » (B2), un peu plus sec, c'est la fermeture des autres valves juste après. Puis un
+        <strong>silence</strong> : le cœur se remplit avant le battement suivant. <em>poum-ta … poum-ta … poum-ta.</em>
+      </div>
+
+      <div class="scene-ecoute">
+        <div class="coeur-viz">
+          <span class="coeur-emoji" id="coeur-emoji">🫀</span>
+          <div class="coeur-rythme" id="coeur-rythme">— bpm</div>
+        </div>
+        <div class="strip-zone">
+          <canvas id="strip" height="130"></canvas>
+        </div>
+      </div>
+
+      <div class="boutons-ligne">
+        <button class="bouton" id="btn-sain" type="button">▶ Écouter un cœur sain</button>
+      </div>
+      <p class="note-synthese">🎧 Mets un peu de volume. Ces sons sont recréés par l'ordinateur pour être bien nets
+         et toujours identiques — un vrai stéthoscope ajoute, lui, plein de petits bruits parasites.</p>
+    </section>
+
+    <!-- ── 2. Les six cœurs ─────────────────────────────────────── -->
+    <section class="carte" id="ecoute-pathologies">
+      <h2>2. Six cœurs à écouter</h2>
+      <p class="explication">
+        Choisis un cœur, écoute-le quelques secondes, puis passe au suivant. Concentre-toi sur le
+        <strong>rythme</strong> : est-il régulier ? rapide ? lent ? Y a-t-il des « ratés » ? Le même cœur
+        s'affiche au-dessus pour t'aider à <em>voir</em> ce que tu entends.
+      </p>
+
+      <div class="rythmes-grille">
+        <button class="rythme-btn" data-nom="sain" type="button">
+          <span class="em">💚</span><span class="ti">Cœur sain</span>
+        </button>
+        <button class="rythme-btn" data-nom="tachy" type="button">
+          <span class="em">🏃</span><span class="ti">Tachycardie</span>
+        </button>
+        <button class="rythme-btn" data-nom="brady" type="button">
+          <span class="em">🐢</span><span class="ti">Bradycardie</span>
+        </button>
+        <button class="rythme-btn" data-nom="extra" type="button">
+          <span class="em">💓</span><span class="ti">Extrasystole</span>
+        </button>
+        <button class="rythme-btn" data-nom="fa" type="button">
+          <span class="em">🌀</span><span class="ti">Fibrillation auriculaire</span>
+        </button>
+        <button class="rythme-btn urgence" data-nom="fv" type="button">
+          <span class="em">⚠️</span><span class="ti">Fibrillation ventriculaire</span>
+        </button>
+      </div>
+
+      <div class="desc-panneau" id="desc-panneau">
+        <h3>👆 Choisis un cœur ci-dessus</h3>
+        <p>Clique sur un bouton pour lancer le son. Reclique dessus pour l'arrêter.</p>
+      </div>
+
+      <div class="compteur-ecoute" id="compteur-ecoute">🎧 0 / 6 cœurs écoutés</div>
+    </section>
+
+    <!-- ── Bravo & Badge (apparaît après avoir écouté les 6) ────── -->
+    <section class="carte cache" id="section-bravo">
+      <div style="text-align:center;padding:10px 0 6px;">
+        <span style="font-size:2.6rem;display:block;margin-bottom:6px;">👂</span>
+        <h2 style="color:var(--signal-fonce);">Badge obtenu : Oreille d'Or&nbsp;!</h2>
+        <p class="explication" style="margin:8px 0 18px;">
+          Tu sais maintenant reconnaître à l'oreille un cœur sain, un cœur qui s'emballe, qui ralentit, qui
+          rate un battement, qui s'affole (FA) ou qui s'arrête (FV). C'est exactement le premier geste d'un
+          soignant. Ensuite, on <strong>confirme avec l'ECG</strong> — et ça, c'est la suite de ton aventure&nbsp;!
+        </p>
+        <a class="bouton" href="index.html?badge=sons" style="text-decoration:none;display:inline-block;">
+          ← Retour à l'accueil pour voir ton badge
+        </a>
+      </div>
+    </section>
+
+    <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+  </main>
+
+  <!-- Progression manager (chargé en premier) -->
+  <script src="progression.js"></script>
+
+  <script>
+  /* =====================================================================
+     ÉCOUTER LE CŒUR — sons synthétiques + cœur animé + bande qui défile
+     ===================================================================== */
+
+  /* ╔══════════════════════════════════════════════════════════════════╗
+     ║  ★★★  POUR UTILISER DE VRAIS FICHIERS AUDIO  ★★★                  ║
+     ║  Mets tes .mp3 / .wav dans un dossier "sons/" à côté des pages,   ║
+     ║  puis renseigne le chemin ici. Laisse "" pour garder le son       ║
+     ║  synthétisé par l'ordinateur.                                     ║
+     ╚══════════════════════════════════════════════════════════════════╝ */
+  var FICHIERS_REELS = {
+    sain:  "",   // ex : "sons/sain.mp3"
+    tachy: "",
+    brady: "",
+    extra: "",
+    fa:    "",
+    fv:    ""
+  };
+
+  /* ─────────────────────────────────────────────────────────────────
+     Moteur audio (Web Audio) — un "poum-ta" = deux bruits de valve
+     ───────────────────────────────────────────────────────────────── */
+  var actx = null, master = null;
+  function audio() {
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { return null; }
+      master = actx.createGain();
+      master.gain.value = 0.9;
+      master.connect(actx.destination);
+    }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+
+  /* Un "bruit de valve" : un coup grave (oscillateur) + un petit souffle (bruit filtré) */
+  function thump(time, freq, dur, peak) {
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, time);
+    o.frequency.exponentialRampToValueAtTime(Math.max(8, freq * 0.55), time + dur);
+    var g = a.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.001, peak), time + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    o.connect(g); g.connect(master);
+    o.start(time); o.stop(time + dur + 0.05);
+
+    // petit souffle de valve (bruit court filtré)
+    var len = Math.floor(a.sampleRate * 0.05);
+    var buf = a.createBuffer(1, len, a.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var n = a.createBufferSource(); n.buffer = buf;
+    var bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq * 2.4; bp.Q.value = 0.8;
+    var ng = a.createGain();
+    ng.gain.setValueAtTime(0.0001, time);
+    ng.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * 0.5), time + 0.008);
+    ng.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+    n.connect(bp); bp.connect(ng); ng.connect(master);
+    n.start(time); n.stop(time + 0.06);
+  }
+
+  /* Un battement complet : B1 ("poum", grave et long) puis B2 ("ta", plus aigu et bref) */
+  function battement(time, ampli, gap) {
+    thump(time,            48, 0.13, 0.55 * ampli);  // B1
+    thump(time + (gap || 0.30), 64, 0.09, 0.40 * ampli);  // B2
+  }
+
+  /* ─────────────────────────────────────────────────────────────────
+     Les six "générateurs de rythme".
+     Chacun renvoie, à chaque appel, le prochain battement :
+       amp    = force du battement (0 à 1)
+       gap    = écart B1→B2 (secondes)
+       dtNext = délai avant le PROCHAIN battement (secondes)
+     ───────────────────────────────────────────────────────────────── */
+  function genConstant(bpm, gap) {
+    var dt = 60 / bpm;
+    return function () { return { amp: 1, gap: gap, dtNext: dt }; };
+  }
+  function genExtra() {
+    // Rythme normal, mais 1 battement sur 5 arrive EN AVANCE et plus faible,
+    // suivi d'une PAUSE plus longue (la "pause compensatrice").
+    var i = 0, base = 60 / 72;
+    return function () {
+      i++;
+      if (i % 5 === 0) return { amp: 0.55, gap: 0.24, dtNext: base * 1.55 }; // extra faible + longue pause
+      var prochainEnAvance = ((i + 1) % 5 === 0);
+      return { amp: 1, gap: 0.30, dtNext: prochainEnAvance ? base * 0.6 : base };
+    };
+  }
+  function genFA() {
+    // "Irrégulièrement irrégulier" : écarts au hasard, force variable.
+    return function () {
+      return {
+        amp: 0.45 + Math.random() * 0.55,
+        gap: 0.18 + Math.random() * 0.07,
+        dtNext: 0.40 + Math.random() * 0.55
+      };
+    };
+  }
+
+  /* ─────────────────────────────────────────────────────────────────
+     Lecture : un petit ordonnanceur qui rejoue le rythme en boucle
+     ───────────────────────────────────────────────────────────────── */
+  var EN_COURS = null;   // état de la lecture active
+  var nomActif = null;   // nom du rythme en cours
+
+  function arreterLecture() {
+    if (EN_COURS) {
+      EN_COURS.actif = false;
+      EN_COURS.timers.forEach(clearTimeout);
+      if (EN_COURS.stopExtra) EN_COURS.stopExtra();
+      if (EN_COURS.audioEl) { try { EN_COURS.audioEl.pause(); } catch (e) {} }
+      EN_COURS = null;
+    }
+    nomActif = null;
+    majBoutons();
+    rythmeLabel('— bpm');
+  }
+
+  function jouerRythme(nom, gen, bpmLabel) {
+    var st = { actif: true, timers: [] };
+    EN_COURS = st; nomActif = nom;
+    rythmeLabel(bpmLabel);
+    function tick() {
+      if (!st.actif) return;
+      var b = gen();
+      var a = audio();
+      var t0 = a ? a.currentTime + 0.02 : 0;
+      battement(t0, b.amp, b.gap);
+      pulseCoeur(b.amp);
+      pousserBlip(b.amp, b.gap);
+      var id = setTimeout(tick, (b.dtNext || 0.84) * 1000);
+      st.timers.push(id);
+    }
+    tick();
+  }
+
+  /* FV : pas de "poum-ta" — le cœur tremble. Bruit grave chaotique, qui s'éteint. */
+  function jouerFV() {
+    var a = audio(); if (!a) { return; }
+    var st = { actif: true, timers: [] };
+    EN_COURS = st; nomActif = 'fv';
+    rythmeLabel('chaos…');
+
+    var len = Math.floor(a.sampleRate * 2);
+    var buf = a.createBuffer(1, len, a.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = a.createBufferSource(); src.buffer = buf; src.loop = true;
+    var lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 95;
+    var g = a.createGain(); g.gain.value = 0.0001;
+    src.connect(lp); lp.connect(g); g.connect(master);
+    src.start();
+
+    var flutter = setInterval(function () {
+      if (!st.actif) return;
+      var v = 0.04 + Math.random() * 0.13;
+      g.gain.setTargetAtTime(v, a.currentTime, 0.03);
+      pulseCoeurErratique();
+      pousserBlip(0.18 + Math.random() * 0.28, 0);
+    }, 85);
+
+    st.stopExtra = function () {
+      clearInterval(flutter);
+      try { g.gain.setTargetAtTime(0.0001, a.currentTime, 0.12); src.stop(a.currentTime + 0.4); } catch (e) {}
+    };
+    // s'arrête tout seul au bout de 8 s (le frémissement ne dure jamais bien longtemps)
+    st.timers.push(setTimeout(function () { arreterLecture(); }, 8000));
+  }
+
+  /* Lecture d'un VRAI fichier (si renseigné dans FICHIERS_REELS) */
+  function jouerFichier(nom, chemin, bpmLabel) {
+    var st = { actif: true, timers: [] };
+    EN_COURS = st; nomActif = nom;
+    rythmeLabel(bpmLabel || '♪');
+    var el = new Audio(chemin); el.loop = true;
+    st.audioEl = el;
+    el.play().catch(function () {});
+    // pouls visuel décoratif (on ne connaît pas le vrai rythme du fichier)
+    var bat = setInterval(function () {
+      if (!st.actif) { clearInterval(bat); return; }
+      pulseCoeur(1); pousserBlip(0.9, 0.3);
+    }, 800);
+    st.stopExtra = function () { clearInterval(bat); };
+  }
+
+  /* ─────────────────────────────────────────────────────────────────
+     Catalogue des six rythmes (label, son, description fidèle)
+     ───────────────────────────────────────────────────────────────── */
+  var RYTHMES = {
+    sain: {
+      bpm: '≈ 70 bpm',
+      lancer: function () { jouerRythme('sain', genConstant(70, 0.30), '≈ 70 bpm'); },
+      titre: '💚 Cœur sain — rythme normal',
+      texte: "Régulier et tranquille : poum-ta … poum-ta. Le silence entre deux battements est plus long que le « poum-ta » lui-même. C'est le repère ; tous les autres s'en écartent."
+    },
+    tachy: {
+      bpm: '≈ 150 bpm',
+      lancer: function () { jouerRythme('tachy', genConstant(150, 0.16), '≈ 150 bpm'); },
+      titre: '🏃 Tachycardie — le cœur s\'emballe',
+      texte: "Toujours régulier, mais beaucoup trop rapide. Les « poum-ta » se rapprochent et le silence rétrécit. Normal après un effort, du stress ou de la fièvre ; anormal au repos."
+    },
+    brady: {
+      bpm: '≈ 42 bpm',
+      lancer: function () { jouerRythme('brady', genConstant(42, 0.34), '≈ 42 bpm'); },
+      titre: '🐢 Bradycardie — le cœur au ralenti',
+      texte: "Régulier mais très lent, avec de longs silences entre les battements. Fréquent et sans danger chez les sportifs très entraînés ; parfois le signe d'un problème de « pile » naturelle du cœur."
+    },
+    extra: {
+      bpm: 'irrégulier',
+      lancer: function () { jouerRythme('extra', genExtra(), 'extra…'); },
+      titre: '💓 Extrasystole — le battement en avance',
+      texte: "Un battement s'invite trop tôt, souvent plus faible, suivi d'une pause un peu plus longue, comme un « raté » puis un « rattrapage ». C'est la sensation du cœur qui saute un battement — très courant et le plus souvent bénin."
+    },
+    fa: {
+      bpm: 'irrégulier',
+      lancer: function () { jouerRythme('fa', genFA(), 'irrégulier'); },
+      titre: '🌀 Fibrillation auriculaire — le rythme fou',
+      texte: "« Irrégulièrement irrégulier » : aucun ordre, les battements tombent n'importe quand et plus ou moins fort. Les oreillettes tremblent au lieu de se contracter. Fréquente avec l'âge, à surveiller (risque de caillots)."
+    },
+    fv: {
+      bpm: 'urgence',
+      lancer: function () { jouerFV(); },
+      urgence: true,
+      titre: '⚠️ Fibrillation ventriculaire — urgence vitale',
+      texte: "Ici, ce n'est plus une simple anomalie de rythme. Les ventricules ne se contractent plus : ils tremblent, et le cœur ne pompe presque plus de sang. Il n'y a donc presque plus de « poum-ta », juste un frémissement chaotique. <strong>Sans secours rapide (massage cardiaque + défibrillateur), c'est mortel en quelques minutes.</strong> La bonne nouvelle : un défibrillateur — l'appareil avec les électrodes, présent dans beaucoup de lieux publics — peut relancer le cœur. C'est précisément pour repérer ça très vite que les ingénieurs biomédicaux conçoivent les moniteurs et les montres connectées."
+    }
+  };
+
+  /* ─────────────────────────────────────────────────────────────────
+     Visuel : le cœur qui bat + la bande "phono" qui défile
+     ───────────────────────────────────────────────────────────────── */
+  var coeurEmoji = document.getElementById('coeur-emoji');
+  var coeurRythmeEl = document.getElementById('coeur-rythme');
+  var resetPulse = null;
+
+  function pulseCoeur(amp) {
+    var s = 1 + 0.20 * (amp || 1);
+    coeurEmoji.style.transform = 'scale(' + s + ')';
+    clearTimeout(resetPulse);
+    resetPulse = setTimeout(function () { coeurEmoji.style.transform = 'scale(1)'; }, 90);
+  }
+  function pulseCoeurErratique() {
+    var s = 1 + (Math.random() * 0.10);
+    coeurEmoji.style.transform = 'scale(' + s + ')';
+  }
+  function rythmeLabel(txt) { coeurRythmeEl.textContent = txt; }
+
+  // Bande qui défile (on stocke les "blips" récents avec leur instant)
+  var strip = document.getElementById('strip');
+  var sctx = strip.getContext('2d');
+  var blips = [];
+  function dimensionnerStrip() {
+    strip.width = strip.clientWidth || 300;
+    strip.height = 130;
+  }
+  dimensionnerStrip();
+  window.addEventListener('resize', dimensionnerStrip);
+
+  function pousserBlip(amp, gap) {
+    var now = performance.now() / 1000;
+    blips.push({ t: now, amp: amp, b2: false });
+    if (gap && gap > 0) {
+      setTimeout(function () {
+        blips.push({ t: performance.now() / 1000, amp: amp * 0.7, b2: true });
+      }, gap * 1000);
+    }
+  }
+
+  function dessinerStrip() {
+    var W = strip.width, H = strip.height;
+    var base = H * 0.62;
+    sctx.clearRect(0, 0, W, H);
+    // fond
+    sctx.fillStyle = '#060d10'; sctx.fillRect(0, 0, W, H);
+    // ligne de base
+    sctx.strokeStyle = 'rgba(255,255,255,.10)'; sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.moveTo(0, base); sctx.lineTo(W, base); sctx.stroke();
+
+    var now = performance.now() / 1000;
+    var FENETRE = 4;                 // 4 secondes visibles
+    var PPS = W / FENETRE;
+    blips = blips.filter(function (e) { return now - e.t < FENETRE + 0.3; });
+
+    for (var i = 0; i < blips.length; i++) {
+      var e = blips[i];
+      var x = W - (now - e.t) * PPS;
+      var h = e.amp * (H * 0.42);
+      sctx.fillStyle = e.b2 ? 'rgba(14,159,110,.55)' : 'rgba(14,159,110,.95)';
+      // un petit pic en forme de losange
+      sctx.beginPath();
+      sctx.moveTo(x, base - h);
+      sctx.lineTo(x + 3, base);
+      sctx.lineTo(x, base + h * 0.25);
+      sctx.lineTo(x - 3, base);
+      sctx.closePath();
+      sctx.fill();
+    }
+    requestAnimationFrame(dessinerStrip);
+  }
+  requestAnimationFrame(dessinerStrip);
+
+  /* ─────────────────────────────────────────────────────────────────
+     Sélection / interface
+     ───────────────────────────────────────────────────────────────── */
+  var ecoutes = new Set();
+  var badgeDonne = false;
+  var btnSain = document.getElementById('btn-sain');
+  var boutons = Array.prototype.slice.call(document.querySelectorAll('.rythme-btn'));
+  var panneau = document.getElementById('desc-panneau');
+  var compteur = document.getElementById('compteur-ecoute');
+
+  function majBoutons() {
+    boutons.forEach(function (b) { b.classList.toggle('actif', b.dataset.nom === nomActif); });
+    btnSain.textContent = (nomActif === 'sain') ? '⏹ Arrêter' : '▶ Écouter un cœur sain';
+  }
+
+  function majCompteur() {
+    compteur.textContent = '🎧 ' + ecoutes.size + ' / 6 cœurs écoutés';
+  }
+
+  function afficherDescription(nom) {
+    var r = RYTHMES[nom];
+    panneau.classList.toggle('urgence', !!r.urgence);
+    panneau.innerHTML = '<h3>' + r.titre + '</h3><p>' + r.texte + '</p>';
+  }
+
+  function selectionner(nom) {
+    audio(); // débloque le son au premier clic
+    if (nomActif === nom) { arreterLecture(); return; }  // reclic = stop
+    arreterLecture();
+
+    afficherDescription(nom);
+
+    var fichier = FICHIERS_REELS[nom];
+    if (fichier && fichier.trim() !== '') {
+      jouerFichier(nom, fichier, RYTHMES[nom].bpm);
+    } else {
+      RYTHMES[nom].lancer();
+    }
+    majBoutons();
+
+    // progression : écouter les 6 → badge
+    ecoutes.add(nom);
+    majCompteur();
+    if (ecoutes.size >= 6 && !badgeDonne) {
+      badgeDonne = true;
+      var bravo = document.getElementById('section-bravo');
+      bravo.classList.remove('cache');
+      bravo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof validerModule === 'function') validerModule('sons');
+    }
+  }
+
+  boutons.forEach(function (b) {
+    b.addEventListener('click', function () { selectionner(b.dataset.nom); });
+  });
+  btnSain.addEventListener('click', function () { selectionner('sain'); });
+
+  // Couper le son si on quitte / change d'onglet
+  window.addEventListener('pagehide', arreterLecture);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) arreterLecture(); });
+  </script>
+</body>
+</html>
