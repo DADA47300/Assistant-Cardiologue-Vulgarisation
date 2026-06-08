@@ -295,6 +295,10 @@
       EN_COURS = null;
     }
     nomActif = null;
+    // bande propre pour ne pas mélanger avec le signal suivant
+    blips = [];
+    blipTimers.forEach(clearTimeout);
+    blipTimers = [];
     majBoutons();
     rythmeLabel('— bpm');
   }
@@ -405,7 +409,7 @@
       lancer: function () { jouerFV(); },
       urgence: true,
       titre: '⚠️ Fibrillation ventriculaire',
-      texte: "Au lieu de se contracter, les ventricules se mettent à trembler très vite et en désordre : il n'y a presque plus de « poum-ta », juste un frémissement. C'est la grande urgence du cœur, mais elle se soigne : un défibrillateur permet de relancer le rythme. Le repérer vite, c'est justement le rôle des appareils que conçoivent les ingénieurs biomédicaux."
+      texte: "Au lieu de se contracter, les ventricules se mettent à trembler très vite et en désordre : il n'y a presque plus de « poum-ta », juste un frémissement. C'est la grande urgence du cœur, mais elle se soigne : un défibrillateur — l'appareil avec les électrodes qu'on trouve dans beaucoup de lieux publics — permet de relancer le rythme. Le repérer vite, c'est justement le rôle des appareils que conçoivent les ingénieurs biomédicaux."
     }
   };
 
@@ -432,6 +436,7 @@
   var strip = document.getElementById('strip');
   var sctx = strip.getContext('2d');
   var blips = [];
+  var blipTimers = [];   // minuteries des "ta" (B2) en attente, pour pouvoir les annuler
   function dimensionnerStrip() {
     strip.width = strip.clientWidth || 300;
     strip.height = 130;
@@ -443,9 +448,10 @@
     var now = performance.now() / 1000;
     blips.push({ t: now, amp: amp, b2: false });
     if (gap && gap > 0) {
-      setTimeout(function () {
+      var id = setTimeout(function () {
         blips.push({ t: performance.now() / 1000, amp: amp * 0.7, b2: true });
       }, gap * 1000);
+      blipTimers.push(id);
     }
   }
 
