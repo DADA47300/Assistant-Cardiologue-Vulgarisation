@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diplôme — Ingénieur·e biomédical·e junior · Lis un cœur</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --signal:#0e9f6e;
+    --signal-fonce:#0b7a55;
+    --signal-clair:#34d399;
+    --battement:#e11d48;
+    --encre:#16302a;
+    --encre-doux:#4b6058;
+    --papier:#fbfaf6;
+    --or:#b8893b;
+    --titre:"Bricolage Grotesque","Bricolage","Trebuchet MS",sans-serif;
+    --texte:"Atkinson Hyperlegible","Atkinson","Segoe UI",sans-serif;
+  }
+
+  *{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  html,body{ margin:0; }
+  body{
+    font-family:var(--texte);
+    color:var(--encre);
+    background:#e7ece9;
+    display:flex; flex-direction:column; align-items:center;
+    padding:24px 12px 60px;
+    min-height:100vh;
+  }
+
+  /* ───────── Bandeau d'aide (jamais imprimé) ───────── */
+  .aide{
+    width:297mm; max-width:100%;
+    background:#fff; border:1px solid #d6ddd9; border-radius:14px;
+    padding:14px 20px; margin-bottom:22px;
+    font-size:0.9rem; color:var(--encre-doux); line-height:1.55;
+    box-shadow:0 8px 24px rgba(22,48,42,0.08);
+  }
+  .aide strong{ color:var(--encre); }
+  .aide b{ color:var(--signal-fonce); }
+  .aide .titre-aide{
+    font-family:var(--titre); font-weight:800; font-size:1rem;
+    color:var(--encre); margin-bottom:6px; display:block;
+  }
+  .aide code{
+    background:#eef3f0; border-radius:6px; padding:1px 7px;
+    font-family:ui-monospace,Menlo,Consolas,monospace; font-size:0.85em; color:var(--signal-fonce);
+  }
+
+  /* ───────── Le diplôme (format A4 paysage) ───────── */
+  .diplome{
+    width:297mm; height:210mm;
+    position:relative; overflow:hidden;
+    background:var(--papier);
+    box-shadow:0 24px 60px rgba(22,48,42,0.22);
+    /* quadrillage façon papier ECG, très léger */
+    background-image:
+      radial-gradient(120% 130% at 100% 0%, rgba(52,211,153,0.10) 0%, transparent 48%),
+      radial-gradient(120% 130% at 0% 100%, rgba(225,29,72,0.06) 0%, transparent 48%),
+      linear-gradient(rgba(225,29,72,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225,29,72,0.035) 1px, transparent 1px),
+      linear-gradient(rgba(225,29,72,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225,29,72,0.06) 1px, transparent 1px);
+    background-size:100% 100%, 100% 100%, 5mm 5mm, 5mm 5mm, 25mm 25mm, 25mm 25mm;
+  }
+
+  /* Cadre décoratif double */
+  .cadre{
+    position:absolute; inset:8mm;
+    border:2.5px solid var(--signal);
+    border-radius:10px;
+    padding:9mm 16mm;
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center;
+  }
+  .cadre::before{
+    content:""; position:absolute; inset:3.5mm;
+    border:1px solid rgba(14,159,110,0.45);
+    border-radius:6px; pointer-events:none;
+  }
+  /* Petits cœurs dans les angles */
+  .coin{ position:absolute; font-size:14px; color:var(--battement); opacity:0.8; }
+  .coin.tl{ top:5mm; left:5mm; } .coin.tr{ top:5mm; right:5mm; }
+  .coin.bl{ bottom:5mm; left:5mm; } .coin.br{ bottom:5mm; right:5mm; }
+
+  /* En-tête */
+  .etab{
+    font-family:var(--titre); font-weight:700;
+    font-size:0.82rem; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--signal-fonce);
+  }
+  .atelier{
+    margin-top:5mm;
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:var(--titre); font-weight:700; font-size:0.9rem;
+    color:var(--encre-doux);
+    background:#fff; border:1px solid rgba(14,159,110,0.35);
+    padding:5px 16px; border-radius:99px;
+  }
+  .atelier .pls{ color:var(--battement); }
+
+  /* Titre */
+  .titre-diplome{
+    font-family:var(--titre); font-weight:800;
+    font-size:3.1rem; line-height:0.98; letter-spacing:-0.02em;
+    color:var(--encre); margin:3mm 0 0;
+  }
+  .surtitre{
+    display:block;
+    font-family:var(--titre); font-weight:700;
+    font-size:0.85rem; letter-spacing:0.34em; text-transform:uppercase;
+    color:var(--battement); margin-bottom:2.5mm;
+  }
+
+  .decerne{
+    margin-top:4mm; font-size:1.02rem; color:var(--encre-doux);
+    font-style:italic;
+  }
+
+  /* Nom de l'étudiant + tracé ECG en guise de soulignement */
+  .nom-zone{ position:relative; margin:2mm 0 0; padding:0 8mm; }
+  .nom{
+    font-family:var(--titre); font-weight:800;
+    font-size:2.9rem; line-height:1.05; letter-spacing:-0.01em;
+    color:var(--signal-fonce);
+    display:inline-block; min-width:140mm;
+    outline:none; border-radius:6px;
+    padding:0 6px;
+  }
+  /* affordance « cliquer pour éditer » — à l'écran seulement */
+  .nom:hover, .nom:focus{ background:rgba(14,159,110,0.07); }
+  .titre-edit, .titre-grade{ outline:none; border-radius:6px; padding:0 4px; }
+  .titre-edit:hover, .titre-edit:focus,
+  .titre-grade:hover, .titre-grade:focus,
+  .mention:hover, .mention:focus{ background:rgba(14,159,110,0.07); }
+  .mention{ outline:none; border-radius:6px; }
+  .ecg-soulignement{
+    display:block; width:170mm; max-width:100%; height:11mm; margin:1mm auto 0;
+  }
+  .ecg-soulignement path{ filter:drop-shadow(0 1px 2px rgba(225,29,72,0.25)); }
+
+  .grade{
+    margin-top:4mm; font-size:1.04rem; color:var(--encre); max-width:200mm;
+  }
+  .grade .titre-grade{
+    font-family:var(--titre); font-weight:800; color:var(--signal-fonce);
+    font-size:1.22rem; display:block; margin-top:2px;
+  }
+  .mention{
+    margin-top:2.5mm; font-size:0.92rem; color:var(--encre-doux);
+    max-width:185mm; line-height:1.5;
+  }
+
+  /* Rangée de compétences (les 6 modules) */
+  .competences{
+    display:flex; gap:7mm; margin-top:4mm; flex-wrap:nowrap;
+    justify-content:center;
+  }
+  .comp{ display:flex; flex-direction:column; align-items:center; gap:4px; width:24mm; }
+  .comp-ico{
+    width:13mm; height:13mm; border-radius:10px;
+    display:grid; place-items:center; font-size:1.3rem;
+    background:#fff; border:1.5px solid rgba(14,159,110,0.5);
+    box-shadow:0 3px 10px rgba(14,159,110,0.12);
+  }
+  .comp-lbl{
+    font-family:var(--titre); font-weight:700; font-size:0.72rem;
+    color:var(--encre-doux); letter-spacing:0.02em;
+  }
+
+  /* Pied : date · sceau · atelier */
+  .pied-diplome{
+    margin-top:auto;
+    width:100%;
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:8mm; padding-top:4mm;
+  }
+  .bloc-pied{ flex:1; min-width:0; }
+  .ligne-signature{
+    border-top:1.5px solid var(--encre);
+    margin-bottom:5px; height:0; width:62mm;
+  }
+  .pied-libelle{
+    font-family:var(--titre); font-weight:700; font-size:0.82rem; color:var(--encre);
+  }
+  .pied-detail{ font-size:0.74rem; color:var(--encre-doux); }
+  .lieu-date{ text-align:left; }
+  .signature-atelier{ text-align:right; }
+  .signature-atelier .ligne-signature{ margin-left:auto; }
+  .date-edit{ outline:none; border-radius:5px; padding:0 4px; }
+  .date-edit:hover, .date-edit:focus{ background:rgba(14,159,110,0.07); }
+
+  /* Sceau central */
+  .sceau{
+    flex:none; width:30mm; height:30mm; position:relative;
+    display:grid; place-items:center;
+  }
+  .sceau-ring{
+    position:absolute; inset:0; border-radius:50%;
+    border:2.5px solid var(--signal);
+    background:radial-gradient(circle at 50% 38%, #ffffff 0%, #f1faf5 70%, #e3f4ec 100%);
+    box-shadow:0 4px 14px rgba(14,159,110,0.22), inset 0 0 0 3px #fff, inset 0 0 0 4px rgba(14,159,110,0.35);
+  }
+  .sceau-inner{ position:relative; text-align:center; line-height:1; }
+  .sceau-top, .sceau-bot{
+    font-family:var(--titre); font-weight:800; font-size:0.5rem;
+    letter-spacing:0.12em; color:var(--signal-fonce); text-transform:uppercase;
+  }
+  .sceau-coeur{ font-size:1.5rem; color:var(--battement); margin:1.5px 0; display:block; }
+
+  /* ───────── Impression ───────── */
+  @page{ size:A4 landscape; margin:0; }
+  @media print{
+    body{ background:#fff; padding:0; display:block; }
+    .aide{ display:none !important; }
+    .diplome{ box-shadow:none; margin:0; }
+  }
+
+  /* Aperçu confortable sur petits écrans */
+  @media screen and (max-width:1180px){
+    .diplome{ transform:scale(calc(100vw / 1130)); transform-origin:top center; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Ce bandeau ne s'imprime jamais : il sert juste de notice -->
+  <div class="aide">
+    <span class="titre-aide">📝 Comment utiliser ce diplôme</span>
+    <strong>1.</strong> Clique directement sur le <b>nom</b>, le <b>titre</b>, le <b>paragraphe de description</b> ou la <b>date</b> dans le diplôme ci-dessous pour les modifier (ils sont éditables).<br>
+    <strong>2.</strong> Pour imprimer / créer le PDF : <code>Ctrl/Cmd + P</code> → Destination <b>« Enregistrer au format PDF »</b> → Orientation <b>Paysage</b> → Marges <b>« Aucune »</b> → coche <b>« Graphismes d'arrière-plan »</b>.<br>
+    <strong>3.</strong> (Alternative WeasyPrint) : <code>weasyprint diplome.html diplome.pdf</code>.<br>
+    <em>Astuce : pour changer le nom dans le code source, cherche la balise <code>&lt;span class="nom"&gt;</code> et remplace « Prénom Nom ».</em>
+  </div>
+
+  <div class="diplome">
+    <div class="cadre">
+      <span class="coin tl">❤</span><span class="coin tr">❤</span>
+      <span class="coin bl">❤</span><span class="coin br">❤</span>
+
+      <div class="etab">ENSEIRB-MATMECA · Département Télécommunications</div>
+      <div class="atelier"><span class="pls">❤</span> Atelier « Lis un cœur »</div>
+
+      <div class="titre-diplome">
+        <span class="surtitre">Diplôme officiel</span>
+        <!-- ✏️ MODIFIE LE TITRE ICI (ou clique dessus dans le navigateur) -->
+        <span class="titre-edit" contenteditable="true" spellcheck="false">Ingénieur·e biomédical·e junior</span>
+      </div>
+
+      <p class="decerne">Ce diplôme est fièrement décerné à</p>
+
+      <div class="nom-zone">
+        <!-- ✏️ MODIFIE LE NOM ICI (ou clique dessus dans le navigateur) -->
+        <span class="nom" contenteditable="true" spellcheck="false">Prénom Nom</span>
+        <svg class="ecg-soulignement" viewBox="0 0 520 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 22 H150 l7 0 l4 -3 l5 5 l6 -24 l6 36 l6 -16 l5 2 H352 l7 0 l4 -3 l5 5 l6 -24 l6 36 l6 -16 l5 2 H520"
+                fill="none" stroke="#e11d48" stroke-width="2.6"
+                stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <p class="grade">
+        pour avoir mené à bien sa mission et obtenu officiellement le titre de
+        <span class="titre-grade" contenteditable="true" spellcheck="false">🎓 Ingénieur·e biomédical·e junior</span>
+      </p>
+      <p class="mention" contenteditable="true" spellcheck="false">
+        En décodant les signaux du cœur, il·elle a appris à capter, nettoyer et analyser un signal pour détecter une pathologie, mettant ainsi en œuvre les principes fondamentaux du traitement du signal, au cœur des télécommunications. 
+      </p>
+
+      <div class="competences">
+        <div class="comp"><span class="comp-ico">🌊</span><span class="comp-lbl">Signaux</span></div>
+        <div class="comp"><span class="comp-ico">❤️</span><span class="comp-lbl">ECG</span></div>
+        <div class="comp"><span class="comp-ico">👂</span><span class="comp-lbl">Auscultation</span></div>
+        <div class="comp"><span class="comp-ico">🔬</span><span class="comp-lbl">Labo</span></div>
+        <div class="comp"><span class="comp-ico">🩺</span><span class="comp-lbl">Pathologies</span></div>
+        <div class="comp"><span class="comp-ico">🛠️</span><span class="comp-lbl">Métiers</span></div>
+      </div>
+
+      <div class="pied-diplome">
+        <div class="bloc-pied lieu-date">
+          <div class="ligne-signature"></div>
+          <div class="pied-libelle">Fait à Talence, le <span class="date-edit" contenteditable="true" spellcheck="false">…… juin 2026</span></div>
+          <div class="pied-detail">ENSEIRB-MATMECA</div>
+        </div>
+
+        <div class="sceau" aria-hidden="true">
+          <div class="sceau-ring"></div>
+          <div class="sceau-inner">
+            <div class="sceau-top">Atelier</div>
+            <span class="sceau-coeur">❤</span>
+            <div class="sceau-bot">Lis un cœur</div>
+          </div>
+        </div>
+
+        <div class="bloc-pied signature-atelier">
+          <div class="ligne-signature"></div>
+          <div class="pied-libelle">L'équipe de l'atelier</div>
+          <div class="pied-detail">Stage Télécommunications · ENSEIRB-MATMECA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

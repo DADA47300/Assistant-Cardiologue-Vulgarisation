@@ -170,18 +170,21 @@
       font-size: 1.35rem;
     }
 
-    /* ── Victoire synthèse Fourier ── */
-    #msg-victoire-synth {
-      display: none;
-      background: #f0fdf4;
-      border: 2px solid var(--signal);
-      border-radius: 12px;
-      padding: 14px 18px;
-      margin-top: 14px;
-      font-family: var(--titre); font-weight: 700; font-size: 1.08rem;
-      color: var(--signal-fonce);
+    /* ── Checklist de progression ── */
+    .checklist {
+      display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 20px;
     }
-    #msg-victoire-synth.visible { display: block; }
+    .chk {
+      display: flex; align-items: center; gap: 6px; font-size: 0.84rem;
+      color: var(--encre-doux); background: #f3f6f4; padding: 5px 11px;
+      border-radius: 20px; border: 1px solid var(--bord); transition: all 0.3s;
+    }
+    .chk.fait {
+      background: #e6f8ef; color: var(--signal-fonce);
+      border-color: var(--signal); font-weight: 700;
+    }
+    .chk .ico { font-size: 0.88rem; }
+
   </style>
 </head>
 <body>
@@ -202,6 +205,17 @@
          physique qui <strong>transporte une information</strong>. Ici tu vas jouer avec les signaux, les entendre,
          les déformer — et comprendre pourquoi le bruit est l'ennemi numéro 1 de l'ingénieur.</p>
     </header>
+
+  <!-- Checklist de progression -->
+  <div class="checklist" aria-label="Conditions pour obtenir le badge">
+    <span class="chk" id="chk-tinder"><span class="ico">○</span> C'est quoi un signal ?</span>
+    <span class="chk" id="chk-bac"><span class="ico">○</span> Bac à sable</span>
+    <span class="chk" id="chk-sync"><span class="ico">○</span> Synchronisation</span>
+    <span class="chk" id="chk-periode"><span class="ico">○</span> Période</span>
+    <span class="chk" id="chk-echant"><span class="ico">○</span> Échantillonnage</span>
+    <span class="chk" id="chk-fourier"><span class="ico">○</span> Synthèse de Fourier</span>
+    <span class="chk" id="chk-bruit"><span class="ico">○</span> Le bruit</span>
+  </div>
 
     <!-- ════════════════════════════════════════════════════════
          SECTION 0 — DÉFINITION + MINI-JEU TINDER
@@ -417,16 +431,10 @@
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-synthese">
       <h2>🧩 6. Construire un signal — La recette</h2>
-      <p>Comment fabrique-t-on un signal complexe ? C'est comme une <strong>recette de cuisine</strong> !
-         On peut créer n'importe quelle forme en mélangeant des vagues très simples.
-         En bas, ce sont tes <strong>ingrédients</strong>. En haut, c'est le <strong>résultat</strong>.</p>
-
-      <div class="def-box" style="border-left-color:#7c3aed; background:linear-gradient(135deg,#f5f3ff,#ede9fe);">
-        <strong style="color:#5b21b6;">🎮 Défi :</strong> Fabrique un signal carré !
-        Les ordinateurs adorent ces signaux en forme de <strong>« créneaux »</strong> (pour faire des 0 et des 1).
-        La ligne en pointillés gris te montre la forme à atteindre.
-        À toi de doser les ingrédients avec les curseurs !
-      </div>
+      <p>Comment fabrique-t-on un signal complexe ? C'est comme une <strong>recette de cuisine</strong> :
+         on mélange des vagues simples, chacune à sa fréquence. En haut, le <strong>résultat</strong> dans le temps ;
+         en bas, le <strong>spectre</strong> — la liste des ingrédients.
+         Joue avec les curseurs et observe comment le signal change.</p>
 
       <div class="zone-jeu">
         <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin-bottom:4px;">Le signal dans le temps</div>
@@ -436,32 +444,23 @@
 
         <div class="panneau-controles">
           <div class="controle">
-            <label>Vague de base (1) : <strong id="val-h1">1.0</strong></label>
+            <label>Vague de base (1f) : <strong id="val-h1">1.0</strong></label>
             <input type="range" id="slide-h1" min="0" max="1" step="0.05" value="1">
           </div>
           <div class="controle">
-            <label>Vague rapide (2) : <strong id="val-h2">0.0</strong></label>
+            <label>Vague rapide (2f) : <strong id="val-h2">0.0</strong></label>
             <input type="range" id="slide-h2" min="0" max="1" step="0.05" value="0">
           </div>
           <div class="controle">
-            <label>Vague très rapide (3) : <strong id="val-h3">0.0</strong></label>
+            <label>Vague très rapide (3f) : <strong id="val-h3">0.0</strong></label>
             <input type="range" id="slide-h3" min="0" max="1" step="0.05" value="0">
           </div>
           <div class="controle">
-            <label>Vague ultra rapide (4) : <strong id="val-h4">0.0</strong></label>
+            <label>Vague ultra rapide (4f) : <strong id="val-h4">0.0</strong></label>
             <input type="range" id="slide-h4" min="0" max="1" step="0.05" value="0">
           </div>
         </div>
         <p id="msg-synth" style="font-family:var(--titre);font-weight:700;font-size:0.92rem;margin:10px 0 0;min-height:24px;color:var(--encre-doux);"></p>
-
-        <button id="btn-indice-synth" class="bouton secondaire" style="margin-top:14px;">💡 Un indice ?</button>
-        <div id="indice-synth" class="cache" style="margin-top:10px; background:#fffbeb; border:2px solid #f59e0b; border-radius:12px; padding:12px 16px; font-size:0.95rem; color:#78350f; text-align:left;">
-          🤫 <strong>Astuce :</strong> Pour faire un créneau, tu n'as besoin que des vagues impaires.
-          Mets la <strong>Vague 1</strong> à fond, et ajoute un peu de <strong>Vague 3</strong>.
-          Laisse la 2 et la 4 à zéro !
-        </div>
-
-        <div id="msg-victoire-synth">🎉 Bravo ! Tu viens de recréer un signal numérique — c'est exactement comme ça qu'un ordinateur transmet des données !</div>
       </div>
     </section>
 
@@ -513,19 +512,19 @@
       </p>
     </section>
 
-    <!-- ── Fin du module ── -->
-    <section class="carte" id="fin-module"
+    <!-- ── Badge obtenu (caché par défaut) ── -->
+    <section class="carte cache" id="badge-signal-section"
       style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid var(--signal);text-align:center;">
       <div style="font-size:2.8rem;margin-bottom:10px;">🌊🏅</div>
-      <h2 style="color:var(--signal-fonce);margin:0 0 8px;">Fin du module — Maître des Ondes</h2>
+      <h2 style="color:var(--signal-fonce);margin:0 0 8px;">Badge obtenu : Maître des Ondes !</h2>
       <p style="color:var(--encre-doux);margin:0 0 22px;max-width:480px;margin-left:auto;margin-right:auto;">
         Tu as exploré l'amplitude, la fréquence, la période, l'échantillonnage,
         la synthèse de Fourier et le bruit.
         C'est tout le vocabulaire de l'ingénieur en télécommunications !
       </p>
-      <a href="index.html?badge=signal" class="bouton"
-         style="display:inline-block;text-decoration:none;font-size:1.2rem;padding:16px 32px;">
-        J'ai tout compris, récupérer mon badge ! 🏅
+      <a href="index.html" class="bouton"
+         style="display:inline-block;text-decoration:none;font-size:1.1rem;padding:14px 28px;">
+        ← Retour à l'accueil pour voir ton badge
       </a>
     </section>
     <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
@@ -533,6 +532,97 @@
 
   <script src="progression.js"></script>
   <script src="signaux.js"></script>
+  <script>
+  /* =====================================================================
+     MOTEUR DE PROGRESSION — signal.html
+     7 cases à cocher → badge débloqué.
+     L'état de la checklist est sauvegardé dans sessionStorage pour
+     survivre à un rechargement de la page (même clé de session que les badges).
+     ===================================================================== */
+  var CLE_CHECKLIST_SIGNAL = 'lisuncoeur_checklist_signal';
+
+  var progresSignal = {
+    tinder: false,
+    bac: false,
+    sync: false,
+    periode: false,
+    echant: false,
+    fourier: false,
+    bruit: false
+  };
+  var badgeSignalObtenu = false;
+
+  /* Lecture de l'état sauvegardé (renvoie {} si rien / erreur) */
+  function _lireChecklistSignal() {
+    try {
+      var data = sessionStorage.getItem(CLE_CHECKLIST_SIGNAL);
+      if (!data) return {};
+      var p = JSON.parse(data);
+      return (typeof p === 'object' && p !== null) ? p : {};
+    } catch (e) { return {}; }
+  }
+
+  /* Écriture de l'état courant */
+  function _ecrireChecklistSignal() {
+    try {
+      sessionStorage.setItem(CLE_CHECKLIST_SIGNAL, JSON.stringify(progresSignal));
+    } catch (e) { /* sessionStorage indisponible : on continue sans persistance */ }
+  }
+
+  /* Met à jour l'apparence d'une case (coché visuellement) */
+  function _afficherCase(cle) {
+    var el = document.getElementById('chk-' + cle);
+    if (el) { el.classList.add('fait'); el.querySelector('.ico').textContent = '✓'; }
+  }
+
+  function cocherSignal(cle) {
+    if (progresSignal[cle]) return;
+    progresSignal[cle] = true;
+    _afficherCase(cle);
+    _ecrireChecklistSignal();
+    verifierCompletionSignal();
+  }
+
+  function verifierCompletionSignal(silencieux) {
+    if (badgeSignalObtenu) return;
+    var tout = Object.values(progresSignal).every(Boolean);
+    if (!tout) return;
+    badgeSignalObtenu = true;
+    // On ne (re)valide le module que si ce n'est pas déjà fait
+    if (typeof validerModule === 'function') validerModule('signal');
+    var sec = document.getElementById('badge-signal-section');
+    if (sec) {
+      sec.classList.remove('cache');
+      // Pas de défilement automatique lors d'une simple restauration au chargement
+      if (!silencieux) {
+        setTimeout(function() { sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 600);
+      }
+    }
+  }
+
+  /* --- Restauration au chargement de la page --- */
+  (function restaurerProgressionSignal() {
+    var sauvegarde = _lireChecklistSignal();
+    Object.keys(progresSignal).forEach(function (cle) {
+      if (sauvegarde[cle]) {
+        progresSignal[cle] = true;
+        _afficherCase(cle);
+      }
+    });
+    // Si le badge avait déjà été obtenu, on ré-affiche la section sans défiler
+    if (typeof moduleValide === 'function' && moduleValide('signal')) {
+      // S'assurer que toutes les cases apparaissent cochées
+      Object.keys(progresSignal).forEach(function (cle) {
+        progresSignal[cle] = true;
+        _afficherCase(cle);
+      });
+      verifierCompletionSignal(true);
+    } else {
+      // Sinon, vérifier quand même si les 7 cases restaurées suffisent
+      verifierCompletionSignal(true);
+    }
+  })();
+  </script>
   <script>
   /* =====================================================================
      MOTEUR DE DESSIN — signal.html
@@ -882,6 +972,73 @@
   genererNouvelleCible();
   animer();
 
+  /* =====================================================================
+     HOOKS DE PROGRESSION — relient les mini-jeux à la checklist
+     ===================================================================== */
+
+  /* Bac à sable : coché dès que l'étudiant joue avec les curseurs */
+  (function() {
+    var cocheBac = false;
+    function onBac() {
+      if (cocheBac) return;
+      cocheBac = true;
+      if (typeof cocherSignal === 'function') cocherSignal('bac');
+    }
+    document.getElementById('slide-amp-bac').addEventListener('input', onBac);
+    document.getElementById('slide-freq-bac').addEventListener('input', onBac);
+    document.getElementById('btn-son').addEventListener('click', onBac);
+  }());
+
+  /* Synchronisation : coché quand le signal colle à la cible */
+  (function() {
+    var cochSync = false;
+    var origDessinerDefi = dessinerDefi;
+    // On observe le message de victoire
+    var obsSync = new MutationObserver(function() {
+      if (!cochSync && msgVictoire.classList.contains('visible')) {
+        cochSync = true;
+        if (typeof cocherSignal === 'function') cocherSignal('sync');
+      }
+    });
+    obsSync.observe(msgVictoire, { attributes: true, attributeFilter: ['class'] });
+  }());
+
+  /* Période : coché quand la période cible est atteinte */
+  (function() {
+    var cochePer = false;
+    var obsPer = new MutationObserver(function() {
+      if (!cochePer && msgVictoirePer.classList.contains('visible')) {
+        cochePer = true;
+        if (typeof cocherSignal === 'function') cocherSignal('periode');
+      }
+    });
+    obsPer.observe(msgVictoirePer, { attributes: true, attributeFilter: ['class'] });
+  }());
+
+  /* Échantillonnage : coché dès que l'étudiant touche le curseur */
+  (function() {
+    var cocheEch = false;
+    document.getElementById('slide-fe').addEventListener('input', function() {
+      if (cocheEch) return;
+      cocheEch = true;
+      if (typeof cocherSignal === 'function') cocherSignal('echant');
+    });
+  }());
+
+  /* Tinder : coché quand l'écran de résultat apparaît (fin du quiz) */
+  (function() {
+    var cocheTinder = false;
+    var resultatEl = document.getElementById('tinder-resultat');
+    if (!resultatEl) return;
+    var obsTinder = new MutationObserver(function() {
+      if (!cocheTinder && !resultatEl.classList.contains('cache')) {
+        cocheTinder = true;
+        if (typeof cocherSignal === 'function') cocherSignal('tinder');
+      }
+    });
+    obsTinder.observe(resultatEl, { attributes: true, attributeFilter: ['class'] });
+  }());
+
   </script>
 
   <!-- ════════════════════════════════════════════════════════════════
@@ -920,20 +1077,11 @@
       xT.clearRect(0, 0, W, H);
       axe(xT, W, H);
 
-      /* Cible créneau en pointillés gris */
-      xT.save(); xT.beginPath(); xT.strokeStyle = '#cbd5e1'; xT.lineWidth = 2; xT.setLineDash([6, 4]);
-      for (var xc = 0; xc < W; xc++) {
-        var tc = (xc / W) * 2;
-        var pyc = H / 2 - ((tc % 1 < 0.5) ? 1 : -1) * (H / 2 - 14);
-        xc === 0 ? xT.moveTo(xc, pyc) : xT.lineTo(xc, pyc);
-      }
-      xT.stroke(); xT.setLineDash([]); xT.restore();
-
-      /* Signal (vert si victoire, violet sinon) */
-      var victoire = a[0] > 0.8 && a[1] < 0.1 && a[2] > 0.2 && a[2] < 0.5 && a[3] < 0.1;
+      /* Signal (toujours violet/vert selon nb de fréquences actives) */
+      var actives = a.filter(function (v) { return v > 0.05; }).length;
       var maxA = a.reduce(function (s, v) { return s + v; }, 0) || 1;
       xT.save(); xT.beginPath();
-      xT.strokeStyle = victoire ? '#0e9f6e' : '#7c3aed'; xT.lineWidth = 3;
+      xT.strokeStyle = actives > 1 ? '#0e9f6e' : '#7c3aed'; xT.lineWidth = 3;
       for (var x = 0; x < W; x++) {
         var t = (x / W) * 2;
         var y = 0;
@@ -962,34 +1110,31 @@
       }
       xS.textAlign = 'left';
 
-      /* Message + victoire */
-      var actives = a.filter(function (v) { return v > 0.05; }).length;
-      if (victoire) {
-        msg.textContent = '🟢 Signal numérique détecté ! La courbe colle à la cible.';
-        msg.style.color = 'var(--signal-fonce)';
-      } else if (actives <= 1) {
-        msg.textContent = 'Une seule fréquence → un sinus pur, une seule barre.';
+      /* Message pédagogique */
+      if (actives === 0) {
+        msg.textContent = 'Tous les curseurs à zéro → silence.';
+        msg.style.color = 'var(--encre-doux)';
+      } else if (actives === 1) {
+        msg.textContent = 'Une seule fréquence → un sinus pur, une seule barre dans le spectre.';
         msg.style.color = 'var(--encre-doux)';
       } else {
         msg.textContent = actives + ' fréquences mélangées → un signal plus riche, ' + actives + ' barres dans le spectre.';
-        msg.style.color = 'var(--encre-doux)';
+        msg.style.color = 'var(--signal-fonce)';
       }
-      var msgV = document.getElementById('msg-victoire-synth');
-      if (msgV) { msgV.className = victoire ? 'visible' : ''; }
     }
 
-    sliders.forEach(function (s) { s.addEventListener('input', dessiner); });
-    dessiner();
-
-    /* Bouton indice */
-    var btnIndice = document.getElementById('btn-indice-synth');
-    if (btnIndice) {
-      btnIndice.addEventListener('click', function () {
-        var indice = document.getElementById('indice-synth');
-        if (indice) indice.classList.remove('cache');
-        btnIndice.classList.add('cache');
+    /* Hook progression : coché dès le premier déplacement d'un curseur */
+    var cocheFourier = false;
+    sliders.forEach(function (s) {
+      s.addEventListener('input', function() {
+        dessiner();
+        if (!cocheFourier) {
+          cocheFourier = true;
+          if (typeof cocherSignal === 'function') cocherSignal('fourier');
+        }
       });
-    }
+    });
+    dessiner();
   }());
 
   /* ════════════════════════════════════
@@ -1070,6 +1215,16 @@
 
     slB.addEventListener('input', dessiner);
     dessiner();
+
+    /* Hook progression : coché dès le premier déplacement du curseur bruit */
+    (function() {
+      var cocheBruit = false;
+      slB.addEventListener('input', function() {
+        if (cocheBruit) return;
+        cocheBruit = true;
+        if (typeof cocherSignal === 'function') cocherSignal('bruit');
+      });
+    }());
 
     /* --- Écoute : tonalité propre + bruit dosé par le curseur --- */
     var actx = null, osc = null, gain = null, noiseSrc = null, noiseGain = null, on = false;
