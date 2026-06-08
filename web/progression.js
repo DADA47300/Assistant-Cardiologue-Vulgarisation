@@ -120,6 +120,9 @@ function validerModule(idModule) {
     console.error("[Progression] ❌ ERREUR : le badge n'a PAS été sauvegardé malgré l'écriture !");
   }
 
+  /* Mémoriser le module récemment validé pour la séquence de récompense sur l'accueil */
+  sessionStorage.setItem("module_recent", idModule);
+
   // Afficher la notification toast
   if (typeof afficherToastBadge === "function") {
     afficherToastBadge(BADGES[idModule]);

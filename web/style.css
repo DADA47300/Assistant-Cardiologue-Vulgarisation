@@ -72,14 +72,28 @@ body {
   font-family: var(--texte);
   color: var(--encre);
   background-color: var(--papier);
-  /* quadrillage façon papier ECG, très léger */
+  /* quadrillage façon papier ECG, défilant doucement en diagonale */
   background-image:
     linear-gradient(rgba(225, 29, 72, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(225, 29, 72, 0.05) 1px, transparent 1px),
     linear-gradient(rgba(225, 29, 72, 0.09) 1px, transparent 1px),
     linear-gradient(90deg, rgba(225, 29, 72, 0.09) 1px, transparent 1px);
   background-size: 12px 12px, 12px 12px, 60px 60px, 60px 60px;
+  animation: ecg-scroll 14s linear infinite;
   line-height: 1.5;
+}
+@keyframes ecg-scroll {
+  from { background-position: 0 0,    0 0,    0 0,    0 0;    }
+  to   { background-position: 12px 12px, 12px 12px, 60px 60px, 60px 60px; }
+}
+
+/* Vignette subtile : assombrit les bords pour focaliser l'œil au centre */
+.vignette-fond {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+  background: radial-gradient(ellipse at 50% 44%, transparent 42%, rgba(14,30,24,0.30) 100%);
 }
 
 /* --- Barre du haut --- */
@@ -963,9 +977,8 @@ a.pastille:hover {
 .sous-item.verrou:hover .si-num { background: #e5e7eb; color: #9aa6a0; }
 .sous-item.verrou::after { content: "🔒"; margin-left: auto; font-size: 0.82rem; }
 /* =====================================================================
-   ACCUEIL — Refonte « parcours / skill-tree »
-   Bloc 100 % scopé à la page d'accueil (classes dédiées) : n'affecte
-   aucune autre page du site.
+   ACCUEIL — Éléments communs (mission header, couleurs modules, sous-listes)
+   Les styles Path UI spécifiques sont dans le <style> inline de index.html.
    ===================================================================== */
 
 /* --- Tracé ECG en fond du bandeau mission (SVG inline + point lumineux animé) --- */
@@ -1131,4 +1144,37 @@ a.pastille:focus-visible,
     margin-top: 14px;
   }
   .mission-trace { opacity: 0.4; }
+}
+
+/* ── Particules flottantes (juice) ── */
+.sparkles {
+  position: absolute;
+  inset: -15px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.noeud.fait .sparkles,
+.noeud.actif .sparkles {
+  opacity: 1;
+}
+
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--signal);
+  animation: float-sparkle 2s infinite ease-in-out alternate;
+}
+
+.sparkle:nth-child(1) { top: -2px;    left: 10%;   animation-delay: 0s;   }
+.sparkle:nth-child(2) { bottom: -2px; right: 10%;  animation-delay: 0.7s; }
+.sparkle:nth-child(3) { top: 40%;     right: -12px; animation-delay: 1.3s; }
+
+@keyframes float-sparkle {
+  from { transform: translateY(0)     scale(0.6); opacity: 0.3; }
+  to   { transform: translateY(-10px) scale(1.2); opacity: 1;   }
 }

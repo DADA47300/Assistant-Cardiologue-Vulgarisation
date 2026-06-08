@@ -177,6 +177,8 @@ Ce module doit être découpé en 3 mini-parties distinctes (barre d'étapes lin
 
 Réussir l'étape 3 attribue le 4ème badge obligatoire : pathologies (Détective Médical), déclenchant le diplôme final sur l'accueil.
 
+### écouter.html — « Oreille d'or » — COMPLET
+Explication du son du coeur en deux étape. Montre les différences pathologies en temps réel.
 ---
 
 ## 8. API de signaux.js (bibliothèque partagée)
@@ -201,6 +203,7 @@ Note pour l'agent : Pour le module pathologies, tu devras utiliser ou étendre g
 ---
 
 ## 9. Idée directrice à poursuivre & TODO
+
 
 ---
 

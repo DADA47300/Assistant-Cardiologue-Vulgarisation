@@ -6,14 +6,605 @@
   <title>Lis un cœur — Découvre les télécommunications avec l'ECG</title>
   <meta name="description" content="Atelier pédagogique interactif de 4h — Deviens ingénieur biomédical junior en explorant les signaux, l'ECG et les pathologies cardiaques.">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ================================================================
+       PATH UI — styles spécifiques à index.html
+       ================================================================ */
+
+    /* --- HUD : barre de progression style jeu vidéo --- */
+    .hud {
+      background: linear-gradient(135deg, #0c3d2b 0%, #16302a 100%);
+      border-radius: var(--rayon);
+      padding: 18px 22px 14px;
+      margin-bottom: 24px;
+      color: #eafff5;
+      position: relative;
+      overflow: hidden;
+      animation: apparait 0.5s ease both;
+      box-shadow: 0 8px 28px rgba(14, 50, 38, 0.22);
+    }
+    .hud::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+    .hud-ligne-haute {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .hud-rang { display: flex; align-items: center; gap: 10px; }
+    .hud-rang-icone { font-size: 1.5rem; line-height: 1; }
+    .hud-rang-texte { display: flex; flex-direction: column; gap: 1px; }
+    .hud-rang-label {
+      font-family: var(--titre);
+      font-size: 0.67rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .hud-rang-titre {
+      font-family: var(--titre);
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #fff;
+      letter-spacing: -0.02em;
+      transition: opacity 0.3s ease;
+    }
+    .hud-compteur {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.1);
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .hud-xp-piste {
+      height: 16px;
+      background: rgba(0,0,0,0.28);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255,255,255,0.07);
+      position: relative;
+    }
+    .hud-xp-remplissage {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      height: 100%;
+      min-width: 0;
+      background: linear-gradient(90deg, #10b981 0%, #34d399 60%, #6ee7b7 100%);
+      border-radius: 99px;
+      transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 0 14px rgba(52,211,153,0.5);
+    }
+    .hud-xp-remplissage::after {
+      content: "";
+      position: absolute;
+      top: 3px; left: 10%; right: 10%;
+      height: 4px;
+      background: rgba(255,255,255,0.28);
+      border-radius: 99px;
+    }
+    .hud-paliers {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+    .hud-palier {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.66rem;
+      color: rgba(255,255,255,0.28);
+      transition: color 0.4s ease;
+    }
+    .hud-palier.atteint { color: rgba(255,255,255,0.78); }
+    .hud-palier-icone { font-size: 0.75rem; }
+
+    /* --- Chemin sinueux --- */
+    .chemin-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      animation: apparait 0.7s ease 0.1s both;
+    }
+    .chemin-wrap::before {
+      content: "";
+      display: block;
+      padding-bottom: 163.33%; /* ratio hauteur SVG 980 / largeur 600 */
+    }
+    .chemin-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      z-index: 0;
+    }
+
+    /* --- Nœuds du chemin --- */
+    .noeud {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+    }
+    .noeud-btn {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 4px solid var(--accent, #ccd8d2);
+      background: var(--accent-soft, #f0f4f2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      /* Effet bouton 3D */
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+      box-shadow: 0 7px 0 color-mix(in srgb, var(--accent, #a8b8b2) 80%, #000),
+                  0 10px 22px rgba(22,48,42,0.14);
+      font-family: inherit;
+      text-decoration: none;
+    }
+    .noeud-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 0 color-mix(in srgb, var(--accent, #a8b8b2) 80%, #000),
+                  0 14px 30px rgba(22,48,42,0.2);
+      filter: brightness(1.08);
+    }
+    .noeud-btn:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 color-mix(in srgb, var(--accent, #a8b8b2) 80%, #000),
+                  0 4px 10px rgba(22,48,42,0.1);
+    }
+    .noeud-btn:focus-visible {
+      outline: 3px solid var(--accent, var(--signal));
+      outline-offset: 4px;
+    }
+    .noeud-emoji {
+      font-size: 2.1rem;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .noeud-num {
+      position: absolute;
+      bottom: -4px; right: -4px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--accent, #7a9490);
+      color: #fff;
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.75rem;
+      display: grid;
+      place-items: center;
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 6px rgba(22,48,42,0.25);
+      pointer-events: none;
+      transition: background 0.3s ease;
+    }
+    .noeud-label {
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.76rem;
+      color: var(--encre);
+      text-align: center;
+      max-width: 116px;
+      line-height: 1.3;
+      pointer-events: none;
+      text-shadow: 0 1px 5px rgba(255,255,255,0.95);
+    }
+
+    /* État FAIT (badge obtenu) */
+    .noeud.fait .noeud-btn {
+      border-color: var(--signal);
+      background: #daf5e9;
+      box-shadow: 0 7px 0 var(--signal-fonce),
+                  0 10px 28px rgba(14,159,110,0.35);
+    }
+    .noeud.fait .noeud-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 0 var(--signal-fonce), 0 14px 34px rgba(14,159,110,0.42);
+      filter: brightness(1.07);
+    }
+    .noeud.fait .noeud-btn:active {
+      transform: translateY(5px);
+      box-shadow: 0 2px 0 var(--signal-fonce), 0 4px 12px rgba(14,159,110,0.2);
+    }
+    .noeud.fait .noeud-num { background: var(--signal); font-size: 0; }
+    .noeud.fait .noeud-num::after { content: "✓"; font-size: 0.9rem; }
+
+    /* État ACTIF (prochain module à faire — halo pulsant) */
+    .noeud.actif .noeud-btn {
+      border-color: var(--accent, var(--signal));
+      background: var(--accent-soft, #e6f8ef);
+      animation: noeud-actif-halo 1.9s ease-in-out infinite;
+    }
+    @keyframes noeud-actif-halo {
+      0%, 100% {
+        box-shadow: 0 7px 0 var(--signal-fonce),
+                    0 0 0 0   rgba(14,159,110,0.55),
+                    0 10px 28px rgba(14,159,110,0.3);
+      }
+      50% {
+        box-shadow: 0 7px 0 var(--signal-fonce),
+                    0 0 0 22px rgba(14,159,110,0),
+                    0 10px 38px rgba(14,159,110,0.55);
+      }
+    }
+    .noeud.actif .noeud-btn:hover   { animation: none; transform: translateY(-3px); filter: brightness(1.1); }
+    .noeud.actif .noeud-btn:active  { animation: none; transform: translateY(5px); box-shadow: 0 2px 0 var(--signal-fonce); }
+
+    /* État VERROUILLÉ — vrai noir & blanc, réagit au survol et au clic (shake) */
+    .noeud.verrouille .noeud-btn {
+      border-color: #b8c4be;
+      background: #e8eceb;
+      box-shadow: 0 5px 0 #a8b6b2;
+      filter: grayscale(100%);
+      opacity: 0.62;
+      cursor: not-allowed;
+    }
+    .noeud.verrouille .noeud-btn:hover {
+      cursor: not-allowed;
+      transform: scale(1.06);
+      filter: grayscale(75%) brightness(1.06);
+    }
+    .noeud.verrouille .noeud-num { display: none; }
+    .noeud.verrouille .noeud-btn::after {
+      content: "🔒";
+      position: absolute;
+      bottom: -5px; right: -5px;
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+    .noeud.verrouille .noeud-label { opacity: 0.45; }
+
+    /* Secousse d'erreur au clic sur un nœud verrouillé */
+    @keyframes shake-error {
+      0%   { transform: translateX(0); }
+      15%  { transform: translateX(-7px); border-color: #e11d48 !important; }
+      30%  { transform: translateX(7px); }
+      45%  { transform: translateX(-5px); border-color: #e11d48 !important; }
+      60%  { transform: translateX(5px); }
+      75%  { transform: translateX(-3px); }
+      90%  { transform: translateX(3px); }
+      100% { transform: translateX(0); }
+    }
+    .noeud.shake-error .noeud-btn,
+    .noeud-bonus.shake-error .noeud-btn {
+      animation: shake-error 0.42s ease !important;
+      border-color: #e11d48 !important;
+    }
+
+    /* ── Bulle "GO !" flottante au-dessus du nœud actif ── */
+    .noeud-go {
+      position: absolute;
+      bottom: calc(100% + 8px); /* flotte au-dessus du bouton */
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ff9600;
+      color: #fff;
+      font-family: var(--titre);
+      font-weight: 900;
+      font-size: 0.88rem;
+      letter-spacing: 0.07em;
+      padding: 5px 16px 6px;
+      border-radius: 20px;
+      box-shadow: 0 4px 0 #bf6c00, 0 8px 22px rgba(255,150,0,0.45);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+      animation: go-bounce 1.05s ease-in-out infinite;
+    }
+    .noeud-go::after {
+      content: "";
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #ff9600;
+    }
+    @keyframes go-bounce {
+      0%,100% { transform: translateX(-50%) translateY(0px); }
+      50%      { transform: translateX(-50%) translateY(-9px); }
+    }
+
+    /* ── Pop-in cascade des nœuds (entrée en jeu) ── */
+    @keyframes noeud-pop-in {
+      0%   { transform: translate(-50%,-50%) scale(0);    opacity: 0; }
+      60%  { transform: translate(-50%,-50%) scale(1.16); opacity: 1; }
+      82%  { transform: translate(-50%,-50%) scale(0.94); }
+      100% { transform: translate(-50%,-50%) scale(1);    opacity: 1; }
+    }
+    @keyframes noeud-actif-pop {
+      0%   { transform: translate(-50%,-50%) scale(0);    opacity: 0; }
+      50%  { transform: translate(-50%,-50%) scale(1.28); opacity: 1; }
+      70%  { transform: translate(-50%,-50%) scale(0.87); }
+      85%  { transform: translate(-50%,-50%) scale(1.11); }
+      100% { transform: translate(-50%,-50%) scale(1);    opacity: 1; }
+    }
+
+    /* Nœuds BONUS (embranchements secondaires) */
+    .noeud-bonus .noeud-btn {
+      width: 68px; height: 68px;
+      border-width: 3px;
+      border-style: dashed;
+      background: rgba(255,255,255,0.88);
+      box-shadow: 0 5px 0 color-mix(in srgb, var(--accent, #a8b8b2) 70%, #000),
+                  0 8px 16px rgba(22,48,42,0.1);
+    }
+    /* Bonus débloqué mais pas encore fait : même effet 3D épais que les principaux */
+    .noeud-bonus:not(.verrouille):not(.fait) .noeud-btn {
+      border-style: solid;
+      border-color: var(--accent, var(--signal));
+      background: var(--accent-soft, #e6f8ef);
+      box-shadow: 0 7px 0 color-mix(in srgb, var(--accent, #a8b8b2) 80%, #000),
+                  0 10px 22px rgba(22,48,42,0.18);
+    }
+    .noeud-bonus:not(.verrouille):not(.fait) .noeud-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 0 color-mix(in srgb, var(--accent, #a8b8b2) 80%, #000),
+                  0 14px 28px rgba(22,48,42,0.22);
+      filter: brightness(1.08);
+    }
+
+    /* Bulle "BONUS !" (violet) au-dessus des bonus fraîchement débloqués */
+    .noeud-bonus-go {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #7c3aed;
+      color: #fff;
+      font-family: var(--titre);
+      font-weight: 900;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      padding: 4px 11px 5px;
+      border-radius: 16px;
+      box-shadow: 0 3px 0 #5b21b6, 0 6px 16px rgba(124,58,237,0.42);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+      animation: go-bounce 1.15s ease-in-out infinite;
+    }
+    .noeud-bonus-go::after {
+      content: "";
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: #7c3aed;
+    }
+
+    /* Pop de succès pour le nœud qui vient d'être validé */
+    @keyframes noeud-success {
+      0%   { transform: translate(-50%,-50%) scale(0);    opacity: 0; }
+      35%  { transform: translate(-50%,-50%) scale(1.55); opacity: 1; }
+      55%  { transform: translate(-50%,-50%) scale(0.82); }
+      72%  { transform: translate(-50%,-50%) scale(1.2);  }
+      87%  { transform: translate(-50%,-50%) scale(0.97); }
+      100% { transform: translate(-50%,-50%) scale(1);    opacity: 1; }
+    }
+    .noeud-bonus .noeud-emoji { font-size: 1.55rem; }
+    .noeud-bonus .noeud-num { width: 19px; height: 19px; font-size: 0.62rem; bottom: -3px; right: -3px; }
+    .noeud-bonus .noeud-label { font-size: 0.67rem; max-width: 82px; color: var(--encre-doux); opacity: 0.85; }
+    .noeud-bonus.fait .noeud-btn {
+      border-style: solid;
+      border-color: var(--accent, var(--signal));
+      background: var(--accent-soft, #e6f8ef);
+      box-shadow: 0 5px 0 color-mix(in srgb, var(--accent, #07865c) 80%, #000),
+                  0 8px 18px rgba(14,159,110,0.25);
+    }
+    /* Bonus verrouillé — vrai noir & blanc, réagit au survol et au clic (shake) */
+    .noeud-bonus.verrouille .noeud-btn {
+      filter: grayscale(100%);
+      opacity: 0.55;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    .noeud-bonus.verrouille .noeud-btn:hover {
+      cursor: not-allowed;
+      transform: scale(1.06);
+      filter: grayscale(70%) brightness(1.06);
+    }
+
+    /* --- Modale bottom-sheet --- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(14, 30, 24, 0.62);
+      z-index: 1000;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    .modal-overlay.ouvert { opacity: 1; pointer-events: auto; }
+    .modal-feuille {
+      background: var(--carte);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 640px;
+      max-height: 82vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+      position: relative;
+      padding-bottom: 16px;
+    }
+    .modal-overlay.ouvert .modal-feuille { transform: translateY(0); }
+    .modal-poignee {
+      width: 44px; height: 5px;
+      background: #d0d8d4;
+      border-radius: 99px;
+      margin: 14px auto 0;
+    }
+    .modal-corps { padding: 18px 22px 28px; }
+    .modal-btn-fermer {
+      position: absolute;
+      top: 18px; right: 18px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: #f0f0ee;
+      color: var(--encre-doux);
+      font-size: 1rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .modal-btn-fermer:hover { background: #e4e4e0; transform: scale(1.08); }
+    .modal-entete {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding-right: 44px;
+    }
+    .modal-icone-module {
+      width: 54px; height: 54px;
+      flex: none;
+      border-radius: 16px;
+      border: 2px solid var(--accent, var(--bord));
+      background: var(--accent-soft, #eef2ef);
+      display: grid;
+      place-items: center;
+      font-size: 1.8rem;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .modal-info-module { flex: 1; min-width: 0; }
+    .modal-titre-module {
+      font-family: var(--titre);
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--encre);
+      margin: 0 0 3px;
+      letter-spacing: -0.02em;
+    }
+    .modal-desc-module {
+      font-size: 0.82rem;
+      color: var(--encre-doux);
+      margin: 0 0 5px;
+      line-height: 1.4;
+    }
+    .modal-badge-obtenu {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      background: #e6f8ef;
+      border-radius: 99px;
+      font-family: var(--titre);
+      font-weight: 700;
+      font-size: 0.74rem;
+      color: var(--signal-fonce);
+    }
+    .modal-liens { display: flex; flex-direction: column; gap: 8px; }
+    .modal-liens .sous-item {
+      border-radius: 12px;
+      border: 1px solid var(--bord);
+      padding: 13px 16px;
+      background: #f7faf8;
+    }
+    .modal-liens .sous-item:first-child { border-top: 1px solid var(--bord); }
+    .modal-liens .sous-item:hover { background: #eafaf3; padding-left: 22px; }
+    .modal-liens .sous-item.verrou:hover { background: #f7faf8; padding-left: 16px; }
+
+    @keyframes modal-pop {
+      from { opacity: 0; transform: scale(0.80) translateY(24px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0);    }
+    }
+    @media (min-width: 640px) {
+      .modal-overlay { align-items: center; }
+      .modal-feuille {
+        border-radius: 28px;
+        max-width: 520px;
+        max-height: 88vh;
+        transform: scale(0.82) translateY(24px);
+        box-shadow: 0 32px 80px rgba(14,30,24,0.38);
+      }
+      .modal-overlay.ouvert .modal-feuille {
+        transform: scale(1) translateY(0);
+        animation: modal-pop 0.4s cubic-bezier(0.34, 1.38, 0.64, 1) both;
+      }
+    }
+
+    /* --- Sources cachées pour la modale --- */
+    .donnees-cachees { display: none !important; }
+
+    /* --- Badge tag bonus (utilisé dans le JS de la grille) --- */
+    .badge-tag-bonus {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--attention);
+      background: rgba(217,119,6,0.1);
+      padding: 1px 6px;
+      border-radius: 99px;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 500px) {
+      .noeud-btn { width: 72px; height: 72px; }
+      .noeud-emoji { font-size: 1.7rem; }
+      .noeud-bonus .noeud-btn { width: 56px; height: 56px; }
+      .noeud-label { font-size: 0.68rem; max-width: 96px; }
+      .noeud-bonus .noeud-label { font-size: 0.62rem; max-width: 74px; }
+      .chemin-wrap { max-width: 360px; }
+      .hud-rang-titre { font-size: 1.05rem; }
+    }
+    @media (max-width: 380px) {
+      .chemin-wrap { max-width: 300px; }
+      .noeud-btn { width: 60px; height: 60px; }
+      .noeud-emoji { font-size: 1.45rem; }
+      .noeud-bonus .noeud-btn { width: 48px; height: 48px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .noeud.actif .noeud-btn { animation: none !important; }
+      .modal-feuille { transition: none; }
+      .modal-overlay { transition: none; }
+    }
+  </style>
 </head>
 <body>
+  <!-- Vignette d'immersion : bords légèrement assombris, pointer-events désactivés -->
+  <div class="vignette-fond" aria-hidden="true"></div>
+
   <nav class="barre">
     <a class="marque" href="index.html">Lis un <span>cœur</span></a>
     <span class="lien">ENSEIRB-MATMECA</span>
   </nav>
 
   <main class="page">
+
+    <!-- Bandeau de mission -->
     <header class="mission">
       <span class="mission-trace" aria-hidden="true">
         <svg class="mission-trace-svg" viewBox="0 0 960 50" preserveAspectRatio="none"
@@ -28,12 +619,10 @@
               </feMerge>
             </filter>
           </defs>
-          <!-- Courbe ECG STATIQUE (4 battements identiques) -->
           <path id="ecg-track"
                 d="M0 33 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0 h64 l5 0 l4 -3 l5 5 l6 -25 l6 38 l6 -15 l5 0 h49 l90 0"
                 fill="none" stroke="#eafff5" stroke-width="2.4" stroke-opacity="0.5"
                 stroke-linejoin="round" stroke-linecap="round"/>
-          <!-- Point lumineux qui PARCOURT la courbe en boucle -->
           <g filter="url(#ecg-glow)">
             <circle r="3.4" fill="#ffffff" fill-opacity="0.97">
               <animateMotion dur="4.5s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1" keyTimes="0;1">
@@ -43,181 +632,344 @@
           </g>
         </svg>
       </span>
-      <a class="mission-progress" id="mission-progress" href="#section-progression">🏅 0 / 6 badges</a>
       <h1>❤️ Deviens ingénieur biomédical le temps d'un atelier</h1>
       <p>Aujourd'hui, ta mission : construire l'outil qui lit un cœur et détecte une maladie.
          Tout ce qu'on découvre ici — les signaux, le bruit, les filtres — sert à ça.
          C'est exactement ce qu'on fait en télécommunications.</p>
     </header>
 
-    <!-- ── Tronc commun (quête principale) ── -->
-    <h3 class="section-titre">🎯 Ta quête principale</h3>
-    <div class="etapes etapes-colonne parcours">
-      <div class="pastille pastille-expandable module-signal" id="lien-signal">
-        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-signal">
-          <span class="module-node">
-            <span class="module-emoji" aria-hidden="true">🌊</span>
-            <span class="num" id="badge-signal">1</span>
-          </span>
-          <span class="pastille-texte"><strong>C'est quoi un signal ?</strong> — Joue avec l'amplitude, la fréquence et la période.</span>
-          <span class="pastille-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="sous-liste" id="sous-liste-signal">
-          <div class="sous-liste-inner">
-            <a class="sous-item" href="signal.html?etape=0"><span class="si-num">1</span> Le Tinder des signaux</a>
-            <a class="sous-item" href="signal.html?etape=1"><span class="si-num">2</span> Le bac à sable (Amplitude / Fréquence)</a>
-            <a class="sous-item" href="signal.html?etape=2"><span class="si-num">3</span> Le hachoir (Échantillonnage)</a>
-            <a class="sous-item" href="signal.html?etape=3"><span class="si-num">4</span> Le spectre</a>
+    <!-- ══ HUD : Barre d'XP & Rang ══ -->
+    <div class="hud" id="hud" aria-label="Ta progression">
+      <div class="hud-ligne-haute">
+        <div class="hud-rang">
+          <span class="hud-rang-icone" id="hud-rang-icone">🔭</span>
+          <div class="hud-rang-texte">
+            <span class="hud-rang-label">Ton rang</span>
+            <span class="hud-rang-titre" id="hud-rang-titre">Observateur</span>
           </div>
         </div>
+        <span class="hud-compteur" id="hud-compteur">0 / 6 badges</span>
       </div>
-
-      <div class="pastille pastille-expandable module-coeur" id="lien-coeur">
-        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-coeur">
-          <span class="module-node">
-            <span class="module-emoji" aria-hidden="true">❤️</span>
-            <span class="num" id="badge-coeur-ecg">2</span>
-          </span>
-          <span class="pastille-texte"><strong>Le cœur et l'ECG</strong> — Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.</span>
-          <span class="pastille-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="sous-liste" id="sous-liste-coeur">
-          <div class="sous-liste-inner">
-            <a class="sous-item" href="coeur.html?etape=0"><span class="si-num">1</span> L'anatomie du cœur</a>
-            <a class="sous-item" href="coeur.html?etape=1"><span class="si-num">2</span> Les ondes P-QRS-T</a>
-          </div>
+      <div class="hud-xp-piste"
+           role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"
+           id="hud-xp-piste">
+        <div class="hud-xp-remplissage" id="hud-xp-remplissage" style="width:0%"></div>
+      </div>
+      <div class="hud-paliers" aria-hidden="true">
+        <div class="hud-palier atteint" data-seuil="0">
+          <span class="hud-palier-icone">🔭</span><span>Observateur</span>
         </div>
-      </div>
-
-      <div class="pastille pastille-expandable module-ecouter" id="lien-ecouter" style="--accent:#0d9488;--accent-soft:#d6f3ef;">
-        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-ecouter">
-          <span class="module-node">
-            <span class="module-emoji" aria-hidden="true">👂</span>
-            <span class="num" id="badge-sons">3</span>
-          </span>
-          <span class="pastille-texte"><strong>Écouter le cœur</strong> — Reconnais un cœur sain et cinq pathologies rien qu'à l'oreille.</span>
-          <span class="pastille-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="sous-liste" id="sous-liste-ecouter">
-          <div class="sous-liste-inner">
-            <a class="sous-item" href="ecouter.html#ecoute-base"><span class="si-num">1</span> Le son d'un cœur (poum-ta)</a>
-            <a class="sous-item" href="ecouter.html#ecoute-pathologies"><span class="si-num">2</span> Les six cœurs à écouter</a>
-          </div>
+        <div class="hud-palier" data-seuil="2">
+          <span class="hud-palier-icone">🔧</span><span>Technicien</span>
         </div>
-      </div>
-
-      <div class="pastille pastille-expandable module-labo" id="lien-labo">
-        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-labo">
-          <span class="module-node">
-            <span class="module-emoji" aria-hidden="true">🔬</span>
-            <span class="num" id="badge-labo">4</span>
-          </span>
-          <span class="pastille-texte"><strong>Le Labo ECG</strong> — Capter, nettoyer, zoomer, puis repérer les battements.</span>
-          <span class="pastille-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="sous-liste" id="sous-liste-labo">
-          <div class="sous-liste-inner">
-            <a class="sous-item" href="labo.html?etape=0"><span class="si-num">1</span> Capter le signal</a>
-            <a class="sous-item" href="labo.html?etape=1"><span class="si-num">2</span> Nettoyer le signal</a>
-            <a class="sous-item" href="labo.html?etape=2"><span class="si-num">3</span> Trouver le bon zoom</a>
-            <a class="sous-item" href="labo.html?etape=3"><span class="si-num">4</span> Repérer les battements</a>
-          </div>
+        <div class="hud-palier" data-seuil="4">
+          <span class="hud-palier-icone">🩻</span><span>Assistant</span>
         </div>
-      </div>
-
-      <div class="pastille pastille-expandable module-pathologies" id="lien-pathologies">
-        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-pathologies">
-          <span class="module-node">
-            <span class="module-emoji" aria-hidden="true">🩺</span>
-            <span class="num" id="badge-pathologies">5</span>
-          </span>
-          <span class="pastille-texte"><strong>Détective des pathologies</strong> — Diagnostique tes patients et affronte le patient mystère.</span>
-          <span class="pastille-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="sous-liste" id="sous-liste-pathologies">
-          <div class="sous-liste-inner">
-            <a class="sous-item" href="pathologies.html?etape=0"><span class="si-num">1</span> Comprendre</a>
-            <a class="sous-item" href="pathologies.html?etape=1"><span class="si-num">2</span> Diagnostiquer</a>
-            <a class="sous-item" href="pathologies.html?etape=2"><span class="si-num">3</span> Patient Mystère</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="pastille pastille-expandable module-metiers" id="lien-metiers">
-        <button type="button" class="pastille-tete" aria-expanded="false" aria-controls="sous-liste-metiers">
-          <span class="module-node">
-            <span class="module-emoji" aria-hidden="true">🛠️</span>
-            <span class="num" id="badge-metiers">6</span>
-          </span>
-          <span class="pastille-texte"><strong>Les métiers de l'ingénieur</strong> — Applique tes connaissances au Réseau et au Web.</span>
-          <span class="pastille-chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="sous-liste" id="sous-liste-metiers">
-          <div class="sous-liste-inner">
-            <a class="sous-item" href="metiers.html?etape=0"><span class="si-num">1</span> Réseaux &amp; Télécoms (Transmettre la donnée)</a>
-            <a class="sous-item" href="metiers.html?etape=1"><span class="si-num">2</span> Informatique (Créer l'interface web)</a>
-          </div>
+        <div class="hud-palier" data-seuil="6">
+          <span class="hud-palier-icone">🎓</span><span>Ing. Junior</span>
         </div>
       </div>
     </div>
 
-    <!-- ── Missions secondaires (bonus) ── -->
-    <h3 class="section-titre">🌟 Missions secondaires <em>(Bonus)</em></h3>
-    <div class="etapes etapes-colonne bonus">
-      <a class="pastille pastille-bonus module-curieux" id="lien-spectro" href="spectro.html">
-        <span class="module-node">
-          <span class="module-emoji" aria-hidden="true">🎧</span>
-          <span class="num" id="badge-curieux">★</span>
-        </span>
-        <span class="pastille-texte"><strong>La photo du son</strong> — Lis un spectrogramme et traque le parasite caché.</span>
-      </a>
-      <a class="pastille pastille-bonus module-matlab" id="lien-matlab" href="reels.html">
-        <span class="module-node">
-          <span class="module-emoji" aria-hidden="true">💻</span>
-          <span class="num" id="badge-matlab">★</span>
-        </span>
-        <span class="pastille-texte"><strong>Dans les coulisses de Matlab</strong> — Explore de vrais signaux cardiaques issus d'un vrai capteur.</span>
-      </a>
-      <a class="pastille pastille-bonus module-montre" id="lien-montre" href="montre.html">
-        <span class="module-node">
-          <span class="module-emoji" aria-hidden="true">⌚</span>
-          <span class="num" id="badge-montre">★</span>
-        </span>
-        <span class="pastille-texte"><strong>La montre qui voit le sang</strong> — Découvre comment les montres connectées mesurent ton cœur avec de la lumière.</span>
-      </a>
-      <a class="pastille pastille-bonus module-filtre" id="lien-piano" href="piano.html">
-        <span class="module-node">
-          <span class="module-emoji" aria-hidden="true">🎹</span>
-          <span class="num" id="badge-filtre">★</span>
-        </span>
-        <span class="pastille-texte"><strong>Le Piano Anti-Parasite</strong> — Vise un parasite par sa fréquence et fais-le disparaître au filtre.</span>
-      </a>
+    <!-- ══ Chemin sinueux (Path UI) ══ -->
+    <h3 class="section-titre">🗺️ Ton parcours <em>— clique sur un module pour commencer</em></h3>
+
+    <div class="chemin-wrap" id="chemin-wrap">
+
+      <!--
+        SVG viewBox 600×980.
+        Chemin principal : S-courbe cubique en zigzag (centre→droite→gauche→droite→gauche→centre).
+        Les embranchements bonus partent des nœuds latéraux en pointillé vers l'extérieur.
+      -->
+      <svg class="chemin-svg" viewBox="0 0 600 980"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+
+        <!-- Chemin de base gris (masqué — les segments individuels gèrent la visibilité) -->
+        <path d="M300 80 C300 160,430 160,430 240
+                 C430 320,170 320,170 400
+                 C170 480,430 480,430 560
+                 C430 640,170 640,170 720
+                 C170 800,300 800,300 880"
+              fill="none" stroke="#d4deda" stroke-width="12"
+              stroke-linecap="round" stroke-linejoin="round"
+              style="display:none"/>
+
+        <!-- Segments colorés dynamiquement par JS — invisibles jusqu'à validation -->
+        <path id="seg-1" d="M300 80 C300 160,430 160,430 240"
+              fill="none" stroke="#0e9f6e" stroke-width="15" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="seg-2" d="M430 240 C430 320,170 320,170 400"
+              fill="none" stroke="#0e9f6e" stroke-width="15" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="seg-3" d="M170 400 C170 480,430 480,430 560"
+              fill="none" stroke="#0e9f6e" stroke-width="15" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="seg-4" d="M430 560 C430 640,170 640,170 720"
+              fill="none" stroke="#0e9f6e" stroke-width="15" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="seg-5" d="M170 720 C170 800,300 800,300 880"
+              fill="none" stroke="#0e9f6e" stroke-width="15" stroke-linecap="round"
+              style="opacity:0"/>
+
+        <!-- Flux d'énergie — invisibles jusqu'à validation -->
+        <path id="flux-1" d="M300 80 C300 160,430 160,430 240"
+              fill="none" stroke="#7effc5" stroke-width="6" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="flux-2" d="M430 240 C430 320,170 320,170 400"
+              fill="none" stroke="#7effc5" stroke-width="6" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="flux-3" d="M170 400 C170 480,430 480,430 560"
+              fill="none" stroke="#7effc5" stroke-width="6" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="flux-4" d="M430 560 C430 640,170 640,170 720"
+              fill="none" stroke="#7effc5" stroke-width="6" stroke-linecap="round"
+              style="opacity:0"/>
+        <path id="flux-5" d="M170 720 C170 800,300 800,300 880"
+              fill="none" stroke="#7effc5" stroke-width="6" stroke-linecap="round"
+              style="opacity:0"/>
+
+        <!-- Embranchements bonus — lignes pleines, invisibles jusqu'au déverrouillage -->
+        <line id="branche-spectro" x1="430" y1="240" x2="565" y2="310"
+              stroke="#d4deda" stroke-width="8" stroke-linecap="round"
+              style="opacity:0"/>
+        <line id="branche-matlab" x1="170" y1="400" x2="35" y2="470"
+              stroke="#d4deda" stroke-width="8" stroke-linecap="round"
+              style="opacity:0"/>
+        <line id="branche-montre" x1="430" y1="560" x2="565" y2="630"
+              stroke="#d4deda" stroke-width="8" stroke-linecap="round"
+              style="opacity:0"/>
+        <line id="branche-piano" x1="170" y1="720" x2="35" y2="790"
+              stroke="#d4deda" stroke-width="8" stroke-linecap="round"
+              style="opacity:0"/>
+
+        <!-- Étoiles décoratives sur les embranchements -->
+      </svg>
+
+      <!-- ── Nœuds principaux ──
+           Positions CSS (% du conteneur 600×980) :
+           Signal 300,80  → 50.00 / 8.16
+           Cœur   430,240 → 71.67 / 24.49
+           Écoute 170,400 → 28.33 / 40.82
+           Labo   430,560 → 71.67 / 57.14
+           Patho  170,720 → 28.33 / 73.47
+           Métiers300,880 → 50.00 / 89.80
+      -->
+
+      <div class="noeud module-signal" id="lien-signal"
+           style="left:50%;top:8.16%">
+        <button type="button" class="noeud-btn"
+                onclick="ouvrirModal('signal')"
+                aria-haspopup="dialog"
+                aria-label="Module 1 : C'est quoi un signal ?">
+          <span class="noeud-emoji" aria-hidden="true">🌊</span>
+          <span class="noeud-num" id="badge-signal">1</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </button>
+        <div class="noeud-label">C'est quoi un signal&nbsp;?</div>
+      </div>
+
+      <div class="noeud module-coeur" id="lien-coeur"
+           style="left:71.67%;top:24.49%">
+        <button type="button" class="noeud-btn"
+                onclick="ouvrirModal('coeur')"
+                aria-haspopup="dialog"
+                aria-label="Module 2 : Le cœur et l'ECG">
+          <span class="noeud-emoji" aria-hidden="true">❤️</span>
+          <span class="noeud-num" id="badge-coeur-ecg">2</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </button>
+        <div class="noeud-label">Le cœur et l'ECG</div>
+      </div>
+
+      <div class="noeud module-ecouter" id="lien-ecouter"
+           style="left:28.33%;top:40.82%;--accent:#0d9488;--accent-soft:#d6f3ef;">
+        <button type="button" class="noeud-btn"
+                onclick="ouvrirModal('ecouter')"
+                aria-haspopup="dialog"
+                aria-label="Module 3 : Écouter le cœur">
+          <span class="noeud-emoji" aria-hidden="true">👂</span>
+          <span class="noeud-num" id="badge-sons">3</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </button>
+        <div class="noeud-label">Écouter le cœur</div>
+      </div>
+
+      <div class="noeud module-labo" id="lien-labo"
+           style="left:71.67%;top:57.14%">
+        <button type="button" class="noeud-btn"
+                onclick="ouvrirModal('labo')"
+                aria-haspopup="dialog"
+                aria-label="Module 4 : Le Labo ECG">
+          <span class="noeud-emoji" aria-hidden="true">🔬</span>
+          <span class="noeud-num" id="badge-labo">4</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </button>
+        <div class="noeud-label">Le Labo ECG</div>
+      </div>
+
+      <div class="noeud module-pathologies" id="lien-pathologies"
+           style="left:28.33%;top:73.47%">
+        <button type="button" class="noeud-btn"
+                onclick="ouvrirModal('pathologies')"
+                aria-haspopup="dialog"
+                aria-label="Module 5 : Détective des pathologies">
+          <span class="noeud-emoji" aria-hidden="true">🩺</span>
+          <span class="noeud-num" id="badge-pathologies">5</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </button>
+        <div class="noeud-label">Détective pathologies</div>
+      </div>
+
+      <div class="noeud module-metiers" id="lien-metiers"
+           style="left:50%;top:89.80%">
+        <button type="button" class="noeud-btn"
+                onclick="ouvrirModal('metiers')"
+                aria-haspopup="dialog"
+                aria-label="Module 6 : Les métiers de l'ingénieur">
+          <span class="noeud-emoji" aria-hidden="true">🛠️</span>
+          <span class="noeud-num" id="badge-metiers">6</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </button>
+        <div class="noeud-label">Métiers de l'ingénieur</div>
+      </div>
+
+      <!-- ── Nœuds bonus (embranchements secondaires)
+           Positions : Spectro 565,310→94.17/31.63 | Matlab 35,470→5.83/47.96
+                       Montre  565,630→94.17/64.29 | Piano  35,790→5.83/80.61
+      -->
+
+      <div class="noeud noeud-bonus module-curieux" id="lien-spectro"
+           style="left:94.17%;top:31.63%">
+        <a href="spectro.html" class="noeud-btn"
+           aria-label="Bonus : La photo du son">
+          <span class="noeud-emoji" aria-hidden="true">🎧</span>
+          <span class="noeud-num" id="badge-curieux">★</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </a>
+        <div class="noeud-label">La photo du son</div>
+      </div>
+
+      <div class="noeud noeud-bonus module-matlab" id="lien-matlab"
+           style="left:5.83%;top:47.96%">
+        <a href="reels.html" class="noeud-btn"
+           aria-label="Bonus : Coulisses de Matlab">
+          <span class="noeud-emoji" aria-hidden="true">💻</span>
+          <span class="noeud-num" id="badge-matlab">★</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </a>
+        <div class="noeud-label">Coulisses Matlab</div>
+      </div>
+
+      <div class="noeud noeud-bonus module-montre" id="lien-montre"
+           style="left:94.17%;top:64.29%">
+        <a href="montre.html" class="noeud-btn"
+           aria-label="Bonus : La montre qui voit le sang">
+          <span class="noeud-emoji" aria-hidden="true">⌚</span>
+          <span class="noeud-num" id="badge-montre">★</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </a>
+        <div class="noeud-label">La montre du sang</div>
+      </div>
+
+      <div class="noeud noeud-bonus module-filtre" id="lien-piano"
+           style="left:5.83%;top:80.61%">
+        <a href="piano.html" class="noeud-btn"
+           aria-label="Bonus : Le Piano Anti-Parasite">
+          <span class="noeud-emoji" aria-hidden="true">🎹</span>
+          <span class="noeud-num" id="badge-filtre">★</span>
+          <div class="sparkles" aria-hidden="true"><div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div></div>
+        </a>
+        <div class="noeud-label">Piano Anti-Parasite</div>
+      </div>
+
+    </div><!-- /.chemin-wrap -->
+
+    <!--
+      Sources cachées des sous-listes.
+      Ces divs ne s'affichent jamais mais sont lus par :
+        • majSousListes() → applique .verrou sur les sous-items non débloqués
+        • ouvrirModal()   → clone le contenu dans la modale
+    -->
+    <div class="donnees-cachees" aria-hidden="true">
+      <div id="sous-liste-signal">
+        <div class="sous-liste-inner">
+          <a class="sous-item" href="signal.html?etape=0"><span class="si-num">1</span> Le Tinder des signaux</a>
+          <a class="sous-item" href="signal.html?etape=1"><span class="si-num">2</span> Le bac à sable (Amplitude / Fréquence)</a>
+          <a class="sous-item" href="signal.html?etape=2"><span class="si-num">3</span> Le hachoir (Échantillonnage)</a>
+          <a class="sous-item" href="signal.html?etape=3"><span class="si-num">4</span> Le spectre</a>
+        </div>
+      </div>
+      <div id="sous-liste-coeur">
+        <div class="sous-liste-inner">
+          <a class="sous-item" href="coeur.html?etape=0"><span class="si-num">1</span> L'anatomie du cœur</a>
+          <a class="sous-item" href="coeur.html?etape=1"><span class="si-num">2</span> Les ondes P-QRS-T</a>
+        </div>
+      </div>
+      <div id="sous-liste-ecouter">
+        <div class="sous-liste-inner">
+          <a class="sous-item" href="ecouter.html#ecoute-base"><span class="si-num">1</span> Le son d'un cœur (poum-ta)</a>
+          <a class="sous-item" href="ecouter.html#ecoute-pathologies"><span class="si-num">2</span> Les six cœurs à écouter</a>
+        </div>
+      </div>
+      <div id="sous-liste-labo">
+        <div class="sous-liste-inner">
+          <a class="sous-item" href="labo.html?etape=0"><span class="si-num">1</span> Capter le signal</a>
+          <a class="sous-item" href="labo.html?etape=1"><span class="si-num">2</span> Nettoyer le signal</a>
+          <a class="sous-item" href="labo.html?etape=2"><span class="si-num">3</span> Trouver le bon zoom</a>
+          <a class="sous-item" href="labo.html?etape=3"><span class="si-num">4</span> Repérer les battements</a>
+        </div>
+      </div>
+      <div id="sous-liste-pathologies">
+        <div class="sous-liste-inner">
+          <a class="sous-item" href="pathologies.html?etape=0"><span class="si-num">1</span> Comprendre</a>
+          <a class="sous-item" href="pathologies.html?etape=1"><span class="si-num">2</span> Diagnostiquer</a>
+          <a class="sous-item" href="pathologies.html?etape=2"><span class="si-num">3</span> Patient Mystère</a>
+        </div>
+      </div>
+      <div id="sous-liste-metiers">
+        <div class="sous-liste-inner">
+          <a class="sous-item" href="metiers.html?etape=0"><span class="si-num">1</span> Réseaux &amp; Télécoms (Transmettre la donnée)</a>
+          <a class="sous-item" href="metiers.html?etape=1"><span class="si-num">2</span> Informatique (Créer l'interface web)</a>
+        </div>
+      </div>
     </div>
 
-    <!-- =================== SECTION PROGRESSION =================== -->
+    <!-- Modale / bottom-sheet -->
+    <div class="modal-overlay" id="modal-overlay"
+         role="dialog" aria-modal="true" aria-labelledby="modal-titre-module">
+      <div class="modal-feuille" id="modal-feuille">
+        <div class="modal-poignee" aria-hidden="true"></div>
+        <button type="button" class="modal-btn-fermer" id="modal-btn-fermer"
+                aria-label="Fermer">✕</button>
+        <div class="modal-corps">
+          <div class="modal-entete">
+            <div class="modal-icone-module" id="modal-icone-module" aria-hidden="true"></div>
+            <div class="modal-info-module">
+              <h2 class="modal-titre-module" id="modal-titre-module"></h2>
+              <p class="modal-desc-module"  id="modal-desc-module"></p>
+              <div id="modal-badge-zone"></div>
+            </div>
+          </div>
+          <div class="modal-liens" id="modal-liens"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Section progression détaillée ══ -->
     <section class="progression-section" id="section-progression">
       <h2>🏅 Ta progression</h2>
       <p class="sous-titre">Complète chaque module pour obtenir ton badge et débloquer le diplôme final !</p>
-
-      <!-- Barre de progression -->
       <div class="barre-progression">
         <div class="barre-progression-remplissage" id="barre-remplissage" style="width: 0%;"></div>
       </div>
       <div class="progression-compteur" id="progression-compteur">0 / 6 badges</div>
-
-      <!-- Grille des 4 badges -->
-      <div class="badges-grille" id="badges-grille">
-        <!-- Rempli dynamiquement par JS -->
-      </div>
+      <div class="badges-grille" id="badges-grille"></div>
     </section>
 
-    <!-- Zone du bouton diplôme (apparaît quand les 4 badges sont obtenus) -->
     <div id="zone-bouton-diplome"></div>
-
-    <!-- Zone du diplôme (apparaît après clic sur le bouton) -->
     <div id="zone-diplome"></div>
 
-    <p class="pied">Réalisé par <strong>Damien Belharet & Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
+    <p class="pied">Réalisé par <strong>Damien Belharet &amp; Dima Husseini</strong> — Stage ENSEIRB-MATMECA · Département Télécommunications</p>
   </main>
 
   <!-- Progression manager (doit être chargé en premier) -->
@@ -225,10 +977,9 @@
 
   <script>
   /* =====================================================================
-     INDEX — Affichage dynamique de la progression
+     INDEX — Path UI · gestion dynamique de la progression
      ===================================================================== */
 
-  /** Ordre d'affichage des badges sur l'index (tronc commun d'abord, bonus ensuite) */
   var ORDRE_MODULES = [
     { id: "signal",      module: "C'est quoi un signal ?" },
     { id: "coeur_ecg",   module: "Le cœur et l'ECG" },
@@ -236,13 +987,237 @@
     { id: "labo",        module: "Le Labo ECG" },
     { id: "pathologies", module: "Détective des pathologies" },
     { id: "metiers",     module: "Les métiers de l'ingénieur" },
-    { id: "curieux",     module: "Détective du Son",        bonus: true },
-    { id: "matlab",      module: "Expert Matlab",            bonus: true },
+    { id: "curieux",     module: "Détective du Son",           bonus: true },
+    { id: "matlab",      module: "Expert Matlab",              bonus: true },
     { id: "montre",      module: "La montre qui voit le sang", bonus: true },
-    { id: "filtre",      module: "Le Piano Anti-Parasite",   bonus: true }
+    { id: "filtre",      module: "Le Piano Anti-Parasite",     bonus: true }
   ];
 
-  /** Construit la grille de badges */
+  /* Métadonnées pour la modale de chaque module principal */
+  var MODULES_INFO = {
+    signal:      { emoji:"🌊", titre:"C'est quoi un signal ?",      desc:"Joue avec l'amplitude, la fréquence et la période.",                      accent:"#0891b2", accentSoft:"#e0f5fa", badgeId:"signal"      },
+    coeur:       { emoji:"❤️", titre:"Le cœur et l'ECG",            desc:"Relie l'anatomie au signal électrique et explore les ondes P, QRS, T.",   accent:"#e11d48", accentSoft:"#fde7ec", badgeId:"coeur_ecg"   },
+    ecouter:     { emoji:"👂", titre:"Écouter le cœur",             desc:"Reconnais un cœur sain et cinq pathologies rien qu'à l'oreille.",          accent:"#0d9488", accentSoft:"#d6f3ef", badgeId:"sons"        },
+    labo:        { emoji:"🔬", titre:"Le Labo ECG",                 desc:"Capter, nettoyer, zoomer, puis repérer les battements.",                  accent:"#7c3aed", accentSoft:"#efe8fd", badgeId:"labo"        },
+    pathologies: { emoji:"🩺", titre:"Détective des pathologies",   desc:"Diagnostique tes patients et affronte le patient mystère.",               accent:"#0e9f6e", accentSoft:"#e6f8ef", badgeId:"pathologies" },
+    metiers:     { emoji:"🛠️", titre:"Les métiers de l'ingénieur", desc:"Applique tes connaissances aux Réseaux et au Web.",                       accent:"#d97706", accentSoft:"#fdeed7", badgeId:"metiers"     }
+  };
+
+  /* Rangs professionnels (seuils en nb de badges obligatoires) */
+  var RANGS = [
+    { min:0, icone:"🔭", titre:"Observateur"          },
+    { min:2, icone:"🔧", titre:"Technicien Signal"     },
+    { min:4, icone:"🩻", titre:"Assistant Biomédical"  },
+    { min:6, icone:"🎓", titre:"Ingénieur Junior"      }
+  ];
+
+  /* ── HUD ── */
+  function majHUD(nb) {
+    var rang = RANGS[0];
+    for (var i = RANGS.length - 1; i >= 0; i--) {
+      if (nb >= RANGS[i].min) { rang = RANGS[i]; break; }
+    }
+    document.getElementById("hud-rang-icone").textContent = rang.icone;
+    document.getElementById("hud-rang-titre").textContent = rang.titre;
+    document.getElementById("hud-compteur").textContent   = nb + " / 6 badges";
+    document.getElementById("hud-xp-remplissage").style.width = (nb / 6 * 100) + "%";
+    document.getElementById("hud-xp-piste").setAttribute("aria-valuenow", nb);
+    document.querySelectorAll(".hud-palier").forEach(function(el) {
+      var seuil = parseInt(el.getAttribute("data-seuil"), 10);
+      el.classList.toggle("atteint", nb >= seuil);
+    });
+  }
+
+  /* ── Nœuds du chemin ── */
+  function majNoeuds() {
+    var LIAISONS = [
+      { badgeId:"signal",      lienId:"lien-signal",      segApres:"seg-1" },
+      { badgeId:"coeur_ecg",   lienId:"lien-coeur",       segApres:"seg-2" },
+      { badgeId:"sons",        lienId:"lien-ecouter",     segApres:"seg-3" },
+      { badgeId:"labo",        lienId:"lien-labo",        segApres:"seg-4" },
+      { badgeId:"pathologies", lienId:"lien-pathologies", segApres:"seg-5" },
+      { badgeId:"metiers",     lienId:"lien-metiers",     segApres:null    }
+    ];
+
+    /* Calcul des états */
+    var premierNonFait = -1;
+    var etats = [];
+    for (var i = 0; i < LIAISONS.length; i++) {
+      var fait = moduleValide(LIAISONS[i].badgeId);
+      etats.push(fait);
+      if (!fait && premierNonFait === -1) premierNonFait = i;
+    }
+    if (premierNonFait === -1) premierNonFait = LIAISONS.length;
+
+    LIAISONS.forEach(function(l, i) {
+      var noeud = document.getElementById(l.lienId);
+      if (!noeud) return;
+
+      var estFait       = etats[i];
+      var estActif      = (i === premierNonFait);
+      /* Verrouillé = pas encore le tour */
+      var estVerrouille = (i > premierNonFait && !estFait);
+
+      noeud.classList.toggle("fait",       estFait);
+      noeud.classList.toggle("actif",      estActif);
+      noeud.classList.toggle("verrouille", estVerrouille);
+    });
+
+    /* ─ Segments ─ */
+    var SEG_DEFS = [
+      { id:"seg-1", srcIdx:0, dstIdx:1 },
+      { id:"seg-2", srcIdx:1, dstIdx:2 },
+      { id:"seg-3", srcIdx:2, dstIdx:3 },
+      { id:"seg-4", srcIdx:3, dstIdx:4 },
+      { id:"seg-5", srcIdx:4, dstIdx:5 }
+    ];
+    SEG_DEFS.forEach(function(sd) {
+      var seg = document.getElementById(sd.id);
+      if (!seg) return;
+      seg.style.strokeDasharray  = "";
+      seg.style.strokeDashoffset = "";
+      if (etats[sd.dstIdx]) {
+        seg.style.opacity = "1";
+        seg.setAttribute("stroke", "#0e9f6e");
+        seg.setAttribute("stroke-width", "15");
+      } else if (etats[sd.srcIdx] && sd.dstIdx === premierNonFait) {
+        seg.style.opacity = "1";
+        seg.setAttribute("stroke", "#d4deda");
+        seg.setAttribute("stroke-width", "12");
+      } else {
+        seg.style.opacity = "0";
+      }
+    });
+
+    /* Flux cachés */
+    ["flux-1","flux-2","flux-3","flux-4","flux-5"].forEach(function(id) {
+      var fl = document.getElementById(id);
+      if (fl) { fl.style.opacity = "0"; fl.style.animation = "none"; fl.style.strokeDasharray = ""; fl.style.strokeDashoffset = ""; }
+    });
+
+    /* Nœuds bonus */
+    var BONUS = [
+      { badgeId:"curieux", lienId:"lien-spectro", brancheId:"branche-spectro", parentBadge:"coeur_ecg"   },
+      { badgeId:"matlab",  lienId:"lien-matlab",  brancheId:"branche-matlab",  parentBadge:"sons"        },
+      { badgeId:"montre",  lienId:"lien-montre",  brancheId:"branche-montre",  parentBadge:"labo"        },
+      { badgeId:"filtre",  lienId:"lien-piano",   brancheId:"branche-piano",   parentBadge:"pathologies" }
+    ];
+    document.querySelectorAll(".noeud-bonus-go").forEach(function(el) { el.remove(); });
+
+    BONUS.forEach(function(b) {
+      var fait            = moduleValide(b.badgeId);
+      var parentValide    = moduleValide(b.parentBadge);
+      var bonusVerrouille = !parentValide && !fait;
+      var bonusActif      = parentValide && !fait;
+      var noeud = document.getElementById(b.lienId);
+      if (noeud) {
+        noeud.classList.toggle("fait",       fait);
+        noeud.classList.toggle("verrouille", bonusVerrouille);
+        if (bonusActif) {
+          var bulleBonus = document.createElement("div");
+          bulleBonus.className = "noeud-bonus-go";
+          bulleBonus.textContent = "BONUS !";
+          noeud.appendChild(bulleBonus);
+        }
+      }
+      var branche = document.getElementById(b.brancheId);
+      if (branche) {
+        branche.style.strokeDasharray  = "";
+        branche.style.strokeDashoffset = "";
+        if (fait) {
+          branche.style.opacity = "1";
+          branche.setAttribute("stroke", "#0e9f6e");
+          branche.setAttribute("stroke-width", "8");
+        } else if (parentValide) {
+          branche.style.opacity = "1";
+          branche.setAttribute("stroke", "#d4deda");
+          branche.setAttribute("stroke-width", "8");
+        } else {
+          branche.style.opacity = "0";
+        }
+      }
+    });
+
+    /* Bulle GO */
+    document.querySelectorAll(".noeud-go").forEach(function(el) { el.remove(); });
+    if (premierNonFait < LIAISONS.length) {
+      var noeudActifEl = document.getElementById(LIAISONS[premierNonFait].lienId);
+      if (noeudActifEl) {
+        var bulle = document.createElement("div");
+        bulle.className = "noeud-go"; bulle.textContent = "GO !";
+        noeudActifEl.appendChild(bulle);
+      }
+    }
+
+    /* Séquence de récompense */
+    if (!window._animEntreeLancee) {
+      window._animEntreeLancee = true;
+      var moduleRecent = sessionStorage.getItem("module_recent");
+      if (moduleRecent) {
+        sessionStorage.removeItem("module_recent");
+        lancerAnimVictoire(moduleRecent, premierNonFait, etats);
+      }
+    }
+  }
+
+  /* ── Modale ── */
+  function ouvrirModal(listeId) {
+    var noeudIdMap = {
+      signal:"lien-signal", coeur:"lien-coeur", ecouter:"lien-ecouter",
+      labo:"lien-labo", pathologies:"lien-pathologies", metiers:"lien-metiers"
+    };
+    var noeudEl = document.getElementById(noeudIdMap[listeId]);
+    if (noeudEl && noeudEl.classList.contains("verrouille")) {
+      secouerNoeud(noeudEl);
+      return;
+    }
+
+    var info = MODULES_INFO[listeId];
+    if (!info) return;
+    var source = document.querySelector("#sous-liste-" + listeId + " .sous-liste-inner");
+    if (!source) return;
+
+    var feuille = document.getElementById("modal-feuille");
+    feuille.style.setProperty("--accent",      info.accent);
+    feuille.style.setProperty("--accent-soft", info.accentSoft);
+
+    var iconeEl = document.getElementById("modal-icone-module");
+    iconeEl.textContent       = info.emoji;
+    iconeEl.style.background  = info.accentSoft;
+    iconeEl.style.borderColor = info.accent;
+    document.getElementById("modal-titre-module").textContent = info.titre;
+    document.getElementById("modal-desc-module").textContent  = info.desc;
+
+    var badgeZone = document.getElementById("modal-badge-zone");
+    if (moduleValide(info.badgeId) && BADGES[info.badgeId]) {
+      badgeZone.innerHTML = '<span class="modal-badge-obtenu">✅&nbsp;' + BADGES[info.badgeId].nom + '</span>';
+    } else {
+      badgeZone.innerHTML = "";
+    }
+
+    document.getElementById("modal-liens").innerHTML = source.innerHTML;
+    document.getElementById("modal-overlay").classList.add("ouvert");
+    document.body.style.overflow = "hidden";
+  }
+
+  function fermerModal() {
+    document.getElementById("modal-overlay").classList.remove("ouvert");
+    document.body.style.overflow = "";
+  }
+
+  document.getElementById("modal-btn-fermer").addEventListener("click", fermerModal);
+  document.getElementById("modal-overlay").addEventListener("click", function(ev) {
+    if (ev.target === this) fermerModal();
+  });
+  document.getElementById("modal-liens").addEventListener("click", function(ev) {
+    var a = ev.target.closest(".sous-item");
+    if (a && a.classList.contains("verrou")) ev.preventDefault();
+  });
+  document.addEventListener("keydown", function(ev) {
+    if (ev.key === "Escape") fermerModal();
+  });
+
+  /* ── Grille de badges ── */
   function construireBadges() {
     var grille = document.getElementById("badges-grille");
     grille.innerHTML = "";
@@ -250,89 +1225,38 @@
     var nbObligatoires = BADGES_OBLIGATOIRES.length;
     var nbObligatoiresValides = 0;
 
-    ORDRE_MODULES.forEach(function (m) {
-      var badge = BADGES[m.id];
+    ORDRE_MODULES.forEach(function(m) {
+      var badge     = BADGES[m.id];
       var estObtenu = valides.indexOf(m.id) !== -1;
-      var estBonus = !!m.bonus;
-
+      var estBonus  = !!m.bonus;
       if (!estBonus && estObtenu) nbObligatoiresValides++;
 
       var carte = document.createElement("div");
-      carte.className = "badge-carte " + (estObtenu ? "obtenu" : "verrouille")
-        + (estBonus ? " bonus" : "");
-
+      carte.className = "badge-carte " + (estObtenu ? "obtenu" : "verrouille") + (estBonus ? " bonus" : "");
       carte.innerHTML =
         '<div class="badge-icone">' + badge.icone + '</div>' +
         '<div class="badge-info">' +
-          '<span class="badge-nom">' + badge.nom +
-            (estBonus ? ' <span class="badge-tag-bonus">★ bonus</span>' : '') +
-          '</span>' +
-          '<span class="badge-etat">' +
-            (estObtenu ? "✅ Obtenu" : "🔒 " + m.module) +
-          '</span>' +
-        '</div>' +
-        (estObtenu ? '<div class="badge-coche">✓</div>' : '');
-
+          '<span class="badge-nom">' + badge.nom + (estBonus ? ' <span class="badge-tag-bonus">★ bonus</span>' : '') + '</span>' +
+          '<span class="badge-etat">' + (estObtenu ? "✅ Obtenu" : "🔒 " + m.module) + '</span>' +
+        '</div>' + (estObtenu ? '<div class="badge-coche">✓</div>' : '');
       grille.appendChild(carte);
     });
 
-    // Barre de progression (uniquement les badges obligatoires)
     var pourcent = (nbObligatoiresValides / nbObligatoires) * 100;
     document.getElementById("barre-remplissage").style.width = pourcent + "%";
-    document.getElementById("progression-compteur").textContent =
-      nbObligatoiresValides + " / " + nbObligatoires + " badge" + (nbObligatoiresValides > 1 ? "s" : "");
-
-    // Rappel de progression dans le bandeau mission
-    var miniProg = document.getElementById("mission-progress");
-    if (miniProg) {
-      miniProg.textContent = "🏅 " + nbObligatoiresValides + " / " + nbObligatoires + " badges";
-      miniProg.classList.toggle("complet", nbObligatoiresValides === nbObligatoires);
-    }
-
-    // Marquer les modules complétés dans la liste des étapes (état "fait")
-    var liaisons = [
-      { badge: "signal",      lien: "lien-signal"      },
-      { badge: "coeur_ecg",   lien: "lien-coeur"       },
-      { badge: "sons",        lien: "lien-ecouter"     },
-      { badge: "labo",        lien: "lien-labo"        },
-      { badge: "pathologies", lien: "lien-pathologies" },
-      { badge: "metiers",     lien: "lien-metiers"     },
-      { badge: "curieux",     lien: "lien-spectro"     },
-      { badge: "matlab",      lien: "lien-matlab"      },
-      { badge: "montre",      lien: "lien-montre"      },
-      { badge: "filtre",      lien: "lien-piano"       }
-    ];
-    liaisons.forEach(function (x) {
-      var carte = document.getElementById(x.lien);
-      if (carte) carte.classList.toggle("fait", moduleValide(x.badge));
-    });
+    document.getElementById("progression-compteur").textContent = nbObligatoiresValides + " / " + nbObligatoires + " badge" + (nbObligatoiresValides > 1 ? "s" : "");
+    return nbObligatoiresValides;
   }
 
-  /** Gère l'apparition du bouton diplôme ou de la zone diplôme */
+  /* ── Diplôme ── */
   function gererDiplome() {
     var zoneBouton = document.getElementById("zone-bouton-diplome");
     var zoneDiplome = document.getElementById("zone-diplome");
-
-    if (!tousLesBadges()) {
-      zoneBouton.innerHTML = "";
-      zoneDiplome.innerHTML = "";
-      return;
-    }
-
-    // Si le diplôme a déjà été « cliqué » cette session ou avant
-    if (sessionStorage.getItem("diplome_affiche") === "oui") {
-      afficherDiplome();
-      return;
-    }
-
-    // Sinon, afficher le gros bouton
-    zoneBouton.innerHTML =
-      '<button class="bouton-diplome" id="btn-obtenir-diplome" onclick="debloquerDiplome()">' +
-        '🎓 Obtenir mon diplôme d\'ingénieur biomédical junior' +
-      '</button>';
+    if (!tousLesBadges()) { zoneBouton.innerHTML = ""; zoneDiplome.innerHTML = ""; return; }
+    if (sessionStorage.getItem("diplome_affiche") === "oui") { afficherDiplome(); return; }
+    zoneBouton.innerHTML = '<button class="bouton-diplome" id="btn-obtenir-diplome" onclick="debloquerDiplome()">🎓 Obtenir mon diplôme d\'ingénieur biomédical junior</button>';
   }
 
-  /** Déclenchée au clic sur le bouton "Obtenir mon diplôme" */
   function debloquerDiplome() {
     sessionStorage.setItem("diplome_affiche", "oui");
     document.getElementById("zone-bouton-diplome").innerHTML = "";
@@ -340,7 +1264,6 @@
     setTimeout(afficherDiplome, 400);
   }
 
-  /** Affiche la zone de diplôme */
   function afficherDiplome() {
     document.getElementById("zone-bouton-diplome").innerHTML = "";
     document.getElementById("zone-diplome").innerHTML =
@@ -358,98 +1281,386 @@
       '</div>';
   }
 
-  /* --- Verrouillage des sous-listes ---
-     La 1re sous-étape de chaque module est toujours accessible.
-     Les suivantes sont verrouillées tant que le badge du module n'est pas obtenu.
-     Une fois le badge obtenu, tout se déverrouille (mode révision). */
   function majSousListes() {
     var regles = [
-      { liste: "signal",      badge: "signal"      },
-      { liste: "coeur",       badge: "coeur_ecg"   },
-      { liste: "ecouter",     badge: "sons"        },
-      { liste: "labo",        badge: "labo"         },
-      { liste: "pathologies", badge: "pathologies"  },
-      { liste: "metiers",     badge: "metiers"      }
+      { liste:"signal",      badge:"signal"      }, { liste:"coeur",       badge:"coeur_ecg"   },
+      { liste:"ecouter",     badge:"sons"        }, { liste:"labo",        badge:"labo"        },
+      { liste:"pathologies", badge:"pathologies" }, { liste:"metiers",     badge:"metiers"     }
     ];
-    regles.forEach(function (r) {
+    regles.forEach(function(r) {
       var fait = (typeof moduleValide === "function") && moduleValide(r.badge);
-      document.querySelectorAll("#sous-liste-" + r.liste + " .sous-item").forEach(function (a, i) {
+      document.querySelectorAll("#sous-liste-" + r.liste + " .sous-item").forEach(function(a, i) {
         a.classList.toggle("verrou", i > 0 && !fait);
       });
     });
   }
 
-  /* --- Initialisation --- */
+  function animPopNoeud(lienId, delay, dur, kf) {
+    var el = document.getElementById(lienId);
+    if (!el) return;
+    setTimeout(function() {
+      el.style.animation = kf + " " + dur + "ms cubic-bezier(0.34,1.28,0.64,1) both";
+      function nettoyer() {
+        el.removeEventListener("animationend", nettoyer);
+        el.style.animation = ""; el.style.opacity = ""; el.style.transform = "";
+      }
+      el.addEventListener("animationend", nettoyer);
+    }, delay);
+  }
+
+  /* ── Séquence de récompense ── */
+  function lancerAnimVictoire(moduleRecentId, premierNonFait, etats) {
+    /* ✨ LE VERROU ANTI-BUG : empêche majNoeuds() de se relancer pendant l'animation */
+    window._animationEnCours = true;
+
+    var BADGE_TO_IDX = { signal:0, coeur_ecg:1, sons:2, labo:3, pathologies:4, metiers:5 };
+    var BONUS_PAR_MODULE = {
+      coeur_ecg:   { brancheId:"branche-spectro", noeudId:"lien-spectro" },
+      sons:        { brancheId:"branche-matlab",  noeudId:"lien-matlab"  },
+      labo:        { brancheId:"branche-montre",  noeudId:"lien-montre"  },
+      pathologies: { brancheId:"branche-piano",   noeudId:"lien-piano"   }
+    };
+    var BONUS_BADGE_INFO = {
+      curieux: { brancheId:"branche-spectro", noeudId:"lien-spectro", parentIdx:1 },
+      matlab:  { brancheId:"branche-matlab",  noeudId:"lien-matlab",  parentIdx:2 },
+      montre:  { brancheId:"branche-montre",  noeudId:"lien-montre",  parentIdx:3 },
+      filtre:  { brancheId:"branche-piano",   noeudId:"lien-piano",   parentIdx:4 }
+    };
+    var BONUS_PREV_DEFS = [
+      { brancheId:"branche-spectro", noeudId:"lien-spectro", parentIdx:1, badgeId:"curieux" },
+      { brancheId:"branche-matlab",  noeudId:"lien-matlab",  parentIdx:2, badgeId:"matlab"  },
+      { brancheId:"branche-montre",  noeudId:"lien-montre",  parentIdx:3, badgeId:"montre"  },
+      { brancheId:"branche-piano",   noeudId:"lien-piano",   parentIdx:4, badgeId:"filtre"  }
+    ];
+    var SEG_IDS   = ["seg-1","seg-2","seg-3","seg-4","seg-5"];
+    var FLUX_IDS  = ["flux-1","flux-2","flux-3","flux-4","flux-5"];
+    var NOEUD_IDS = ["lien-signal","lien-coeur","lien-ecouter","lien-labo","lien-pathologies","lien-metiers"];
+    var ALL_BONUS_IDS = ["lien-spectro","lien-matlab","lien-montre","lien-piano"];
+    var ALL_BR_IDS    = ["branche-spectro","branche-matlab","branche-montre","branche-piano"];
+
+    var recIdx   = BADGE_TO_IDX[moduleRecentId];
+    var recBonus = BONUS_BADGE_INFO[moduleRecentId];
+
+    if (recIdx === undefined && !recBonus) {
+      window._animationEnCours = false;
+      return;
+    }
+
+    function animerLigne(el, couleur, largeur, duree, cb) {
+      el.setAttribute("stroke", couleur);
+      el.setAttribute("stroke-width", "" + largeur);
+      el.style.strokeDasharray  = "";
+      el.style.strokeDashoffset = "";
+      el.style.opacity = "1";
+      el.getBoundingClientRect(); /* force reflow */
+      var len = 0;
+      try { len = el.getTotalLength(); } catch(e) {}
+      if (!len || len <= 0) len = 400; 
+      el.style.strokeDasharray  = len + "px";
+      el.style.strokeDashoffset = len + "px";
+      var anim = el.animate(
+        [{ strokeDashoffset: len + "px" }, { strokeDashoffset: "0px" }],
+        { duration: duree, easing: "linear", fill: "forwards" }
+      );
+      anim.onfinish = function() {
+        el.style.strokeDasharray  = "";
+        el.style.strokeDashoffset = "";
+        anim.cancel();
+        if (cb) cb();
+      };
+    }
+
+    /* MASQUAGE SYNCHRONE IMMÉDIAT */
+    NOEUD_IDS.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.opacity = "0"; });
+    ALL_BONUS_IDS.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.opacity = "0"; });
+    SEG_IDS.forEach(function(id) { var el = document.getElementById(id); if (el) { el.style.opacity = "0"; el.style.strokeDasharray = ""; } });
+    FLUX_IDS.forEach(function(id) { var el = document.getElementById(id); if (el) { el.style.opacity = "0"; el.style.animation = "none"; } });
+    ALL_BR_IDS.forEach(function(id) { var el = document.getElementById(id); if (el) { el.style.opacity = "0"; el.style.strokeDasharray = ""; } });
+
+    /* CAS BONUS */
+    if (recBonus) {
+      var brId    = recBonus.brancheId;
+      var ndId    = recBonus.noeudId;
+      var parIdx  = recBonus.parentIdx;
+
+      var srcBonusEl = document.getElementById(NOEUD_IDS[parIdx]);
+      if (srcBonusEl) srcBonusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      var noeudBonusEl = document.getElementById(ndId);
+      if (noeudBonusEl) {
+        noeudBonusEl.classList.remove("fait", "verrouille");
+        var goB = noeudBonusEl.querySelector(".noeud-bonus-go");
+        if (goB) goB.remove();
+      }
+
+      for (var nib = 0; nib < NOEUD_IDS.length; nib++) {
+        var elb = document.getElementById(NOEUD_IDS[nib]);
+        if (elb) { elb.style.opacity = "1"; elb.style.transform = ""; }
+      }
+
+      var SEG_DEFS_B = [ { id:"seg-1", si:0, di:1 }, { id:"seg-2", si:1, di:2 }, { id:"seg-3", si:2, di:3 }, { id:"seg-4", si:3, di:4 }, { id:"seg-5", si:4, di:5 } ];
+      SEG_DEFS_B.forEach(function(sd) {
+        var seg = document.getElementById(sd.id);
+        if (!seg) return;
+        if (etats[sd.di]) {
+          seg.style.opacity = "1"; seg.setAttribute("stroke", "#0e9f6e"); seg.setAttribute("stroke-width", "15");
+        } else if (etats[sd.si] && sd.di === premierNonFait) {
+          seg.style.opacity = "1"; seg.setAttribute("stroke", "#d4deda"); seg.setAttribute("stroke-width", "12");
+        }
+      });
+
+      BONUS_PREV_DEFS.forEach(function(bp) {
+        if (bp.noeudId === ndId) return; 
+        if (!etats[bp.parentIdx]) return;
+        var br = document.getElementById(bp.brancheId);
+        if (br) { br.style.opacity = "1"; br.setAttribute("stroke", moduleValide(bp.badgeId) ? "#0e9f6e" : "#d4deda"); br.setAttribute("stroke-width", "8"); }
+        var bn = document.getElementById(bp.noeudId);
+        if (bn) { bn.style.opacity = "1"; bn.style.transform = ""; }
+      });
+
+      var brancheBonus = document.getElementById(brId);
+      if (brancheBonus) {
+        brancheBonus.style.opacity = "1"; brancheBonus.setAttribute("stroke", "#d4deda"); brancheBonus.setAttribute("stroke-width", "8");
+      }
+
+      if (noeudBonusEl) { noeudBonusEl.style.opacity = "1"; noeudBonusEl.style.transform = ""; }
+
+      setTimeout(function() {
+        if (!brancheBonus) { window._animationEnCours = false; return; }
+        animerLigne(brancheBonus, "#0e9f6e", 8, 900, function() {
+          if (noeudBonusEl) {
+            noeudBonusEl.classList.add("fait");
+            var goRemove = noeudBonusEl.querySelector(".noeud-bonus-go");
+            if (goRemove) goRemove.remove();
+          }
+          animPopNoeud(ndId, 0, 600, "noeud-success");
+          /* On libère le verrou à la fin */
+          setTimeout(function() { window._animationEnCours = false; }, 600);
+        });
+      }, 500);
+
+      return; 
+    }
+
+    /* CAS MODULE PRINCIPAL */
+    var bonus = BONUS_PAR_MODULE[moduleRecentId];
+
+    var scrollSrcEl = document.getElementById(NOEUD_IDS[recIdx > 0 ? recIdx - 1 : 0]);
+    if (scrollSrcEl) scrollSrcEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    var noeudRecent = document.getElementById(NOEUD_IDS[recIdx]);
+    if (noeudRecent) {
+      noeudRecent.classList.remove("fait"); noeudRecent.classList.add("actif");
+      if (!noeudRecent.querySelector(".noeud-go")) {
+        var goInit = document.createElement("div"); goInit.className = "noeud-go"; goInit.textContent = "GO !";
+        noeudRecent.appendChild(goInit);
+      }
+    }
+
+    if (premierNonFait < NOEUD_IDS.length) {
+      var noeudSuivant = document.getElementById(NOEUD_IDS[premierNonFait]);
+      if (noeudSuivant) {
+        noeudSuivant.classList.remove("actif"); noeudSuivant.classList.add("verrouille");
+        var goS = noeudSuivant.querySelector(".noeud-go"); if (goS) goS.remove();
+      }
+    }
+
+    if (bonus) {
+      var noeudBonusInit = document.getElementById(bonus.noeudId);
+      if (noeudBonusInit) {
+        noeudBonusInit.classList.remove("fait"); noeudBonusInit.classList.add("verrouille");
+        var goBInit = noeudBonusInit.querySelector(".noeud-bonus-go"); if (goBInit) goBInit.remove();
+      }
+    }
+
+    for (var ni = 0; ni <= recIdx; ni++) {
+      var nel = document.getElementById(NOEUD_IDS[ni]);
+      if (nel) { nel.style.opacity = "1"; nel.style.transform = ""; }
+    }
+    for (var si = 0; si < recIdx - 1; si++) {
+      var segV = document.getElementById(SEG_IDS[si]);
+      if (segV) { segV.style.opacity = "1"; segV.setAttribute("stroke", "#0e9f6e"); segV.setAttribute("stroke-width", "15"); }
+    }
+    if (recIdx > 0) {
+      var segGris = document.getElementById(SEG_IDS[recIdx - 1]);
+      if (segGris) { segGris.style.opacity = "1"; segGris.setAttribute("stroke", "#d4deda"); segGris.setAttribute("stroke-width", "12"); }
+    }
+
+    BONUS_PREV_DEFS.forEach(function(bp) {
+      if (bp.parentIdx >= recIdx) return;
+      var bpr = document.getElementById(bp.brancheId);
+      if (bpr) { bpr.style.opacity = "1"; bpr.setAttribute("stroke", moduleValide(bp.badgeId) ? "#0e9f6e" : "#d4deda"); bpr.setAttribute("stroke-width", "8"); }
+      var bpn = document.getElementById(bp.noeudId);
+      if (bpn) { bpn.style.opacity = "1"; bpn.style.transform = ""; }
+    });
+
+    setTimeout(etape1, 500);
+
+    function etape1() {
+      if (recIdx === 0) { etape2(); return; }
+      var fluxEl = document.getElementById(FLUX_IDS[recIdx - 1]);
+      if (!fluxEl) { etape2(); return; }
+      animerLigne(fluxEl, "#0e9f6e", 15, 1000, function() {
+        var seg = document.getElementById(SEG_IDS[recIdx - 1]);
+        if (seg) { seg.setAttribute("stroke", "#0e9f6e"); seg.setAttribute("stroke-width", "15"); seg.style.opacity = "1"; }
+        fluxEl.style.opacity = "0";
+        etape2();
+      });
+    }
+
+    function etape2() {
+      var noeud = document.getElementById(NOEUD_IDS[recIdx]);
+      if (noeud) {
+        noeud.classList.remove("actif"); noeud.classList.add("fait");
+        var go = noeud.querySelector(".noeud-go"); if (go) go.remove();
+      }
+      animPopNoeud(NOEUD_IDS[recIdx], 0, 700, "noeud-success");
+      setTimeout(etape3, 1200);
+    }
+
+    function etape3() {
+      if (recIdx < SEG_IDS.length && premierNonFait < NOEUD_IDS.length) {
+        var seg = document.getElementById(SEG_IDS[recIdx]);
+        if (seg) { animerLigne(seg, "#d4deda", 12, 900, etapeMainEveil); }
+        else { etapeMainEveil(); }
+      } else {
+        setTimeout(etapeVerrouilles, 200);
+      }
+      if (bonus) {
+        var br = document.getElementById(bonus.brancheId);
+        if (br) { animerLigne(br, "#d4deda", 8, 750, etapeBonusEveil); }
+      }
+    }
+
+    function etapeMainEveil() {
+      if (premierNonFait < NOEUD_IDS.length) {
+        var suivant = document.getElementById(NOEUD_IDS[premierNonFait]);
+        if (suivant) {
+          suivant.classList.remove("verrouille"); suivant.classList.add("actif");
+          if (!suivant.querySelector(".noeud-go")) {
+            var bulle = document.createElement("div"); bulle.className = "noeud-go"; bulle.textContent = "GO !";
+            suivant.appendChild(bulle);
+          }
+        }
+        animPopNoeud(NOEUD_IDS[premierNonFait], 0, 660, "noeud-actif-pop");
+      }
+      etapeVerrouilles();
+    }
+
+    function etapeBonusEveil() {
+      if (!bonus) return;
+      var noeudBFinal = document.getElementById(bonus.noeudId);
+      if (noeudBFinal) {
+        noeudBFinal.classList.remove("verrouille");
+        if (!noeudBFinal.querySelector(".noeud-bonus-go")) {
+          var bulleB = document.createElement("div"); bulleB.className = "noeud-bonus-go"; bulleB.textContent = "BONUS !";
+          noeudBFinal.appendChild(bulleB);
+        }
+      }
+      animPopNoeud(bonus.noeudId, 0, 480, "noeud-pop-in");
+    }
+
+    function etapeVerrouilles() {
+      for (var vi = premierNonFait + 1; vi < NOEUD_IDS.length; vi++) {
+        if (!etats[vi]) {
+          (function(idx) {
+            setTimeout(function() {
+              var el = document.getElementById(NOEUD_IDS[idx]);
+              if (el) { el.style.opacity = "1"; el.style.transform = ""; }
+            }, (idx - premierNonFait) * 100);
+          })(vi);
+        }
+      }
+      /* ✨ FIN DE L'ANIMATION : On libère le verrou pour autoriser les futures mises à jour */
+      setTimeout(function() { 
+        window._animationEnCours = false; 
+        
+        /* Si c'est la victoire totale, on scroll vers le bouton diplôme */
+        if (typeof tousLesBadges === "function" && tousLesBadges()) {
+          var btnDiplome = document.getElementById("btn-obtenir-diplome");
+          if (btnDiplome) {
+            btnDiplome.scrollIntoView({ behavior: "smooth", block: "center" });
+            /* Petit effet bonus : fait rebondir le bouton quand on arrive dessus */
+            setTimeout(function() {
+              btnDiplome.style.transform = "scale(1.1)";
+              setTimeout(function() { btnDiplome.style.transform = ""; }, 200);
+            }, 500);
+          }
+        }
+      }, 600);
+    }
+  }
+
+  function secouerNoeud(noeudEl) {
+    noeudEl.classList.remove("shake-error");
+    void noeudEl.offsetWidth; 
+    noeudEl.classList.add("shake-error");
+    setTimeout(function() { noeudEl.classList.remove("shake-error"); }, 430);
+  }
+
   function mettreAJour() {
-    console.log("[Index] 🔄 Mise à jour de l'affichage des badges...");
-    construireBadges();
+    /* ✨ LE VRAI CORRECTIF EST ICI : on bloque la mise à jour si l'animation est en cours */
+    if (window._animationEnCours) {
+      console.log("[Index] ⏳ Animation en cours, màj annulée pour éviter les clignotements.");
+      return;
+    }
+    
+    console.log("[Index] 🔄 Mise à jour...");
+    var nb = construireBadges();
+    majHUD(nb);
+    majNoeuds();
     majSousListes();
     gererDiplome();
   }
 
-  // Gérer la validation par paramètre URL (contourne le bug Firefox file://)
-  var params = new URLSearchParams(window.location.search);
+  document.getElementById("chemin-wrap").addEventListener("click", function(e) {
+    var noeud = e.target.closest(".noeud-bonus.verrouille");
+    if (!noeud) return;
+    e.preventDefault();
+    secouerNoeud(noeud);
+  });
+
+  var params   = new URLSearchParams(window.location.search);
   var badgeURL = params.get("badge");
   if (badgeURL && typeof validerModule === "function") {
     console.log("[Index] 📥 Badge reçu via URL:", badgeURL);
     validerModule(badgeURL);
-    // Nettoyer l'URL pour ne pas re-valider si on rafraîchit
     if (window.history && window.history.replaceState) {
-      var cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      var cleanUrl = window.location.protocol + "//" +
+                     window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
     }
   }
 
-  // Dépliage des pastilles à sous-liste (réutilisable : tout .pastille-tete
-  // ouvre/ferme son .pastille-expandable parent)
-  document.querySelectorAll(".pastille-tete").forEach(function (tete) {
-    tete.addEventListener("click", function () {
-      var parent = tete.closest(".pastille-expandable");
-      if (parent) {
-        var ouvert = parent.classList.toggle("ouvert");
-        tete.setAttribute("aria-expanded", ouvert ? "true" : "false");
-      }
-    });
-  });
-
-  // Bloquer le clic sur une sous-étape verrouillée
-  document.querySelectorAll(".sous-item").forEach(function (a) {
-    a.addEventListener("click", function (ev) {
-      if (a.classList.contains("verrou")) ev.preventDefault();
-    });
-  });
-
-  // Respect de « prefers-reduced-motion » pour l'animation SVG (SMIL)
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    document.querySelectorAll(".mission-trace-svg").forEach(function (svg) {
+    document.querySelectorAll(".mission-trace-svg").forEach(function(svg) {
       if (typeof svg.pauseAnimations === "function") svg.pauseAnimations();
     });
   }
 
-  // Exécution immédiate au chargement
   mettreAJour();
 
-  // Re-exécuter quand la page est restaurée depuis le bfcache (bouton retour du navigateur)
-  window.addEventListener("pageshow", function (event) {
+  window.addEventListener("pageshow", function(event) {
+    fermerModal();
     if (event.persisted) {
-      console.log("[Index] 📦 Page restaurée depuis le bfcache, rafraîchissement...");
+      console.log("[Index] 📦 Page restaurée depuis le bfcache.");
+      window._animEntreeLancee = false; 
     }
     mettreAJour();
   });
 
-  // Re-exécuter quand l'onglet redevient visible (retour depuis un autre onglet)
-  document.addEventListener("visibilitychange", function () {
+  window.addEventListener("visibilitychange", function() {
     if (!document.hidden) {
-      console.log("[Index] 👁️ Onglet redevenu visible, rafraîchissement...");
+      console.log("[Index] 👁️ Onglet redevenu visible.");
       mettreAJour();
     }
   });
 
-  // Re-exécuter quand la fenêtre reprend le focus
-  window.addEventListener("focus", function () {
-    console.log("[Index] 🎯 Fenêtre focalisée, rafraîchissement...");
+  window.addEventListener("focus", function() {
+    console.log("[Index] 🎯 Fenêtre focalisée.");
     mettreAJour();
   });
+  </script>
   </script>
 </body>
 </html>
