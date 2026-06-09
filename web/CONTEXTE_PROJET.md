@@ -237,3 +237,22 @@ Note pour l'agent : Pour le module pathologies, tu devras utiliser ou étendre g
 * **Énergie continue :** Ajout d'une animation CSS (`flux-circulation`) sur les SVG des chemins validés. Les câbles verts font transiter des pointillés lumineux continus (`#7effc5`) pour simuler un circuit vivant.
 * **Fade-in organique :** L'apparition des flux continus se fait avec une transition d'opacité de 1.5s (effet de chauffe) pour éviter un "spawn" brutal des particules.
 * **Interactivité du background (En cours) :** Préparation d'un `<canvas>` en `z-index: -1` sur l'accueil pour générer un halo lumineux au survol de la souris et une onde de choc (sonar) au clic.
+
+
+## Séquence Finale : Le QTE du Diplôme (Game Design)
+
+### Concept & Objectif
+La remise du diplôme n'est pas une simple redirection de page. Elle prend la forme d'un mini-jeu de type "Quick Time Event" (QTE) directement sur la page d'accueil. L'étudiant doit "compiler" et "forger" numériquement son diplôme via une série d'interactions d'arcade avant d'appeler l'animateur.
+
+### Architecture
+- **L'outil Admin (`diplome.html`) :** Reste intact. C'est le template "hors-ligne" utilisé par les animateurs pour imprimer les vrais diplômes papier (A4 Paysage) en amont ou pendant l'atelier.
+- **L'interface Élève (`index.html`) :** Importe et adapte les variables CSS dorées et le design de `diplome.html` pour créer un rendu premium sur la carte finale.
+
+### Déroulé technique du mini-jeu (dans `index.html`)
+La fonction `debloquerDiplome()` déclenche la chorégraphie suivante :
+1. **Synchronisation (Timing) :** Une jauge oscillante. L'utilisateur doit cliquer au bon moment. Action : Joue `trace.mp3` et révèle le fond ECG du diplôme.
+2. **Compilation (Mashing) :** L'utilisateur doit cliquer 6 fois très rapidement. Action : Joue `pop.mp3` à chaque clic et affiche les 6 badges de compétences en transparence.
+3. **Scellage (Hold) :** L'utilisateur doit maintenir le clic enfoncé pendant 1.5s pour remplir une barre de pression. Action : Joue `diplome.mp3`, appelle `lancerConfettis()` et révèle la carte finale.
+
+### Rendu Final
+Le diplôme apparaît avec un champ `contenteditable` ou `<input>` pour que l'élève tape son prénom (pure satisfaction visuelle). Il est accompagné d'un Call-To-Action (CTA) clignotant lui demandant de lever la main pour qu'un animateur vienne lui remettre la version papier officielle.
