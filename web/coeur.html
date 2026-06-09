@@ -608,7 +608,10 @@
     validerModule('coeur_ecg');
     var sec = document.getElementById('badge-obtenu-section');
     sec.classList.remove('cache');
-    setTimeout(function() { sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 600);
+    setTimeout(function() {
+      sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof jouerSon === 'function') jouerSon("pop", 0.5);
+    }, 600);
   }
 
   // =========================================================
@@ -628,6 +631,7 @@
   var cavitesVisitees = {};
 
   function activerCavite(id) {
+    if (typeof jouerSon === 'function') jouerSon("pop", 0.3);
     var info = infosCavites[id];
     if (!info) return;
 
@@ -657,6 +661,7 @@
   // MODULE 1 — Anatomie
   // =========================================================
   function allumerOreillettes() {
+    if (typeof jouerSon === 'function') jouerSon("pop", 0.4);
     document.querySelectorAll('#oreillettes .zone-oreil').forEach(function(el) {
       el.classList.remove('recharge'); el.classList.add('allumee');
     });
@@ -669,6 +674,7 @@
   }
 
   function allumerVentricules() {
+    if (typeof jouerSon === 'function') jouerSon("pop", 0.4);
     document.querySelectorAll('#ventricules .zone-ventr').forEach(function(el) {
       el.classList.remove('recharge'); el.classList.add('allumee');
     });
@@ -728,6 +734,7 @@
     desc.className = 'onde-desc ' + info.cls;
     desc.textContent = info.titre + ' — ' + info.texte;
 
+    if (typeof jouerSon === 'function') jouerSon("pop", 0.3);
     cocher(id);
   }
 

@@ -591,6 +591,11 @@
       .modal-feuille { transition: none; }
       .modal-overlay { transition: none; }
     }
+
+    @keyframes flux-circulation {
+      from { stroke-dashoffset: 36px; }
+      to { stroke-dashoffset: 0px; }
+    }
   </style>
 </head>
 <body>
@@ -1076,23 +1081,40 @@
       if (!seg) return;
       seg.style.strokeDasharray  = "";
       seg.style.strokeDashoffset = "";
+      
+      var fluxNum = sd.id.split("-")[1];
+      var flux = document.getElementById("flux-" + fluxNum);
+
       if (etats[sd.dstIdx]) {
         seg.style.opacity = "1";
         seg.setAttribute("stroke", "#0e9f6e");
         seg.setAttribute("stroke-width", "15");
+        // Animation du flux électrique continu
+        if (flux) {
+          flux.style.transition = "opacity 1.5s ease-in-out"; // Effet de chauffe
+          flux.style.opacity = "1";
+          flux.setAttribute("stroke", "#7effc5");
+          flux.setAttribute("stroke-width", "5");
+          flux.style.strokeDasharray = "12px 24px";
+          flux.style.animation = "flux-circulation 1s linear infinite";
+        }
       } else if (etats[sd.srcIdx] && sd.dstIdx === premierNonFait) {
         seg.style.opacity = "1";
         seg.setAttribute("stroke", "#d4deda");
         seg.setAttribute("stroke-width", "12");
+        if (flux) { 
+          flux.style.transition = "none"; 
+          flux.style.opacity = "0"; 
+          flux.style.animation = "none"; 
+        }
       } else {
         seg.style.opacity = "0";
+        if (flux) { 
+          flux.style.transition = "none"; 
+          flux.style.opacity = "0"; 
+          flux.style.animation = "none"; 
+        }
       }
-    });
-
-    /* Flux cachés */
-    ["flux-1","flux-2","flux-3","flux-4","flux-5"].forEach(function(id) {
-      var fl = document.getElementById(id);
-      if (fl) { fl.style.opacity = "0"; fl.style.animation = "none"; fl.style.strokeDasharray = ""; fl.style.strokeDashoffset = ""; }
     });
 
     /* Nœuds bonus */
@@ -1458,6 +1480,7 @@
               var goRemove = noeudBonusEl.querySelector(".noeud-bonus-go");
               if (goRemove) goRemove.remove();
             }
+            if (typeof jouerSon === 'function') jouerSon("victoire_module", 0.6);
             animPopNoeud(ndId, 0, 600, "noeud-success");
             /* On libère le verrou à la fin */
             setTimeout(function() { window._animationEnCours = false; }, 600);
@@ -1591,6 +1614,7 @@
           noeudBFinal.appendChild(bulleB);
         }
       }
+      if (typeof jouerSon === 'function') jouerSon("pop", 0.5);
       animPopNoeud(bonus.noeudId, 0, 480, "noeud-pop-in");
     }
 
@@ -1608,6 +1632,7 @@
       /* ✨ FIN DE L'ANIMATION : On libère le verrou pour autoriser les futures mises à jour */
       setTimeout(function() { 
         window._animationEnCours = false; 
+        mettreAJour(); // Synchro finale des flux continus
         
         /* Si c'est la victoire totale, on scroll vers le bouton diplôme */
         if (typeof tousLesBadges === "function" && tousLesBadges()) {
@@ -1649,10 +1674,17 @@
   }
 
   document.getElementById("chemin-wrap").addEventListener("click", function(e) {
-    var noeud = e.target.closest(".noeud-bonus.verrouille");
-    if (!noeud) return;
-    e.preventDefault();
-    secouerNoeud(noeud);
+    var noeudVerrouille = e.target.closest(".noeud.verrouille, .noeud-bonus.verrouille");
+    if (noeudVerrouille) {
+      e.preventDefault();
+      secouerNoeud(noeudVerrouille);
+      return;
+    }
+    
+    var noeudValide = e.target.closest(".noeud");
+    if (noeudValide && !noeudValide.classList.contains("verrouille")) {
+      if (typeof jouerSon === 'function') jouerSon("pop", 0.4);
+    }
   });
 
   var params   = new URLSearchParams(window.location.search);

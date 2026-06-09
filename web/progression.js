@@ -227,6 +227,7 @@ function afficherToastBadge(badge) {
 
   // Animation d'entrée
   requestAnimationFrame(function () {
+    if (typeof jouerSon === 'function') jouerSon("pop", 0.5);
     toast.classList.add("toast-visible");
   });
 
