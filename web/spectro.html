@@ -124,7 +124,7 @@
       <p class="explication">
         Voici la photo d'un cœur (les <strong>barres verticales</strong> = les battements, bien réguliers).
         Mais regarde : une <strong>ligne horizontale brillante</strong> traverse toute la photo. Elle n'a rien à
-        faire là — c'est le <strong>parasite électrique des prises murales</strong> (le fameux « 50 Hz »).
+        faire là; c'est le <strong>parasite électrique des prises murales</strong> (le fameux « 50 Hz »).
         Il est toujours à la même hauteur : c'est sa signature.
       </p>
 
@@ -374,7 +374,7 @@ function clicJeu(ev) {
   if (Math.abs(fRelClic - fIntrus) < 0.06) {
     trouve = true; reussites++;
     resJeu.className = 'jeu-result bon';
-    resJeu.textContent = '🎯 Trouvé ! C\'est la signature du parasite. Un filtre n\'aurait plus qu\'à effacer cette ligne — et le signal du cœur redevient lisible.'
+    resJeu.textContent = '🎯 Trouvé ! C\'est la signature du parasite. Un filtre n\'aurait plus qu\'à effacer cette ligne et le signal du cœur redevient lisible.'
       + (reussites >= 2 ? ' Tu as l\'œil d\'un vrai analyste 🔬 !' : '');
     // --- Badge Curieux : attribution au premier succès ---
     if (reussites === 1) {
