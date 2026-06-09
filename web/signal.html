@@ -489,7 +489,7 @@
             <input type="range" id="slide-bruit" min="0" max="1" step="0.05" value="0.5">
           </div>
         </div>
-        <button id="btn-bruit-son" class="bouton-action inactif">🔊 Écouter (propre + bruit)</button>
+        <button id="btn-bruit-son" class="bouton-action inactif">🎵 Écouter une musique (+ bruit)</button>
         <p id="msg-bruit" style="font-family:var(--titre);font-weight:700;font-size:0.92rem;margin:10px 0 0;min-height:24px;"></p>
       </div>
 
@@ -1217,14 +1217,80 @@
       });
     }());
 
-    /* --- Écoute : tonalité propre + bruit dosé par le curseur --- */
-    var actx = null, osc = null, gain = null, noiseSrc = null, noiseGain = null, on = false;
+    /* --- Écoute : une mélodie en boucle + bruit dosé par le curseur ---
+       On remplace le sinus continu par une vraie petite chanson (« Ode à la joie »,
+       domaine public). Sur une mélodie connue, l'oreille repère bien mieux ce que
+       le bruit vient abîmer que sur une note tenue. Synthèse 100 % Web Audio :
+       aucun fichier externe → fonctionne hors-ligne (file://). */
+
+    /* Réglages centralisés */
+    var REGLAGES_SON = {
+      tempo:        0.42,   // durée d'un temps (noire), en secondes
+      typeOnde:     'triangle', // timbre clair façon boîte à musique
+      volNote:      0.18,   // amplitude crête d'une note
+      attaque:      0.02,   // montée (s)
+      relache:      0.07,   // descente avant la fin de la note (s)
+      facteurBruit: 0.12,   // bruit = niveau curseur × ce facteur
+      anticipation: 0.14    // fenêtre de planification du séquenceur (s)
+    };
+
+    /* Fréquences des notes (Hz), La4 = 440 */
+    var NOTES = { C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00 };
+
+    /* Mélodie : [nom de note, durée en temps]. '' = silence.
+       Ode à la joie — Beethoven (domaine public), deux phrases puis on reboucle. */
+    var MELODIE = [
+      ['E4',1],['E4',1],['F4',1],['G4',1],
+      ['G4',1],['F4',1],['E4',1],['D4',1],
+      ['C4',1],['C4',1],['D4',1],['E4',1],
+      ['E4',1.5],['D4',0.5],['D4',2],
+      ['E4',1],['E4',1],['F4',1],['G4',1],
+      ['G4',1],['F4',1],['E4',1],['D4',1],
+      ['C4',1],['C4',1],['D4',1],['E4',1],
+      ['D4',1.5],['C4',0.5],['C4',2],
+      ['',0.5] // petite respiration avant de reboucler
+    ];
+
+    var actx = null, melodieGain = null, noiseSrc = null, noiseGain = null;
+    var on = false, timer = null, prochainTemps = 0, indexNote = 0;
+
+    /* Programme une note avec une petite enveloppe (attaque / tenue / relâche)
+       pour bien détacher les notes répétées (E E …). */
+    function planifierNote(freq, debut, duree) {
+      var o = actx.createOscillator();
+      o.type = REGLAGES_SON.typeOnde;
+      o.frequency.value = freq;
+      var g = actx.createGain();
+      var fin = debut + duree;
+      var relache = Math.min(REGLAGES_SON.relache, duree * 0.4);
+      g.gain.setValueAtTime(0, debut);
+      g.gain.linearRampToValueAtTime(REGLAGES_SON.volNote, debut + REGLAGES_SON.attaque);
+      g.gain.setValueAtTime(REGLAGES_SON.volNote, fin - relache);
+      g.gain.linearRampToValueAtTime(0, fin);
+      o.connect(g); g.connect(melodieGain);
+      o.start(debut); o.stop(fin + 0.02);
+    }
+
+    /* Séquenceur à anticipation : planifie les notes juste avant qu'elles sonnent. */
+    function planificateur() {
+      while (prochainTemps < actx.currentTime + REGLAGES_SON.anticipation) {
+        var n = MELODIE[indexNote];
+        var freq = NOTES[n[0]] || 0;
+        var duree = n[1] * REGLAGES_SON.tempo;
+        if (freq > 0) planifierNote(freq, prochainTemps, duree);
+        prochainTemps += duree;
+        indexNote = (indexNote + 1) % MELODIE.length;
+      }
+    }
+
+    function niveauBruit() { return parseFloat(slB.value) * REGLAGES_SON.facteurBruit; }
+
     btn.addEventListener('click', function () {
       if (!actx) {
         actx = new (window.AudioContext || window.webkitAudioContext)();
-        osc = actx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 330;
-        gain = actx.createGain(); gain.gain.value = 0.15;
-        osc.connect(gain); gain.connect(actx.destination); osc.start();
+        melodieGain = actx.createGain(); melodieGain.gain.value = 0.9;
+        melodieGain.connect(actx.destination);
+        /* Bruit blanc : buffer bouclé, gain piloté par le curseur */
         var taille = actx.sampleRate * 2, buf = actx.createBuffer(1, taille, actx.sampleRate), d = buf.getChannelData(0);
         for (var i = 0; i < taille; i++) d[i] = (Math.random() * 2 - 1);
         noiseSrc = actx.createBufferSource(); noiseSrc.buffer = buf; noiseSrc.loop = true;
@@ -1234,14 +1300,21 @@
       on = !on;
       if (on) {
         actx.resume();
-        noiseGain.gain.value = parseFloat(slB.value) * 0.12;
-        btn.textContent = '🔇 Couper le son'; btn.classList.remove('inactif');
+        indexNote = 0;
+        prochainTemps = actx.currentTime + 0.08;
+        noiseGain.gain.value = niveauBruit();
+        planificateur();
+        timer = setInterval(planificateur, 25);
+        btn.textContent = '🔇 Couper la musique'; btn.classList.remove('inactif');
       } else {
-        actx.suspend();
-        btn.textContent = '🔊 Écouter (propre + bruit)'; btn.classList.add('inactif');
+        clearInterval(timer); timer = null;
+        noiseGain.gain.value = 0;
+        btn.textContent = '🎵 Écouter une musique (+ bruit)'; btn.classList.add('inactif');
       }
     });
-    slB.addEventListener('input', function () { if (noiseGain && on) noiseGain.gain.value = parseFloat(slB.value) * 0.12; });
+
+    /* Le curseur ajuste le bruit en direct pendant la lecture */
+    slB.addEventListener('input', function () { if (noiseGain && on) noiseGain.gain.value = niveauBruit(); });
   }());
   </script>
 </body>
