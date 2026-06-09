@@ -58,6 +58,19 @@
     .bouton-action:hover { transform: scale(1.05); background: var(--signal-fonce); }
     .bouton-action.inactif { background: #64748b; }
 
+    .shannon-box {
+      background: #eff6ff;
+      border: 2px solid #0e9f6e;
+      border-radius: 12px;
+      padding: 14px;
+      margin: 16px auto;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0e9f6e;
+      max-width: 250px;
+    }
+
     /* ── Annotation de période (flèche double) ── */
     .periode-annot {
       position: relative;
@@ -146,7 +159,7 @@
     /* ── Boîte objectif (alerte bleue) ── */
     .alerte-objectif {
       background: #eff6ff;
-      border: 2px solid #3b82f6;
+      border: 2px solid #0e9f6e;
       border-radius: 12px;
       padding: 12px 16px;
       margin: 10px 0 14px;
@@ -364,9 +377,19 @@
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-echantillonnage">
       <h2>📊 4. L'échantillonnage — un signal discret</h2>
+
       <p>Un ordinateur ne peut pas stocker un signal <em>continu</em> : il le prend en photo
-         très rapidement, à intervalles réguliers. C'est l'<strong>échantillonnage</strong>.
-         La fréquence d'échantillonnage <strong>fₑ</strong> (en Hz) est le nombre de mesures par seconde.</p>
+        très rapidement, à intervalles réguliers. C'est l'<strong>échantillonnage</strong>.
+        Mais si on prélève trop peu de points, certaines informations du signal peuvent être perdues ou déformées.
+        On appelle fréquence d'échantillonnage la fréquence <strong>fₑ</strong> (en Hz), qui est le nombre de mesures par seconde.</p>
+
+      <p>C'est l'idée du <strong>théorème de Shannon</strong> : pour reconstruire correctement un signal, il faut échantillonner au moins <strong>deux fois</strong> plus vite que sa fréquence la plus élevée.
+        On obtient donc la condition :
+      <div class="shannon-box">
+        <strong>fₑ ≥ 2f</strong>
+      </div>
+
+      <p>où <strong>f</strong> représente la <strong>fréquence maximale</strong> contenue dans le signal, c’est-à-dire la composante la plus rapide du signal analysé.</p>
 
       <p>Déplace le curseur pour changer la fréquence d'échantillonnage et observe la reconstruction.</p>
 
@@ -389,10 +412,58 @@
     </section>
 
     <!-- ════════════════════════════════════════════════════════
-         SECTION 5 — SPECTRE
+         SECTION 5 — ÉCHANTILLONNAGE D'UN SON (aliasing audible)
+         Prolonge l'activité 4 : on ENTEND l'effet du choix de fₑ sur une mélodie.
+         ════════════════════════════════════════════════════════ -->
+    <section class="carte" id="sec-echant-son">
+      <h2>🔊 5. Écoute l'échantillonnage — l'air qui se déforme</h2>
+      <p>On vient de voir l'aliasing <strong>à l'œil</strong>. Maintenant, écoute-le sur une vraie
+         mélodie que tu connais : <strong>"Frère Jacques"</strong>. Si on l'échantillonne assez vite,
+         la mélodie reste juste et reconnaissable. Mais si fₑ est trop basse, les notes se replient sur de
+         <strong>fausses hauteurs</strong> et la chanson devient méconnaissable. C'est l'aliasing… pour les oreilles !</p>
+
+      <div class="alerte-objectif">
+        <span class="ao-icone">🎯</span>
+        <span>Écoute d'abord la mélodie d'origine. Puis <strong>descends le curseur fₑ</strong> et
+          réécoute la version échantillonnée : à partir de quel moment la mélodie commence-t-elle à se déformer ?</span>
+      </div>
+
+      <div class="zone-jeu">
+        <div class="bruit-legende">
+          <div class="bruit-leg-item"><span class="bruit-leg-couleur" style="background:#94a3b8;"></span>Mélodie d'origine</div>
+          <div class="bruit-leg-item"><span class="bruit-leg-couleur" id="leg-percu" style="background:#16a34a;"></span>Mélodie réellement entendue</div>
+        </div>
+
+        <canvas id="canvas-echant-son" style="height:150px;"></canvas>
+
+        <div id="echant-son-chips" class="echant-info"><!-- rempli par JS --></div>
+
+        <div class="panneau-controles">
+          <div class="controle">
+            <label>Fréquence d'échantillonnage fₑ : <strong id="val-fe-son">4000</strong> Hz</label>
+            <input type="range" id="slide-fe-son" min="400" max="4000" step="100" value="4000">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+          <button id="btn-son-origine" class="bouton-action">🔊 Mélodie d'origine</button>
+          <button id="btn-son-echant" class="bouton-action">🔊 Mélodie échantillonnée à fₑ</button>
+        </div>
+
+        <p id="msg-echant-son" style="font-family:var(--titre); font-weight:700; font-size:0.95rem; margin:12px 0 0; min-height:24px;"></p>
+      </div>
+
+      <p style="font-size:0.9rem; color:var(--encre-doux);">
+        💡 C'est pour ça que la musique numérique est échantillonnée à <strong>44 100 Hz</strong> :
+        l'oreille humaine entend jusqu'à ~20 000 Hz, et 44 100 ≥ 2 × 20 000. Pile la règle de Shannon !
+      </p>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════
+         SECTION 6 — SPECTRE
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-spectre">
-      <h2>🎵 5. Le spectre — la recette secrète du signal</h2>
+      <h2>🎵 6. Le spectre — la recette secrète du signal</h2>
       <p>Un signal complexe (comme une voix) est un <strong>mélange de plusieurs ondes simples</strong>.
          Le spectre permet de séparer les <strong>graves</strong> (basses fréquences, à gauche)
          des <strong>aigus</strong> (hautes fréquences, à droite) pour voir exactement de quoi le son est composé.</p>
@@ -415,10 +486,10 @@
     </section>
 
     <!-- ════════════════════════════════════════════════════════
-         SECTION 6 — DÉCOMPOSITION / SYNTHÈSE (clarifie le spectre)
+         SECTION 7 — DÉCOMPOSITION / SYNTHÈSE (clarifie le spectre)
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-synthese">
-      <h2>🧩 6. Construire un signal — La recette</h2>
+      <h2>🧩 7. Construire un signal — La recette</h2>
       <p>Un signal complexe est la <strong>somme de vagues simples</strong> (des sinusoïdes), chacune à une fréquence et une amplitude différentes. Chaque curseur règle l'amplitude d'une de ces composantes. 
         En haut, tu vois le signal résultant au cours du temps. En bas, tu vois son <strong>spectre</strong>; il montre quelles fréquences le constituent et avec quelle intensité. 
         Déplace les curseurs et observe le signal se transformer.</p>
@@ -452,10 +523,10 @@
     </section>
 
     <!-- ════════════════════════════════════════════════════════
-         SECTION 7 — LE BRUIT (notion générale)
+         SECTION 8 — LE BRUIT (notion générale)
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-bruit">
-      <h2>🔇 7. Le bruit — l'ennemi du signal</h2>
+      <h2>🔇 8. Le bruit — l'ennemi du signal</h2>
       <p>Dans la vraie vie, aucun signal n'est parfait. En chemin, il ramasse des
          <strong>perturbations indésirables</strong> : c'est le <strong>bruit</strong>.
          Un micro qui grésille, une ligne électrique qui ronfle, une connexion qui bouge…
@@ -494,8 +565,8 @@
       </div>
 
       <p style="font-size:0.9rem; color:var(--encre-doux);">
-        💡 Chaque type de signal a ses propres bruits, avec des origines bien à eux. 
-        On verra ceux du signal cardiaque (ECG) un peu plus loin.
+        💡 Chaque type de signal a ses propres bruits, avec des origines bien à eux —
+        on verra ceux du signal cardiaque (ECG) un peu plus loin.
       </p>
     </section>
 
@@ -1033,12 +1104,12 @@
   </script>
 
   <!-- ════════════════════════════════════════════════════════════════
-       AJOUTS : moteur des sections 6 (synthèse/spectre) et 7 (bruit).
+       AJOUTS : moteur des sections 7 (synthèse/spectre) et 8 (bruit).
        Code autonome (IIFE) : ne modifie rien des scripts ci-dessus.
        ════════════════════════════════════════════════════════════════ -->
   <script>
   /* ════════════════════════════════════
-     SECTION 6 — SYNTHÈSE / DÉCOMPOSITION
+     SECTION 7 — SYNTHÈSE / DÉCOMPOSITION
      Un signal = somme de sinus → on le voit dans le temps ET en spectre
      ════════════════════════════════════ */
   (function () {
@@ -1129,7 +1200,7 @@
   }());
 
   /* ════════════════════════════════════
-     SECTION 7 — LE BRUIT (notion générale)
+     SECTION 8 — LE BRUIT (notion générale)
      Même signal : bruité (haut) vs filtré (bas), + écoute optionnelle
      ════════════════════════════════════ */
   (function () {
@@ -1315,6 +1386,184 @@
 
     /* Le curseur ajuste le bruit en direct pendant la lecture */
     slB.addEventListener('input', function () { if (noiseGain && on) noiseGain.gain.value = niveauBruit(); });
+  }());
+  </script>
+
+  <!-- ════════════════════════════════════════════════════════════════
+       AJOUT : moteur de la section 5 (échantillonnage audible d'une mélodie).
+       Code autonome (IIFE) : ne modifie rien des scripts ci-dessus.
+       ════════════════════════════════════════════════════════════════ -->
+  <script>
+  /* ════════════════════════════════════
+     SECTION 5 — ÉCHANTILLONNAGE D'UN SON (aliasing audible sur une mélodie)
+     Chaque note est repliée selon  f_perçu = |f − fₑ·round(f/fₑ)|.
+     Sous fₑ = 2·fmax, les notes aiguës se replient → l'air se déforme.
+     Synthèse 100 % Web Audio (sinus purs) → fonctionne hors-ligne (file://).
+     ════════════════════════════════════ */
+  (function () {
+    'use strict';
+    var canvas = document.getElementById('canvas-echant-son');
+    if (!canvas) return;
+    var slFe     = document.getElementById('slide-fe-son');
+    var vFe      = document.getElementById('val-fe-son');
+    var chips    = document.getElementById('echant-son-chips');
+    var msg      = document.getElementById('msg-echant-son');
+    var legPercu = document.getElementById('leg-percu');
+    var btnOrig  = document.getElementById('btn-son-origine');
+    var btnEch   = document.getElementById('btn-son-echant');
+
+    var COULEUR_OK  = '#16a34a';
+    var COULEUR_KO  = '#e11d48';
+    var COULEUR_REF = '#94a3b8';
+
+    /* Réglages centralisés */
+    var REGLAGES = { tempo: 0.34, volNote: 0.22, attaque: 0.015, relache: 0.06 };
+
+    /* Notes (Hz) — octave 5, bien audible */
+    var NOTES = { C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99 };
+    var NOM   = { C5: 'do',  D5: 'ré',  E5: 'mi',  F5: 'fa',  G5: 'sol' };
+
+    /* Mélodie : « Frère Jacques » (domaine public). [note, durée en temps] */
+    var MELODIE = [
+      ['C5',1],['D5',1],['E5',1],['C5',1],
+      ['C5',1],['D5',1],['E5',1],['C5',1],
+      ['E5',1],['F5',1],['G5',2],
+      ['E5',1],['F5',1],['G5',2]
+    ];
+
+    /* Fréquence la plus aiguë → limite de Shannon de la mélodie */
+    var F_MAX = Math.max.apply(null, MELODIE.map(function (n) { return NOTES[n[0]]; }));
+    var SHANNON = Math.round(2 * F_MAX);
+
+    canvas.width = 600; canvas.height = 150;
+    var ctx = canvas.getContext('2d');
+
+    /* Fréquence réellement perçue après échantillonnage (repliement de spectre) */
+    function freqPercue(f, fe) {
+      var k = Math.round(f / fe);
+      return Math.abs(f - k * fe);
+    }
+
+    function dessiner() {
+      var fe = parseFloat(slFe.value);
+      vFe.textContent = fe;
+      var ok = fe >= SHANNON;
+      legPercu.style.background = ok ? COULEUR_OK : COULEUR_KO;
+
+      /* --- Canvas : contour de la mélodie (gris = vraie, coloré = entendue) --- */
+      var W = canvas.width, H = canvas.height, mTop = 24, mBot = 18;
+      var axeMax = F_MAX * 1.12; // l'échelle couvre la note la plus aiguë
+      function yPour(freq) { return H - mBot - (freq / axeMax) * (H - mTop - mBot); }
+      var n = MELODIE.length, pas = W / n;
+      function xPour(i) { return pas * (i + 0.5); }
+
+      ctx.clearRect(0, 0, W, H);
+      /* ligne de base */
+      ctx.save(); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, H - mBot); ctx.lineTo(W, H - mBot); ctx.stroke(); ctx.restore();
+
+      /* contour d'origine : gris pointillé + points */
+      ctx.save(); ctx.strokeStyle = COULEUR_REF; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      MELODIE.forEach(function (note, i) {
+        var x = xPour(i), y = yPour(NOTES[note[0]]);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = COULEUR_REF;
+      MELODIE.forEach(function (note, i) {
+        ctx.beginPath(); ctx.arc(xPour(i), yPour(NOTES[note[0]]), 3, 0, 2 * Math.PI); ctx.fill();
+      });
+      ctx.restore();
+
+      /* étiquettes solfège (do, ré, mi…) au-dessus de chaque note d'origine */
+      ctx.save();
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      MELODIE.forEach(function (note, i) {
+        ctx.fillText(NOM[note[0]], xPour(i), yPour(NOTES[note[0]]) - 9);
+      });
+      ctx.restore();
+
+      /* contour entendu : couleur par note (vert = juste, rouge = faussé) */
+      var fpList = MELODIE.map(function (note) { return freqPercue(NOTES[note[0]], fe); });
+      var auMoinsUnFausse = MELODIE.some(function (note) { return freqPercue(NOTES[note[0]], fe) !== NOTES[note[0]]; });
+      ctx.save();
+      ctx.strokeStyle = auMoinsUnFausse ? COULEUR_KO : COULEUR_OK; ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      fpList.forEach(function (fp, i) {
+        var x = xPour(i), y = yPour(fp);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      fpList.forEach(function (fp, i) {
+        var juste = (fp === NOTES[MELODIE[i][0]]);
+        ctx.fillStyle = juste ? COULEUR_OK : COULEUR_KO;
+        ctx.beginPath(); ctx.arc(xPour(i), yPour(fp), 4, 0, 2 * Math.PI); ctx.fill();
+      });
+      ctx.restore();
+
+      /* --- Chips (même style que l'activité 4) --- */
+      var nbFausses = MELODIE.filter(function (note) { return freqPercue(NOTES[note[0]], fe) !== NOTES[note[0]]; }).length;
+      chips.innerHTML =
+        '<span class="echant-chip neutre">Note la + aiguë : ' + Math.round(F_MAX) + ' Hz</span>' +
+        '<span class="echant-chip neutre">fₑ : ' + fe + ' Hz</span>' +
+        '<span class="echant-chip ' + (ok ? 'ok' : 'ko') + '">Shannon : fₑ ≥ ' + SHANNON + ' Hz ' + (ok ? '✅' : '❌') + '</span>' +
+        '<span class="echant-chip ' + (nbFausses === 0 ? 'ok' : 'ko') + '">' +
+          (nbFausses === 0 ? 'Toutes les notes justes' : nbFausses + ' note(s) faussée(s)') + '</span>';
+
+      /* --- Message --- */
+      if (nbFausses === 0) {
+        msg.style.color = 'var(--signal-fonce)';
+        msg.textContent = '✅ fₑ assez grande : l\'air est parfaitement reconnaissable, toutes les notes sont justes.';
+      } else if (nbFausses < MELODIE.length) {
+        msg.style.color = 'var(--battement)';
+        msg.textContent = '⚠️ Aliasing partiel : les notes les plus aiguës se replient — l\'air commence à se déformer.';
+      } else {
+        msg.style.color = 'var(--battement)';
+        msg.textContent = '⚠️ Aliasing total : toutes les notes sont fausses, « Frère Jacques » est méconnaissable !';
+      }
+    }
+
+    slFe.addEventListener('input', dessiner);
+    dessiner();
+
+    /* --- Lecture audio : la mélodie, jouée vraie ou repliée selon fₑ --- */
+    var actx = null, enLecture = false;
+    function ctxAudio() {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      actx.resume();
+      return actx;
+    }
+    function planifierNote(a, freq, debut, duree) {
+      if (freq < 20) return; // note repliée vers ~0 Hz → inaudible (note « perdue »)
+      var o = a.createOscillator(); o.type = 'triangle'; o.frequency.value = freq;
+      var g = a.createGain(), fin = debut + duree, rel = Math.min(REGLAGES.relache, duree * 0.4);
+      g.gain.setValueAtTime(0, debut);
+      g.gain.linearRampToValueAtTime(REGLAGES.volNote, debut + REGLAGES.attaque);
+      g.gain.setValueAtTime(REGLAGES.volNote, fin - rel);
+      g.gain.linearRampToValueAtTime(0, fin);
+      o.connect(g); g.connect(a.destination);
+      o.start(debut); o.stop(fin + 0.02);
+    }
+    function jouerMelodie(aliasee, btn) {
+      var a = ctxAudio();
+      if (enLecture) return;            // évite le chevauchement
+      enLecture = true;
+      var fe = parseFloat(slFe.value), t = a.currentTime + 0.06, total = 0;
+      MELODIE.forEach(function (note) {
+        var fVraie = NOTES[note[0]], duree = note[1] * REGLAGES.tempo;
+        var f = aliasee ? freqPercue(fVraie, fe) : fVraie;
+        planifierNote(a, f, t, duree);
+        t += duree; total += duree;
+      });
+      if (btn) { btn.classList.add('inactif'); }
+      setTimeout(function () { enLecture = false; if (btn) btn.classList.remove('inactif'); }, total * 1000 + 150);
+    }
+
+    btnOrig.addEventListener('click', function () { jouerMelodie(false, btnOrig); });
+    btnEch.addEventListener('click', function () { jouerMelodie(true, btnEch); });
   }());
   </script>
 </body>
