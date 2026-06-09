@@ -1171,6 +1171,7 @@
       secouerNoeud(noeudEl);
       return;
     }
+    jouerSon("pop", 0.4);
 
     var info = MODULES_INFO[listeId];
     if (!info) return;
@@ -1260,6 +1261,7 @@
   function debloquerDiplome() {
     sessionStorage.setItem("diplome_affiche", "oui");
     document.getElementById("zone-bouton-diplome").innerHTML = "";
+    jouerSon("diplome", 0.8);
     lancerConfettis();
     setTimeout(afficherDiplome, 400);
   }
@@ -1346,6 +1348,27 @@
       return;
     }
 
+    function afficherEcranInteract(callback) {
+      var ecranInteract = document.createElement("div");
+      ecranInteract.style.cssText = "position:fixed; inset:0; z-index:99999; background:rgba(251, 250, 246, 0.85); backdrop-filter:blur(5px); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; opacity:0; transition:opacity 0.4s ease;";
+      var btnInteract = document.createElement("div");
+      btnInteract.style.cssText = "background:var(--signal); color:white; padding:18px 36px; border-radius:99px; font-family:var(--titre); font-weight:800; font-size:1.4rem; box-shadow:0 12px 36px rgba(14,159,110,0.3); transform:translateY(20px); transition:transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);";
+      btnInteract.innerHTML = "🎁 Clique pour découvrir ta progression !";
+      ecranInteract.appendChild(btnInteract);
+      document.body.appendChild(ecranInteract);
+
+      requestAnimationFrame(function() {
+        ecranInteract.style.opacity = "1";
+        btnInteract.style.transform = "translateY(0)";
+      });
+
+      ecranInteract.addEventListener("click", function() {
+        ecranInteract.style.opacity = "0";
+        setTimeout(function() { ecranInteract.remove(); }, 400);
+        callback(); // On lance l'animation instantanément au clic
+      });
+    }
+
     function animerLigne(el, couleur, largeur, duree, cb) {
       el.setAttribute("stroke", couleur);
       el.setAttribute("stroke-width", "" + largeur);
@@ -1425,19 +1448,22 @@
 
       if (noeudBonusEl) { noeudBonusEl.style.opacity = "1"; noeudBonusEl.style.transform = ""; }
 
-      setTimeout(function() {
-        if (!brancheBonus) { window._animationEnCours = false; return; }
-        animerLigne(brancheBonus, "#0e9f6e", 8, 900, function() {
-          if (noeudBonusEl) {
-            noeudBonusEl.classList.add("fait");
-            var goRemove = noeudBonusEl.querySelector(".noeud-bonus-go");
-            if (goRemove) goRemove.remove();
-          }
-          animPopNoeud(ndId, 0, 600, "noeud-success");
-          /* On libère le verrou à la fin */
-          setTimeout(function() { window._animationEnCours = false; }, 600);
-        });
-      }, 500);
+      afficherEcranInteract(function() {
+        setTimeout(function() {
+          if (!brancheBonus) { window._animationEnCours = false; return; }
+          jouerSon("trace", 0.2);
+          animerLigne(brancheBonus, "#0e9f6e", 8, 900, function() {
+            if (noeudBonusEl) {
+              noeudBonusEl.classList.add("fait");
+              var goRemove = noeudBonusEl.querySelector(".noeud-bonus-go");
+              if (goRemove) goRemove.remove();
+            }
+            animPopNoeud(ndId, 0, 600, "noeud-success");
+            /* On libère le verrou à la fin */
+            setTimeout(function() { window._animationEnCours = false; }, 600);
+          });
+        }, 500);
+      });
 
       return; 
     }
@@ -1494,12 +1520,15 @@
       if (bpn) { bpn.style.opacity = "1"; bpn.style.transform = ""; }
     });
 
-    setTimeout(etape1, 500);
+    afficherEcranInteract(function() {
+      setTimeout(etape1, 500);
+    });
 
     function etape1() {
       if (recIdx === 0) { etape2(); return; }
       var fluxEl = document.getElementById(FLUX_IDS[recIdx - 1]);
       if (!fluxEl) { etape2(); return; }
+      jouerSon("trace", 0.35);
       animerLigne(fluxEl, "#0e9f6e", 15, 1000, function() {
         var seg = document.getElementById(SEG_IDS[recIdx - 1]);
         if (seg) { seg.setAttribute("stroke", "#0e9f6e"); seg.setAttribute("stroke-width", "15"); seg.style.opacity = "1"; }
@@ -1514,6 +1543,7 @@
         noeud.classList.remove("actif"); noeud.classList.add("fait");
         var go = noeud.querySelector(".noeud-go"); if (go) go.remove();
       }
+      jouerSon("victoire_module", 0.6);
       animPopNoeud(NOEUD_IDS[recIdx], 0, 700, "noeud-success");
       setTimeout(etape3, 1200);
     }
@@ -1521,14 +1551,17 @@
     function etape3() {
       if (recIdx < SEG_IDS.length && premierNonFait < NOEUD_IDS.length) {
         var seg = document.getElementById(SEG_IDS[recIdx]);
-        if (seg) { animerLigne(seg, "#d4deda", 12, 900, etapeMainEveil); }
+        if (seg) {
+          jouerSon("trace", 0.15);
+          animerLigne(seg, "#d4deda", 12, 900, etapeMainEveil);
+        }
         else { etapeMainEveil(); }
       } else {
         setTimeout(etapeVerrouilles, 200);
       }
       if (bonus) {
         var br = document.getElementById(bonus.brancheId);
-        if (br) { animerLigne(br, "#d4deda", 8, 750, etapeBonusEveil); }
+        if (br) { jouerSon("trace", 0.15); animerLigne(br, "#d4deda", 8, 750, etapeBonusEveil); }
       }
     }
 
@@ -1542,6 +1575,7 @@
             suivant.appendChild(bulle);
           }
         }
+        jouerSon("pop", 0.5);
         animPopNoeud(NOEUD_IDS[premierNonFait], 0, 660, "noeud-actif-pop");
       }
       etapeVerrouilles();
@@ -1592,6 +1626,7 @@
   }
 
   function secouerNoeud(noeudEl) {
+    jouerSon("erreur", 0.3);
     noeudEl.classList.remove("shake-error");
     void noeudEl.offsetWidth; 
     noeudEl.classList.add("shake-error");

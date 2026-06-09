@@ -22,6 +22,22 @@ var BADGES = {
   filtre:      { nom: "Dompteur de Fréquences", icone: "🎹" }
 };
 
+const SONS = {
+  pop: "audio/pop.mp3",
+  erreur: "audio/erreur.mp3",
+  succes: "audio/succes.mp3",
+  victoire_module: "audio/victoire-module.mp3",
+  trace: "audio/trace.mp3",
+  diplome: "audio/victoire-finale.mp3"
+};
+
+function jouerSon(idSon, volume = 0.5) {
+  if (!SONS[idSon]) return;
+  var audio = new Audio(SONS[idSon]);
+  audio.volume = volume;
+  audio.play().catch(e => console.warn("Audio bloqué par le navigateur", e));
+}
+
 /** Badges obligatoires pour le diplôme (les badges bonus n'en font pas partie) */
 var BADGES_OBLIGATOIRES = ["signal", "coeur_ecg", "sons", "labo", "pathologies", "metiers"];
 
@@ -124,6 +140,7 @@ function validerModule(idModule) {
   sessionStorage.setItem("module_recent", idModule);
 
   // Afficher la notification toast
+  jouerSon("succes", 0.7);
   if (typeof afficherToastBadge === "function") {
     afficherToastBadge(BADGES[idModule]);
   }
@@ -225,6 +242,7 @@ function afficherToastBadge(badge) {
    ===================================================================== */
 
 function lancerConfettis() {
+  jouerSon("diplome", 0.8);
   var canvas = document.createElement("canvas");
   canvas.id = "confettis-canvas";
   canvas.style.cssText =
