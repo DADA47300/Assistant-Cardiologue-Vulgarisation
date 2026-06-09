@@ -138,6 +138,12 @@
         <span class="valeur" id="vitesse-val">×2.0</span>
       </div>
 
+      <div class="ecoute-vitesse">
+        <label for="volume-range">🔊 Volume</label>
+        <input type="range" id="volume-range" min="1" max="8" step="0.1" value="3">
+        <span class="valeur" id="volume-val">×3.0</span>
+      </div>
+
       <div class="rythmes-grille" id="rythmes-grille"></div>
 
       <div class="desc-panneau" id="desc-panneau">
@@ -200,8 +206,11 @@
     vitesse:        2.0,      // facteur de lecture (tempo + pitch). 1 = temps réel
     serieAudio:     'filtre', // 'filtre' (propre, chaîne ECG du prof) ou 'brut'
     serieAffichage: 'brut',   // 'brut' (le vrai signal 200 Hz) ou 'filtre'
-    passeHautHz:    25,       // passe-haut audio additionnel anti-"fart" (0 = off)
-    gainMaitre:     0.9,      // volume général
+    passeHautHz:    35,       // passe-haut : libère le sous-grave inaudible (0 = off)
+    volume:         3.0,      // gain de sortie (réglable aussi par le curseur)
+    drive:          2.4,      // saturation douce → harmoniques audibles sur petit HP
+    boostHz:        170,      // fréquence du boost médium-grave (corps du battement)
+    boostDb:        8,        // intensité du boost (dB)
     fenetreSec:     4.0,      // largeur visible de l'écran (secondes de signal)
     epaisseur:      1.8,      // épaisseur du tracé
     lueur:          4         // halo du tracé
@@ -274,14 +283,34 @@
   function serieAffichage(sig) { return REGLAGES.serieAffichage === 'filtre' ? sig.filtre : sig.brut; }
 
   /* ─────────────────────── Moteur audio ────────────────────────── */
-  var actx = null, master = null;
+  var actx = null, master = null, FX = null;
+
+  // Courbe de saturation douce (tanh) : ajoute des harmoniques que les petits
+  // haut-parleurs savent reproduire → rend le battement audible.
+  function courbeSaturation(drive) {
+    var n = 1024, c = new Float32Array(n);
+    for (var i = 0; i < n; i++) { var x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(drive * x); }
+    return c;
+  }
+
   function audio() {
     if (!actx) {
       try { actx = new (window.AudioContext || window.webkitAudioContext)(); }
       catch (e) { return null; }
-      master = actx.createGain();
-      master.gain.value = REGLAGES.gainMaitre;
-      master.connect(actx.destination);
+      // Chaîne : passe-haut → saturation → boost médium-grave → volume → limiteur → sortie
+      var hp = actx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = REGLAGES.passeHautHz; hp.Q.value = 0.7;
+      var shaper = actx.createWaveShaper();
+      shaper.curve = courbeSaturation(REGLAGES.drive); shaper.oversample = '4x';
+      var peak = actx.createBiquadFilter();
+      peak.type = 'peaking'; peak.frequency.value = REGLAGES.boostHz; peak.Q.value = 0.9; peak.gain.value = REGLAGES.boostDb;
+      var vol = actx.createGain(); vol.gain.value = REGLAGES.volume;
+      var lim = actx.createDynamicsCompressor();   // limiteur : on peut pousser le volume sans saturer
+      lim.threshold.value = -3; lim.knee.value = 2; lim.ratio.value = 20;
+      lim.attack.value = 0.002; lim.release.value = 0.18;
+      hp.connect(shaper); shaper.connect(peak); peak.connect(vol); vol.connect(lim); lim.connect(actx.destination);
+      FX = { entree: hp };
+      master = vol;   // le curseur de volume agit sur ce gain
     }
     if (actx.state === 'suspended') actx.resume();
     return actx;
@@ -323,7 +352,7 @@
   // Lecteur : la position du signal est dérivée de l'horloge audio,
   // donc l'affichage reste TOUJOURS synchronisé avec le son.
   var Lecteur = {
-    cle: null, source: null, hp: null, offset: 0, startCtx: 0, rate: REGLAGES.vitesse, duree: 0,
+    cle: null, source: null, offset: 0, startCtx: 0, rate: REGLAGES.vitesse, duree: 0,
 
     jouer: function (cle) {
       var a = audio(); if (!a) return;
@@ -336,13 +365,7 @@
       var a = audio(), buf = bufferPour(this.cle); if (!buf) return;
       var s = a.createBufferSource();
       s.buffer = buf; s.loop = true; s.playbackRate.value = this.rate;
-      var noeud = s;
-      if (REGLAGES.passeHautHz > 0) {
-        var hp = a.createBiquadFilter();
-        hp.type = 'highpass'; hp.frequency.value = REGLAGES.passeHautHz; hp.Q.value = 0.707;
-        s.connect(hp); noeud = hp; this.hp = hp;
-      } else { this.hp = null; }
-      noeud.connect(master);
+      s.connect(FX.entree);
       var off = ((offsetSec % this.duree) + this.duree) % this.duree;
       s.start(0, off);
       this.source = s; this.offset = off; this.startCtx = a.currentTime;
@@ -362,7 +385,6 @@
         try { this.source.onended = null; this.source.stop(); } catch (e) {}
         try { this.source.disconnect(); } catch (e) {}
         this.source = null;
-        if (this.hp) { try { this.hp.disconnect(); } catch (e) {} this.hp = null; }
       }
     },
     stop: function () { this._stopSource(); this.cle = null; },
@@ -558,6 +580,16 @@
     majRythmeLabel();
   });
 
+  // Réglage volume (agit sur le gain de la chaîne audio)
+  var volRange = document.getElementById('volume-range');
+  var volVal = document.getElementById('volume-val');
+  volRange.addEventListener('input', function () {
+    REGLAGES.volume = parseFloat(volRange.value);
+    volVal.textContent = '×' + REGLAGES.volume.toFixed(1);
+    audio(); // s'assure que la chaîne existe
+    if (master) master.gain.value = REGLAGES.volume;
+  });
+
   // Couper le son si on quitte / change d'onglet
   window.addEventListener('pagehide', function () { arret(); });
   document.addEventListener('visibilitychange', function () { if (document.hidden) arret(); });
@@ -566,6 +598,8 @@
   dimensionner();
   vRange.value = REGLAGES.vitesse;
   vVal.textContent = '×' + REGLAGES.vitesse.toFixed(1);
+  volRange.value = REGLAGES.volume;
+  volVal.textContent = '×' + REGLAGES.volume.toFixed(1);
   majCompteur();
   requestAnimationFrame(dessiner);
   </script>
