@@ -15,6 +15,8 @@
     --encre-doux:#4b6058;
     --papier:#fbfaf6;
     --or:#b8893b;
+    --or-clair:#d8b25e;
+    --or-fonce:#8d6726;
     --titre:"Bricolage Grotesque","Bricolage","Trebuchet MS",sans-serif;
     --texte:"Atkinson Hyperlegible","Atkinson","Segoe UI",sans-serif;
   }
@@ -60,68 +62,96 @@
     background-image:
       radial-gradient(120% 130% at 100% 0%, rgba(52,211,153,0.10) 0%, transparent 48%),
       radial-gradient(120% 130% at 0% 100%, rgba(225,29,72,0.06) 0%, transparent 48%),
-      linear-gradient(rgba(225,29,72,0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(225,29,72,0.035) 1px, transparent 1px),
-      linear-gradient(rgba(225,29,72,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(225,29,72,0.06) 1px, transparent 1px);
+      linear-gradient(rgba(225,29,72,0.030) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225,29,72,0.030) 1px, transparent 1px),
+      linear-gradient(rgba(225,29,72,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225,29,72,0.05) 1px, transparent 1px);
     background-size:100% 100%, 100% 100%, 5mm 5mm, 5mm 5mm, 25mm 25mm, 25mm 25mm;
   }
 
-  /* Cadre décoratif double */
+  /* Filigrane : grand cœur ECG très pâle, centré derrière le texte */
+  .filigrane{
+    position:absolute; inset:0; z-index:0;
+    display:grid; place-items:center; pointer-events:none;
+  }
+  .filigrane svg{ width:130mm; height:auto; opacity:0.08; }
+
+  /* Cadre décoratif gravé (triple liseré) */
   .cadre{
-    position:absolute; inset:8mm;
-    border:2.5px solid var(--signal);
-    border-radius:10px;
-    padding:9mm 16mm;
+    position:absolute; inset:8mm; z-index:2;
+    border:3px double var(--or);
+    border-radius:8px;
+    padding:8mm 16mm 9mm;
     display:flex; flex-direction:column; align-items:center;
     text-align:center;
+    box-shadow:inset 0 0 0 1px rgba(184,137,59,0.25);
   }
   .cadre::before{
-    content:""; position:absolute; inset:3.5mm;
-    border:1px solid rgba(14,159,110,0.45);
-    border-radius:6px; pointer-events:none;
+    content:""; position:absolute; inset:3mm;
+    border:1.5px solid var(--signal);
+    border-radius:5px; pointer-events:none;
   }
-  /* Petits cœurs dans les angles */
-  .coin{ position:absolute; font-size:14px; color:var(--battement); opacity:0.8; }
-  .coin.tl{ top:5mm; left:5mm; } .coin.tr{ top:5mm; right:5mm; }
-  .coin.bl{ bottom:5mm; left:5mm; } .coin.br{ bottom:5mm; right:5mm; }
+  .cadre::after{
+    content:""; position:absolute; inset:4.2mm;
+    border:0.5px solid rgba(14,159,110,0.4);
+    border-radius:4px; pointer-events:none;
+  }
+
+  /* Ornements d'angle dorés (style gravure) */
+  .angle{ position:absolute; width:18mm; height:18mm; color:var(--or); opacity:0.85; z-index:3; }
+  .angle.tl{ top:5.5mm; left:5.5mm; }
+  .angle.tr{ top:5.5mm; right:5.5mm; transform:scaleX(-1); }
+  .angle.bl{ bottom:5.5mm; left:5.5mm; transform:scaleY(-1); }
+  .angle.br{ bottom:5.5mm; right:5.5mm; transform:scale(-1,-1); }
+  /* Petits cœurs au creux des angles */
+  .coin-coeur{ position:absolute; font-size:11px; color:var(--battement); opacity:0.85; z-index:3; }
+  .coin-coeur.tl{ top:9mm; left:9mm; } .coin-coeur.tr{ top:9mm; right:9mm; }
+  .coin-coeur.bl{ bottom:9mm; left:9mm; } .coin-coeur.br{ bottom:9mm; right:9mm; }
 
   /* En-tête */
-  .etab{
-    font-family:var(--titre); font-weight:700;
-    font-size:0.82rem; letter-spacing:0.16em; text-transform:uppercase;
-    color:var(--signal-fonce);
-  }
   .atelier{
-    margin-top:5mm;
     display:inline-flex; align-items:center; gap:8px;
-    font-family:var(--titre); font-weight:700; font-size:0.9rem;
-    color:var(--encre-doux);
-    background:#fff; border:1px solid rgba(14,159,110,0.35);
-    padding:5px 16px; border-radius:99px;
+    font-family:var(--titre); font-weight:700; font-size:0.88rem;
+    color:var(--encre-doux); letter-spacing:0.04em;
+    background:#fff; border:1px solid rgba(184,137,59,0.45);
+    padding:5px 18px; border-radius:99px;
+    box-shadow:0 2px 8px rgba(184,137,59,0.12);
   }
   .atelier .pls{ color:var(--battement); }
 
+  /* Filet doré décoratif sous l'en-tête */
+  .filet{
+    display:flex; align-items:center; gap:9px;
+    margin-top:5mm; color:var(--or);
+  }
+  .filet .trait{ width:34mm; height:0; border-top:1px solid var(--or); opacity:0.7; }
+  .filet .gemme{ width:5px; height:5px; transform:rotate(45deg); background:var(--or); }
+
   /* Titre */
   .titre-diplome{
-    font-family:var(--titre); font-weight:800;
-    font-size:3.1rem; line-height:0.98; letter-spacing:-0.02em;
-    color:var(--encre); margin:3mm 0 0;
+    margin:3.5mm 0 0;
   }
   .surtitre{
     display:block;
     font-family:var(--titre); font-weight:700;
-    font-size:0.85rem; letter-spacing:0.34em; text-transform:uppercase;
-    color:var(--battement); margin-bottom:2.5mm;
+    font-size:0.78rem; letter-spacing:0.4em; text-transform:uppercase;
+    color:var(--or-fonce); margin-bottom:3mm; padding-left:0.4em;
+  }
+  .titre-edit{
+    font-family:var(--titre); font-weight:800;
+    font-size:3rem; line-height:0.98; letter-spacing:-0.02em;
+    color:var(--encre);
+    outline:none; border-radius:6px; padding:0 4px;
+    display:inline-block;
   }
 
   .decerne{
-    margin-top:4mm; font-size:1.02rem; color:var(--encre-doux);
+    margin-top:4.5mm; font-size:1.02rem; color:var(--encre-doux);
     font-style:italic;
   }
 
-  /* Nom de l'étudiant + tracé ECG en guise de soulignement */
-  .nom-zone{ position:relative; margin:2mm 0 0; padding:0 8mm; }
+  /* Nom + tracé ECG en guise de soulignement */
+  .nom-zone{ position:relative; margin:1.5mm 0 0; padding:0 8mm; }
   .nom{
     font-family:var(--titre); font-weight:800;
     font-size:2.9rem; line-height:1.05; letter-spacing:-0.01em;
@@ -130,41 +160,43 @@
     outline:none; border-radius:6px;
     padding:0 6px;
   }
-  /* affordance « cliquer pour éditer » — à l'écran seulement */
-  .nom:hover, .nom:focus{ background:rgba(14,159,110,0.07); }
-  .titre-edit, .titre-grade{ outline:none; border-radius:6px; padding:0 4px; }
-  .titre-edit:hover, .titre-edit:focus,
-  .titre-grade:hover, .titre-grade:focus,
-  .mention:hover, .mention:focus{ background:rgba(14,159,110,0.07); }
-  .mention{ outline:none; border-radius:6px; }
   .ecg-soulignement{
-    display:block; width:170mm; max-width:100%; height:11mm; margin:1mm auto 0;
+    display:block; width:170mm; max-width:100%; height:11mm; margin:0.5mm auto 0;
   }
   .ecg-soulignement path{ filter:drop-shadow(0 1px 2px rgba(225,29,72,0.25)); }
 
   .grade{
-    margin-top:4mm; font-size:1.04rem; color:var(--encre); max-width:200mm;
+    margin-top:4mm; font-size:1.02rem; color:var(--encre); max-width:200mm;
   }
   .grade .titre-grade{
     font-family:var(--titre); font-weight:800; color:var(--signal-fonce);
-    font-size:1.22rem; display:block; margin-top:2px;
+    font-size:1.2rem; display:block; margin-top:2px;
+    outline:none; border-radius:6px; padding:0 4px;
   }
   .mention{
-    margin-top:2.5mm; font-size:0.92rem; color:var(--encre-doux);
+    margin-top:2.5mm; font-size:0.9rem; color:var(--encre-doux);
     max-width:185mm; line-height:1.5;
+    outline:none; border-radius:6px;
   }
+
+  /* affordance « cliquer pour éditer » — à l'écran seulement */
+  .nom:hover, .nom:focus,
+  .titre-edit:hover, .titre-edit:focus,
+  .titre-grade:hover, .titre-grade:focus,
+  .mention:hover, .mention:focus,
+  .date-edit:hover, .date-edit:focus{ background:rgba(14,159,110,0.07); }
 
   /* Rangée de compétences (les 6 modules) */
   .competences{
-    display:flex; gap:7mm; margin-top:4mm; flex-wrap:nowrap;
+    display:flex; gap:7mm; margin-top:4.5mm; flex-wrap:nowrap;
     justify-content:center;
   }
   .comp{ display:flex; flex-direction:column; align-items:center; gap:4px; width:24mm; }
   .comp-ico{
     width:13mm; height:13mm; border-radius:10px;
     display:grid; place-items:center; font-size:1.3rem;
-    background:#fff; border:1.5px solid rgba(14,159,110,0.5);
-    box-shadow:0 3px 10px rgba(14,159,110,0.12);
+    background:#fff; border:1.5px solid rgba(184,137,59,0.5);
+    box-shadow:0 3px 10px rgba(184,137,59,0.14);
   }
   .comp-lbl{
     font-family:var(--titre); font-weight:700; font-size:0.72rem;
@@ -176,12 +208,12 @@
     margin-top:auto;
     width:100%;
     display:flex; align-items:flex-end; justify-content:space-between;
-    gap:8mm; padding-top:4mm;
+    gap:8mm; padding-top:2mm;
   }
   .bloc-pied{ flex:1; min-width:0; }
   .ligne-signature{
     border-top:1.5px solid var(--encre);
-    margin-bottom:5px; height:0; width:62mm;
+    margin-bottom:5px; height:0; width:55mm;
   }
   .pied-libelle{
     font-family:var(--titre); font-weight:700; font-size:0.82rem; color:var(--encre);
@@ -191,25 +223,37 @@
   .signature-atelier{ text-align:right; }
   .signature-atelier .ligne-signature{ margin-left:auto; }
   .date-edit{ outline:none; border-radius:5px; padding:0 4px; }
-  .date-edit:hover, .date-edit:focus{ background:rgba(14,159,110,0.07); }
 
-  /* Sceau central */
+  /* ───────── Sceau retravaillé ───────── */
   .sceau{
     flex:none; width:30mm; height:30mm; position:relative;
     display:grid; place-items:center;
   }
+  /* Anneau extérieur doré avec relief */
   .sceau-ring{
     position:absolute; inset:0; border-radius:50%;
-    border:2.5px solid var(--signal);
-    background:radial-gradient(circle at 50% 38%, #ffffff 0%, #f1faf5 70%, #e3f4ec 100%);
-    box-shadow:0 4px 14px rgba(14,159,110,0.22), inset 0 0 0 3px #fff, inset 0 0 0 4px rgba(14,159,110,0.35);
+    background:radial-gradient(circle at 50% 35%, #fdf6e6 0%, #f6e9c8 55%, #ecd49b 100%);
+    border:1.5px solid var(--or);
+    box-shadow:
+      0 4px 14px rgba(141,103,38,0.28),
+      inset 0 0 0 2.5px #fff,
+      inset 0 0 0 3.5px var(--or-clair),
+      inset 0 0 12px rgba(141,103,38,0.18);
   }
-  .sceau-inner{ position:relative; text-align:center; line-height:1; }
-  .sceau-top, .sceau-bot{
-    font-family:var(--titre); font-weight:800; font-size:0.5rem;
-    letter-spacing:0.12em; color:var(--signal-fonce); text-transform:uppercase;
+  /* Cercle de texte courbé (SVG) */
+  .sceau-svg{
+    position:absolute; inset:0; width:100%; height:100%;
   }
-  .sceau-coeur{ font-size:1.5rem; color:var(--battement); margin:1.5px 0; display:block; }
+  .sceau-svg .texte-courbe{
+    font-family:var(--titre); font-weight:800;
+    font-size:5.4px; letter-spacing:1.1px;
+    fill:var(--or-fonce); text-transform:uppercase;
+  }
+  .sceau-svg .tirets{ stroke:var(--or); stroke-width:0.5; opacity:0.55; }
+  .sceau-inner{ position:relative; text-align:center; line-height:1; z-index:2; }
+  .sceau-coeur{ font-size:1.7rem; color:var(--battement); display:block;
+    filter:drop-shadow(0 1px 1px rgba(225,29,72,0.3)); }
+  .sceau-etoiles{ font-size:0.5rem; color:var(--or-fonce); letter-spacing:2px; margin-top:1px; }
 
   /* ───────── Impression ───────── */
   @page{ size:A4 landscape; margin:0; }
@@ -233,16 +277,58 @@
     <strong>1.</strong> Clique directement sur le <b>nom</b>, le <b>titre</b>, le <b>paragraphe de description</b> ou la <b>date</b> dans le diplôme ci-dessous pour les modifier (ils sont éditables).<br>
     <strong>2.</strong> Pour imprimer / créer le PDF : <code>Ctrl/Cmd + P</code> → Destination <b>« Enregistrer au format PDF »</b> → Orientation <b>Paysage</b> → Marges <b>« Aucune »</b> → coche <b>« Graphismes d'arrière-plan »</b>.<br>
     <strong>3.</strong> (Alternative WeasyPrint) : <code>weasyprint diplome.html diplome.pdf</code>.<br>
-    <em>Astuce : pour changer le nom dans le code source, cherche la balise <code>&lt;span class="nom"&gt;</code> et remplace « Prénom Nom ».</em>
+    <em>Astuce : pour changer le nom dans le code source, cherche la balise <code>&lt;span class="nom"&gt;</code> et remplace « Prénom ».</em>
   </div>
 
   <div class="diplome">
-    <div class="cadre">
-      <span class="coin tl">❤</span><span class="coin tr">❤</span>
-      <span class="coin bl">❤</span><span class="coin br">❤</span>
 
-      <div class="etab">ENSEIRB-MATMECA · Département Télécommunications</div>
+    <!-- Filigrane : grand cœur tracé en ECG, très pâle -->
+    <div class="filigrane" aria-hidden="true">
+      <svg viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg">
+        <path d="M300 470
+                 C 120 330, 30 220, 30 140
+                 C 30 70, 90 30, 150 30
+                 C 210 30, 270 70, 300 130
+                 C 330 70, 390 30, 450 30
+                 C 510 30, 570 70, 570 140
+                 C 570 220, 480 330, 300 470 Z"
+              fill="none" stroke="#0b7a55" stroke-width="6"/>
+        <path d="M70 250 H210 l16 0 l9 -7 l11 12 l13 -58 l13 86 l13 -40 l11 6 H520"
+              fill="none" stroke="#e11d48" stroke-width="6"
+              stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="cadre">
+      <!-- Ornements d'angle dorés -->
+      <svg class="angle tl" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M6 6 H42 M6 6 V42" stroke-linecap="round"/>
+        <path d="M14 14 C 14 38, 38 14, 38 38" stroke-width="1.6"/>
+        <circle cx="6" cy="6" r="3" fill="currentColor" stroke="none"/>
+      </svg>
+      <svg class="angle tr" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M6 6 H42 M6 6 V42" stroke-linecap="round"/>
+        <path d="M14 14 C 14 38, 38 14, 38 38" stroke-width="1.6"/>
+        <circle cx="6" cy="6" r="3" fill="currentColor" stroke="none"/>
+      </svg>
+      <svg class="angle bl" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M6 6 H42 M6 6 V42" stroke-linecap="round"/>
+        <path d="M14 14 C 14 38, 38 14, 38 38" stroke-width="1.6"/>
+        <circle cx="6" cy="6" r="3" fill="currentColor" stroke="none"/>
+      </svg>
+      <svg class="angle br" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M6 6 H42 M6 6 V42" stroke-linecap="round"/>
+        <path d="M14 14 C 14 38, 38 14, 38 38" stroke-width="1.6"/>
+        <circle cx="6" cy="6" r="3" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="coin-coeur tl">❤</span><span class="coin-coeur tr">❤</span>
+      <span class="coin-coeur bl">❤</span><span class="coin-coeur br">❤</span>
+
       <div class="atelier"><span class="pls">❤</span> Atelier « Lis un cœur »</div>
+
+      <div class="filet" aria-hidden="true">
+        <span class="trait"></span><span class="gemme"></span><span class="trait"></span>
+      </div>
 
       <div class="titre-diplome">
         <span class="surtitre">Diplôme officiel</span>
@@ -254,12 +340,7 @@
 
       <div class="nom-zone">
         <!-- ✏️ MODIFIE LE NOM ICI (ou clique dessus dans le navigateur) -->
-        <span class="nom" contenteditable="true" spellcheck="false">Prénom Nom</span>
-        <svg class="ecg-soulignement" viewBox="0 0 520 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 22 H150 l7 0 l4 -3 l5 5 l6 -24 l6 36 l6 -16 l5 2 H352 l7 0 l4 -3 l5 5 l6 -24 l6 36 l6 -16 l5 2 H520"
-                fill="none" stroke="#e11d48" stroke-width="2.6"
-                stroke-linejoin="round" stroke-linecap="round"/>
-        </svg>
+        <span class="nom" contenteditable="true" spellcheck="false">Prénom</span>
       </div>
 
       <p class="grade">
@@ -267,7 +348,7 @@
         <span class="titre-grade" contenteditable="true" spellcheck="false">🎓 Ingénieur·e biomédical·e junior</span>
       </p>
       <p class="mention" contenteditable="true" spellcheck="false">
-        En décodant les signaux du cœur, il·elle a appris à capter, nettoyer et analyser un signal pour détecter une pathologie, mettant ainsi en œuvre les principes fondamentaux du traitement du signal, au cœur des télécommunications. 
+        En décodant les signaux du cœur, il·elle a appris à capter, nettoyer et analyser un signal pour détecter une pathologie, mettant ainsi en œuvre les principes fondamentaux du traitement du signal, au cœur des télécommunications.
       </p>
 
       <div class="competences">
@@ -283,22 +364,30 @@
         <div class="bloc-pied lieu-date">
           <div class="ligne-signature"></div>
           <div class="pied-libelle">Fait à Talence, le <span class="date-edit" contenteditable="true" spellcheck="false">…… juin 2026</span></div>
-          <div class="pied-detail">ENSEIRB-MATMECA</div>
         </div>
 
         <div class="sceau" aria-hidden="true">
           <div class="sceau-ring"></div>
+          <svg class="sceau-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <path id="arc-haut" d="M 18 50 A 32 32 0 0 1 82 50"/>
+              <path id="arc-bas" d="M 20 50 A 30 30 0 0 0 80 50"/>
+            </defs>
+            <text class="texte-courbe"><textPath href="#arc-haut" startOffset="50%" text-anchor="middle">Atelier · Lis un cœur</textPath></text>
+            <text class="texte-courbe"><textPath href="#arc-bas" startOffset="50%" text-anchor="middle">Traitement du signal</textPath></text>
+            <line class="tirets" x1="14" y1="50" x2="20" y2="50"/>
+            <line class="tirets" x1="80" y1="50" x2="86" y2="50"/>
+          </svg>
           <div class="sceau-inner">
-            <div class="sceau-top">Atelier</div>
             <span class="sceau-coeur">❤</span>
-            <div class="sceau-bot">Lis un cœur</div>
+            <div class="sceau-etoiles">★ ★ ★</div>
           </div>
         </div>
 
         <div class="bloc-pied signature-atelier">
           <div class="ligne-signature"></div>
           <div class="pied-libelle">L'équipe de l'atelier</div>
-          <div class="pied-detail">Stage Télécommunications · ENSEIRB-MATMECA</div>
+          <div class="pied-detail">Stage Télécommunications</div>
         </div>
       </div>
     </div>
