@@ -374,6 +374,7 @@ if (typeof module !== "undefined" && module.exports) {
     }
 
     function onStart(e) {
+      if (typeof jouerSon === 'function') jouerSon("swipe", 0.4);
       if (enAnimation) return;
       dragging = true;
       dx = 0; dy = 0;
@@ -399,6 +400,7 @@ if (typeof module !== "undefined" && module.exports) {
     var carte = deck[indexCourant];
     var ok    = reponduSignal === carte.estSignal;
     if (ok) score++;
+    if (typeof jouerSon === 'function') { if (ok) { jouerSon("mini_succes", 0.5); } else { jouerSon("erreur", 0.4); } }
 
     /* Animer la carte hors-écran */
     var tx = dir * (window.innerWidth + 300);
@@ -442,6 +444,7 @@ if (typeof module !== "undefined" && module.exports) {
 
   /* --- Écran de résultat --------------------------------------------- */
   function afficherResultat() {
+    if (typeof jouerSon === 'function') jouerSon("succes", 0.6);
     jeuZone.classList.add('cache');
     resultatEl.classList.remove('cache');
     document.getElementById('tinder-score-valeur').textContent = score;
