@@ -221,3 +221,19 @@ Note pour l'agent : Pour le module pathologies, tu devras utiliser ou étendre g
   zéro jargon non expliqué, aucune manipulation de code par l'élève.
 - Teste tes modifications dans le navigateur (oscilloscope animé, curseurs réactifs,
   verrouillage, badge attribué uniquement en fin de parcours).
+  
+## 11. Dernières implémentations : Audio & Visual FX (Game Feel)
+
+### 1. Moteur Audio (`progression.js`)
+* **Centralisation :** Le dictionnaire `SONS` pointe désormais vers les assets locaux définitifs (`pop`, `erreur`, `succes`, `mini_succes`, `swipe`, `badge`, `trace`, `victoire_module`, `diplome`).
+* **Validation :** Remplacement de l'ancien son de succès par `badge.mp3` (effet "Level Up" de 2-3s) lors du déblocage d'un module.
+
+### 2. Intégration sonore par module
+* **Mini-jeu Tinder (`signal.html` & `signaux.js`) :** Câblage millimétré de `swipe.mp3` à la prise en main des cartes, `mini_succes.mp3` ou `erreur.mp3` à la validation, et `succes.mp3` à l'écran de score final.
+* **Anatomie & ECG (`coeur.html`) :** "Pops" d'interface très doux pour l'exploration anatomique. Bip de moniteur médical synchronisé dynamiquement avec le passage sur le complexe QRS lors de l'animation de lecture.
+* **Carte interactive (`index.html`) :** Synchronisation du sifflement électrique (`trace.mp3`) pendant l'animation de tracé des câbles. Ajout des sons d'explosions (`victoire_module`) et de pop d'interface sur le déverrouillage des branches principales ET des branches bonus.
+
+### 3. Effets Visuels (Carte de progression)
+* **Énergie continue :** Ajout d'une animation CSS (`flux-circulation`) sur les SVG des chemins validés. Les câbles verts font transiter des pointillés lumineux continus (`#7effc5`) pour simuler un circuit vivant.
+* **Fade-in organique :** L'apparition des flux continus se fait avec une transition d'opacité de 1.5s (effet de chauffe) pour éviter un "spawn" brutal des particules.
+* **Interactivité du background (En cours) :** Préparation d'un `<canvas>` en `z-index: -1` sur l'accueil pour générer un halo lumineux au survol de la souris et une onde de choc (sonar) au clic.

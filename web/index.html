@@ -596,6 +596,15 @@
       from { stroke-dashoffset: 36px; }
       to { stroke-dashoffset: 0px; }
     }
+
+    /* --- Canvas fond interactif --- */
+    #canvas-fond {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -608,6 +617,7 @@
   </nav>
 
   <main class="page">
+    <canvas id="canvas-fond" aria-hidden="true"></canvas>
 
     <!-- Bandeau de mission -->
     <header class="mission">
@@ -1728,6 +1738,179 @@
     mettreAJour();
   });
   </script>
+
+  <!-- ══ Canvas fond interactif : particules + impulsion ECG au clic ══ -->
+  <script>
+  (function() {
+    const canvas = document.getElementById('canvas-fond');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    const m = { x: -999, y: -999 }; // Position de la souris
+
+    const particules = [];
+    const impulsions = [];
+
+    // Thème couleurs
+    const COL_PART = '126, 255, 197'; // Cyan/Vert clair pour particules (alpha dynamique)
+    const COL_ECG = '#0e9f6e'; // Vert validation pour ECG
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      initParticules(); // Recréer le champ
+    }
+
+    // --- 1. HOVER : Champ de Particules Électriques ---
+    function initParticules() {
+      particules.length = 0;
+      // Densité moyenne
+      const num = Math.floor((width * height) / 10000); 
+      for (let i = 0; i < num; i++) {
+        particules.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          baseX: 0, baseY: 0, // Sauvegarde position grille
+          v: Math.random() * 0.5 + 0.1, // Vitesse de flottaison
+          alpha: Math.random() * 0.1 + 0.03, // Opacité de base très faible
+          excited: false // État d'attraction
+        });
+        // Sauvegarde pour la grille
+        particules[i].baseX = particules[i].x;
+        particules[i].baseY = particules[i].y;
+      }
+    }
+
+    function drawHover() {
+      particules.forEach(p => {
+        // 1. Calcul attraction souris
+        const dx = m.x - p.x;
+        const dy = m.y - p.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < 150) { // Zone d'excitation
+          p.excited = true;
+          // Force d'attraction
+          const power = (150 - dist) / 150;
+          p.x += (dx / dist) * power * 2;
+          p.y += (dy / dist) * power * 2;
+          p.currentAlpha = Math.min(0.25, power * 0.5 + p.alpha); // Brille plus fort
+        } else if (p.excited) {
+          // Retour lent à la grille
+          const dxBase = p.baseX - p.x;
+          const dyBase = p.baseY - p.y;
+          p.x += dxBase * 0.05;
+          p.y += dyBase * 0.05;
+          p.currentAlpha = p.alpha;
+          if (Math.abs(dxBase) < 1 && Math.abs(dyBase) < 1) p.excited = false;
+        } else {
+          // Flottaison naturelle (légère oscillation)
+          p.y += Math.sin(Date.now() * 0.001 * p.v) * 0.1;
+          p.currentAlpha = p.alpha;
+        }
+
+        // 2. Dessin de la particule (micro-point)
+        ctx.fillStyle = `rgba(${COL_PART}, ${p.currentAlpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    // --- 2. CLIC : Impulsion ECG ---
+    function genererImpulsionECG(x, y) {
+      impulsions.push({
+        startX: x, startY: y,
+        progress: 0, // 0 à 1 (déroulement tracé)
+        v: 0.02 + Math.random() * 0.01, // Vitesse de déroulement
+        width: 180 + Math.random() * 40, // Largeur totale du tracé
+        alpha: 1, // Dissipation
+        points: calculerPointsECG()
+      });
+    }
+
+    // Calcule les points P-QRS-T normalisés pour un tracé
+    function calculerPointsECG() {
+      const pts = [];
+      const num = 100;
+      for(let i=0; i<=num; i++) {
+        let t = i / num; // t de 0 à 1
+        let y = 0;
+        
+        // Onde P (petite cloche)
+        y += 12 * Math.exp(-Math.pow((t - 0.2) / 0.04, 2));
+        
+        // Complexe QRS (Pique sec)
+        y -= 5 * Math.exp(-Math.pow((t - 0.45) / 0.015, 2)); // Q (bas)
+        y += 60 * Math.exp(-Math.pow((t - 0.48) / 0.02, 2)); // R (Haut)
+        y -= 15 * Math.exp(-Math.pow((t - 0.52) / 0.02, 2)); // S (Bas)
+        
+        // Onde T (Moyenne cloche)
+        y += 18 * Math.exp(-Math.pow((t - 0.75) / 0.06, 2));
+        
+        pts.push({t: t, y: -y}); // Stocke t (horizontal) et y (vertical, inversé canvas)
+      }
+      return pts;
+    }
+
+    function drawECG() {
+      impulsions.forEach((imp, index) => {
+        imp.progress += imp.v;
+        imp.alpha -= 0.015; // Dissipation lente
+        
+        if (imp.alpha <= 0) {
+          impulsions.splice(index, 1);
+          return;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, imp.alpha);
+        ctx.strokeStyle = COL_ECG;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        
+        // Animation de tracé (comme un fil qui se déroule)
+        const ptsToDraw = Math.floor(imp.points.length * Math.min(1, imp.progress));
+        
+        for(let i = 0; i < ptsToDraw; i++) {
+          const pt = imp.points[i];
+          const px = imp.startX - (imp.width/2) + (pt.t * imp.width);
+          const py = imp.startY + pt.y;
+          
+          if(i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    // --- BOUCLE PRINCIPALE ---
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      drawHover();
+      drawECG();
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    
+    window.addEventListener('mousemove', e => {
+      m.x = e.clientX;
+      m.y = e.clientY;
+    });
+
+    window.addEventListener('click', e => {
+      // On évite de dessiner l'ECG si on clique sur un vrai bouton de l'interface
+      if(e.target.closest('button, a, .noeud-btn, .modal-feuille')) return;
+      genererImpulsionECG(e.clientX, e.clientY);
+    });
+
+    resize();
+    draw();
+  })();
   </script>
 </body>
 </html>
