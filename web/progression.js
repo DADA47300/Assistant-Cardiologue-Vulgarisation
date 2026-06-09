@@ -26,11 +26,13 @@ const SONS = {
   pop: "audio/pop.mp3",
   erreur: "audio/erreur.mp3",
   succes: "audio/succes.mp3",
+  mini_succes: "audio/mini-succes.mp3",
+  swipe: "audio/swipe.mp3",
+  badge: "audio/badge.mp3",
   victoire_module: "audio/victoire-module.mp3",
   trace: "audio/trace.mp3",
   diplome: "audio/victoire-finale.mp3"
 };
-
 function jouerSon(idSon, volume = 0.5) {
   if (!SONS[idSon]) return;
   var audio = new Audio(SONS[idSon]);
@@ -140,7 +142,7 @@ function validerModule(idModule) {
   sessionStorage.setItem("module_recent", idModule);
 
   // Afficher la notification toast
-  jouerSon("succes", 0.7);
+  jouerSon("badge", 0.8);
   if (typeof afficherToastBadge === "function") {
     afficherToastBadge(BADGES[idModule]);
   }
