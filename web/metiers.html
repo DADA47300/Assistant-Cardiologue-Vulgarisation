@@ -237,7 +237,7 @@
       <!-- Message contextuel -->
       <div id="explication-reseau" class="message pas-encore" style="margin-top: 14px;">
         😱 Des <strong>paquets de données</strong> se sont perdus en route.
-        Le tracé arrive avec des trous — le médecin ne peut pas poser de diagnostic fiable !
+        Le tracé arrive avec des trous; le médecin ne peut pas poser de diagnostic fiable !
       </div>
 
       <div style="display:flex; justify-content:flex-end; margin-top:20px;">
@@ -361,7 +361,7 @@
             <span class="mc-titre">Et toi dans tout ça ?</span>
             <span class="mc-desc">
               En choisissant une filière à l'ENSEIRB-MATMECA, tu peux travailler à la croisée
-              de la tech et du médical — un secteur en pleine croissance où chaque ligne de code
+              de la tech et du médical, un secteur en pleine croissance où chaque ligne de code
               peut réellement sauver des vies.
             </span>
           </div>
@@ -476,7 +476,7 @@
     if (reseau === "edge") {
       badge.textContent = "⚠️ 40 % des données perdues";
       badge.className   = "perte-badge mauvais";
-      expl.innerHTML    = "😱 Des <strong>paquets de données</strong> se sont perdus en route. Le tracé arrive avec des trous — impossible de poser un diagnostic fiable !";
+      expl.innerHTML    = "😱 Des <strong>paquets de données</strong> se sont perdus en route. Le tracé arrive avec des trous, impossible de poser un diagnostic fiable !";
       expl.className    = "message pas-encore";
       btnSuiv.classList.add("cache");
     } else if (reseau === "4g") {

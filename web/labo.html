@@ -303,7 +303,7 @@
       <h1>🩺 Labo ECG — à toi de jouer, ingénieur !</h1>
       <p>Le cardiologue t'envoie l'enregistrement du cœur d'un patient. Ta mission, en 4 étapes :
          <strong>capter</strong> le signal, le <strong>nettoyer</strong>, régler ton <strong>zoom</strong>,
-         puis <strong>repérer</strong> toi-même les battements. Attention : on peut se tromper — il faudra réfléchir !</p>
+         puis <strong>repérer</strong> toi-même les battements. Attention : on peut se tromper, il faudra réfléchir !</p>
     </header>
 
     <div class="etapes" id="etapes">
@@ -322,7 +322,7 @@
     <section class="carte etape" id="etape0">
       <h2>Étape 1 — Capte le signal</h2>
       <p class="acq-intro">Avant de nettoyer quoi que ce soit, il faut <strong>capter</strong> le signal du cœur.
-        Un capteur transforme l'activité électrique du cœur en une courbe qui défile à l'écran — exactement comme
+        Un capteur transforme l'activité électrique du cœur en une courbe qui défile à l'écran, exactement comme
         un micro transforme un son en signal. Mais dès qu'on capte dans la vraie vie, le signal se <strong>salit</strong>.
         Ci-dessous, choisis ta source, puis allume les « perturbateurs » pour voir <em>d'où vient la saleté</em>.</p>
 
@@ -341,8 +341,8 @@
           </div>
         </div>
         <p class="acq-intro" style="margin:12px 0 0; text-align:center; font-size:0.86rem;">
-          Les électrodes de l'hôpital captent un signal très propre ; une montre de sport, portée au poignet,
-          capte un signal un peu plus bruité. Le compromis confort / précision, c'est déjà un choix d'ingénieur.</p>
+          Les électrodes utilisées à l'hôpital donnent généralement un signal plus précis. Une montre connectée est beaucoup plus pratique à porter, 
+          mais son signal est souvent plus sensible aux perturbations. Choisir entre confort et qualité de mesure, c'est déjà un problème d'ingénieur.</p>
       </div>
 
       <!-- Oscilloscope -->
@@ -380,7 +380,7 @@
 
       <div class="acq-note">
         💡 Tu vois ? Plus on ajoute de perturbations, plus la jauge de qualité chute et plus le tracé devient
-        illisible. L'enregistrement que tu vas envoyer au labo contient justement ce genre de parasites —
+        illisible. L'enregistrement que tu vas envoyer au labo contient justement ce genre de parasites 
         et ton job à l'étape suivante sera de les <strong>retirer</strong> avec des filtres.
       </div>
 
@@ -483,7 +483,7 @@
       <div class="unite">battements par minute</div>
       <div class="etat" id="etatTexte"></div>
       <p class="felicitations">L'ordinateur a repéré <strong>tous</strong> les battements de l'enregistrement
-        en un instant — bien plus vite que toi ! C'est exactement pour ça qu'on <em>programme</em> la détection :
+        en un instant, bien plus vite que toi ! C'est exactement pour ça qu'on <em>programme</em> la détection :
         pour qu'une machine fasse, en une seconde et sans se fatiguer, ce que tu viens de faire à la main.</p>
       <button class="bouton secondaire" id="btnRecommencer">↻ Recommencer le labo</button>
     </section>
