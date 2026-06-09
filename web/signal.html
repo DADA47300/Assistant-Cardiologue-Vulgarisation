@@ -203,7 +203,7 @@
       <h1>🌊 C'est quoi un signal ?</h1>
       <p>Avant de plonger dans le cœur humain, comprenons les bases. Un signal, c'est toute grandeur
          physique qui <strong>transporte une information</strong>. Ici tu vas jouer avec les signaux, les entendre,
-         les déformer — et comprendre pourquoi le bruit est l'ennemi numéro 1 de l'ingénieur.</p>
+         les déformer. Tu vas comprendre pourquoi le bruit est l'ennemi numéro 1 de l'ingénieur.</p>
     </header>
 
   <!-- Checklist de progression -->
@@ -222,9 +222,7 @@
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-definition">
       <h2>🔍 0. C'est quoi un signal ?</h2>
-      <p>Un signal, ce n'est pas un objet : c'est une <strong>information qui voyage</strong>.
-         La lumière d'un feu rouge, les vibrations d'un haut-parleur, les impulsions électriques
-         du cœur — tout ça, c'est des signaux.</p>
+      <p>Un signal, ce n'est pas un objet : c'est une <strong>information qui voyage</strong>.</p>
 
       <div class="def-box">
         <strong>Définition :</strong> Un signal est une grandeur physique (tension, lumière, son, pression…)
@@ -282,7 +280,7 @@
         <div class="notion-carte">
           <div class="notion-icone">⏱️</div>
           <div class="notion-titre">Période (T)</div>
-          <div class="notion-def">La durée d'un cycle complet. <em>T = 1 / f</em> : si f = 2 Hz alors T = 0,5 s.</div>
+          <div class="notion-def">La durée d'un cycle complet. <em>T = 1 / f</em>. Exemple : si f = 2 Hz alors T = 0,5 s.</div>
         </div>
       </div>
 
@@ -338,7 +336,7 @@
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-periode">
       <h2>⏱️ 3. La Période — lire le temps sur le graphe</h2>
-      <p>La <strong>période T</strong> est la durée d'un cycle complet (un aller-retour de la vague).
+      <p>La <strong>période T</strong> est la durée d'un cycle complet.
          Sur le graphe ci-dessous, la <strong>grille</strong> marque les secondes.
          Une accolade <span style="color:var(--battement);font-weight:700;">rouge</span> te montre
          exactement la largeur d'un cycle.</p>
@@ -370,12 +368,6 @@
          très rapidement, à intervalles réguliers. C'est l'<strong>échantillonnage</strong>.
          La fréquence d'échantillonnage <strong>fₑ</strong> (en Hz) est le nombre de mesures par seconde.</p>
 
-      <div class="def-box">
-        <strong>Théorème de Shannon :</strong> pour capturer fidèlement un signal de fréquence <em>f</em>,
-        il faut échantillonner à <em>fₑ ≥ 2f</em>.
-        En dessous, le signal est déformé — c'est l'<strong>aliasing</strong>.
-      </div>
-
       <p>Déplace le curseur pour changer la fréquence d'échantillonnage et observe la reconstruction.</p>
 
       <div class="zone-jeu">
@@ -394,10 +386,6 @@
         <p id="msg-echant" style="font-family:var(--titre); font-weight:700; font-size:0.95rem; margin:10px 0 0; min-height:24px;"></p>
       </div>
 
-      <p style="font-size:0.9rem; color:var(--encre-doux);">
-        💡 En ECG, on échantillonne typiquement à <strong>500 Hz</strong> ou <strong>1 000 Hz</strong>
-        pour capturer fidèlement les pics R (qui durent ~20 ms).
-      </p>
     </section>
 
     <!-- ════════════════════════════════════════════════════════
@@ -431,10 +419,9 @@
          ════════════════════════════════════════════════════════ -->
     <section class="carte" id="sec-synthese">
       <h2>🧩 6. Construire un signal — La recette</h2>
-      <p>Comment fabrique-t-on un signal complexe ? C'est comme une <strong>recette de cuisine</strong> :
-         on mélange des vagues simples, chacune à sa fréquence. En haut, le <strong>résultat</strong> dans le temps ;
-         en bas, le <strong>spectre</strong> — la liste des ingrédients.
-         Joue avec les curseurs et observe comment le signal change.</p>
+      <p>Un signal complexe est la <strong>somme de vagues simples</strong> (des sinusoïdes), chacune à une fréquence et une amplitude différentes. Chaque curseur règle l'amplitude d'une de ces composantes. 
+        En haut, tu vois le signal résultant au cours du temps. En bas, tu vois son <strong>spectre</strong>; il montre quelles fréquences le constituent et avec quelle intensité. 
+        Déplace les curseurs et observe le signal se transformer.</p>
 
       <div class="zone-jeu">
         <div style="font-family:var(--titre);font-weight:700;font-size:0.85rem;color:var(--encre-doux);margin-bottom:4px;">Le signal dans le temps</div>
