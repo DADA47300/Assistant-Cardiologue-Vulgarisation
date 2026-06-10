@@ -552,6 +552,7 @@ btnCapteur.addEventListener('click', function () {
     setTimeout(function () {
       var btnFin = document.getElementById('btn-fin-montre');
       if (btnFin) { btnFin.style.opacity = '1'; btnFin.style.pointerEvents = 'auto'; }
+      if (typeof validerModule === 'function') validerModule('montre'); 
     }, 3000);
   } else {
     desactiverScene();

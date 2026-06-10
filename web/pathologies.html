@@ -1261,6 +1261,7 @@
           document.querySelectorAll("#diag-mystere-boutons .btn-diag").forEach(function(b) { b.disabled = true; });
           if (typeof validerModule === "function") validerModule("pathologies");
           document.getElementById("badge-obtenu-section").classList.remove("cache");
+          if (typeof validerModule === 'function') validerModule('pathologies');
           setTimeout(function() {
             document.getElementById("badge-obtenu-section").scrollIntoView({ behavior: 'smooth' });
           }, 300);

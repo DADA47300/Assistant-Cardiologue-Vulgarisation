@@ -1336,7 +1336,7 @@ body {
   </section>
 
   <!-- ════════════════ BOUTON BADGE ════════════════ -->
-  <a href="index.html?badge=matlab" class="bouton-badge-final">
+  <a id="btn-badge-matlab" href="index.html?badge=matlab" class="bouton-badge-final">
     J'ai tout vu, récupérer mon badge ! 🏅
   </a>
 
@@ -1787,6 +1787,27 @@ document.querySelectorAll('.btn-reveler').forEach(btn => {
     btn.classList.add('cache');
   };
 });
+
+/* ════════════════ BADGE : afficher le toast, puis retour à l'accueil ════════════════
+   Le clic ne navigue plus immédiatement : on valide le badge (ce qui déclenche le toast
+   en haut de page via progression.js), on laisse ~1,2 s pour le voir, puis on part. */
+(function () {
+  var btnBadge = document.getElementById('btn-badge-matlab');
+  if (!btnBadge) return;
+  btnBadge.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (btnBadge.dataset.enCours === '1') return; // anti double-clic
+    btnBadge.dataset.enCours = '1';
+
+    var nouveau = false;
+    if (typeof validerModule === 'function') {
+      nouveau = validerModule('matlab'); // affiche le toast si le badge vient d'être obtenu
+    }
+    // ~1,2 s pour laisser le toast s'afficher ; plus court si le badge était déjà acquis.
+    var delai = nouveau ? 1200 : 250;
+    setTimeout(function () { window.location.href = 'index.html?badge=matlab'; }, delai);
+  });
+})();
 
 </script>
 
