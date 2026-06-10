@@ -31,7 +31,8 @@ const SONS = {
   badge: "audio/badge.mp3",
   victoire_module: "audio/victoire-module.mp3",
   trace: "audio/trace.mp3",
-  diplome: "audio/victoire-finale.mp3"
+  diplome: "audio/victoire-finale.mp3",
+  urgence: "audio/urgence.mp3"
 };
 function jouerSon(idSon, volume = 0.5) {
   if (!SONS[idSon]) return;

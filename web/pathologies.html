@@ -819,7 +819,10 @@
 
   function allerEtape(n) {
     if (n > etapeMax) { majPastilles(); return; }
-    if (typeof jouerSon === 'function') jouerSon("pop", 0.4);
+    if (typeof jouerSon === 'function') {
+      if (n === 2) jouerSon("urgence", 0.7);
+      else jouerSon("pop", 0.4);
+    }
     etapeActuelle = n;
 
     // Afficher/cacher les sections d'étape
@@ -1207,7 +1210,7 @@
     var btnD = document.getElementById("btnDemarrerMystere");
     if(btnD) {
       btnD.addEventListener("click", function() {
-        if (typeof jouerSon === 'function') jouerSon("trace", 0.6); // Son d'impact propre
+
         document.getElementById("mystere-intro").classList.add("cache");
         document.getElementById("mystere-epreuve").classList.remove("cache");
         initPatientMystere();
