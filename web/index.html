@@ -1527,6 +1527,7 @@
         _htmlDiplomeCarte(true) +
         '<button class="bouton-reset-diplome" onclick="reinitialiserTout()">Réinitialiser la progression</button>' +
       '</div>';
+      setTimeout(window.majEchelleDiplome, 50);
   }
 
   /* ══════════════════════════════════════════════════════
@@ -1566,7 +1567,7 @@
             '<div class="titre-diplome"><span class="surtitre">Diplôme officiel</span><span class="titre-edit">Ingénieur·e biomédical·e junior</span></div>' +
             '<p class="decerne">Ce diplôme est fièrement décerné à</p>' +
             '<div class="nom-zone">' +
-              '<input type="text" class="nom-input diplome-nom-input" value="" placeholder="Ton prénom ici..." spellcheck="false" autocomplete="off" readonly />' +
+              '<input type="text" class="nom-input diplome-nom-input" value="' + (sessionStorage.getItem("diplome_prenom") || "") + '" placeholder="Ton prénom ici..." spellcheck="false" autocomplete="off" oninput="sessionStorage.setItem(\'diplome_prenom\', this.value)" />' +
             '</div>' +
             '<p class="grade">pour avoir mené à bien sa mission et obtenu officiellement le titre de <span class="titre-grade">🎓 Ingénieur·e biomédical·e junior</span></p>' +
             '<div class="competences">' + compsHtml + '</div>' +
@@ -1750,6 +1751,7 @@
       btn.style.background = "linear-gradient(135deg, var(--or-fonce), var(--or-clair))";
 
       var prenomSaisi = input.value.trim();
+      sessionStorage.setItem("diplome_prenom", prenomSaisi); // On mémorise le prénom !
       var champDiplome = document.querySelector(".diplome-nom-input");
       if (champDiplome) champDiplome.value = prenomSaisi;
 

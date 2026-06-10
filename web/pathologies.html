@@ -198,6 +198,39 @@
       .coeur-emoji { font-size: 5rem; }
       #graphe-patho { height: 220px; }
     }
+
+    /* --- MODE URGENCE (Patient Mystère) --- */
+    #etape2.mode-urgence {
+      background: #040a08 !important; border-radius: 16px; padding: 0; overflow: hidden;
+      border: 1px solid rgba(225, 29, 72, 0.4) !important;
+      animation: urgence-pulse 2s infinite; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+    @keyframes urgence-pulse {
+      0%, 100% { box-shadow: inset 0 0 30px rgba(225,29,72,0.05); }
+      50% { box-shadow: inset 0 0 100px rgba(225,29,72,0.35); }
+    }
+    .urgence-banniere {
+      background: #e11d48; color: white; font-family: var(--titre); font-weight: 900;
+      text-align: center; padding: 14px; font-size: 1.25rem; letter-spacing: 0.1em;
+      animation: flash-banniere 1.2s infinite alternate; text-transform: uppercase;
+    }
+    @keyframes flash-banniere {
+      from { background: #e11d48; text-shadow: 0 0 8px rgba(255,255,255,0.6); }
+      to { background: #9f1239; text-shadow: none; }
+    }
+    .glass-panel {
+      background: rgba(13, 27, 23, 0.85); backdrop-filter: blur(12px);
+      border: 1px solid rgba(225, 29, 72, 0.4); border-radius: 12px;
+      padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .glass-panel label, .glass-panel p { color: #eafff5 !important; }
+    .glass-panel h3, .glass-panel h4 { color: #fff !important; }
+
+    /* On force les boutons du patient mystère à être sombres */
+    .mode-urgence .boss-segmented-control { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+    .mode-urgence .boss-segment-btn { color: #94a3b8; }
+    .mode-urgence .boss-segment-btn:hover { color: #fff; }
+    .mode-urgence .boss-segment-btn.actif { background: var(--signal); color: #fff; border:none; }
   </style>
 </head>
 <body>
@@ -334,43 +367,41 @@
     <!-- ================================================================
          ÉTAPE 3 — Le Patient Mystère (Boss de fin)
          ================================================================ -->
-    <section class="carte etape cache" id="etape2" style="background: #0f172a; color: white; border: none;">
-      <!-- Intro / Alerte -->
-      <div id="mystere-intro" style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 4rem; margin-bottom: 20px;">👤⚠️</div>
-        <h2 style="color: #ef4444; font-size: 2rem; margin-bottom: 10px; text-transform: uppercase;">Alerte Urgence : Un nouveau patient mystère arrive !</h2>
-        <p style="color: #cbd5e1; font-size: 1.2rem; margin-bottom: 30px;">Son ECG est complètement illisible. À toi de nettoyer le signal pour le sauver.</p>
-        <button class="bouton" id="btnDemarrerMystere" style="background: #ef4444; color: white; border: none; font-size: 1.2rem; padding: 15px 30px;">Prendre le patient en charge</button>
+    <section class="carte etape cache mode-urgence" id="etape2">
+      <div class="urgence-banniere">⚠️ Alerte Médicale — Code Rouge — Diagnostic Immédiat Requis ⚠️</div>
+      
+      <div id="mystere-intro" style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 5rem; margin-bottom: 10px; animation: secousse 0.4s infinite alternate;">🚨</div>
+        <h2 style="color: #ef4444; font-size: 2.2rem; margin-bottom: 10px; text-transform: uppercase; font-family: var(--titre);">Patient Mystère Arrive !</h2>
+        <p style="color: #cbd5e1; font-size: 1.15rem; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">Son ECG est complètement parasité. Le pronostic vital est engagé. À toi de nettoyer le signal à l'aveugle pour le sauver.</p>
+        <button class="bouton" id="btnDemarrerMystere" style="background: white; color: #e11d48; border: none; font-size: 1.25rem; font-weight: 800; padding: 18px 36px; box-shadow: 0 0 20px rgba(225,29,72,0.5); transition: transform 0.1s;">⚡ Prendre le patient en charge</button>
       </div>
 
-      <!-- Interface de l'épreuve -->
-      <div id="mystere-epreuve" class="cache" style="padding: 20px;">
-        <h3 style="color: white; margin-top: 0; margin-bottom: 20px;">Console de nettoyage</h3>
+      <div id="mystere-epreuve" class="cache" style="padding: 24px; max-width: 800px; margin: 0 auto;">
         
-        <!-- ECG Mystere -->
-        <div id="graphe-mystere" style="height: 300px; width: 100%; margin-bottom: 20px; background: white; border-radius: 8px;"></div>
+        <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 20px;">
+          <div id="graphe-mystere" style="height: 280px; width: 100%;"></div>
+        </div>
         
-        <!-- Phase A : Zoom -->
-        <div id="mystere-phase-a" style="background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <label style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold;">
+        <div id="mystere-phase-a" class="glass-panel">
+          <label style="display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: bold; font-size: 1.1rem;">
             <span>🔍 Zoom Temporel</span>
-            <span id="val-zoom" style="color: #94a3b8;">300s</span>
+            <span id="val-zoom" style="color: var(--signal-clair) !important;">300s</span>
           </label>
-          <input type="range" id="curseur-zoom" min="3" max="300" step="1" value="300" style="width: 100%; cursor: pointer;">
-          <p style="color: #cbd5e1; font-size: 0.9rem; margin-top: 10px; margin-bottom: 0;">Trouve le bon niveau de zoom pour analyser les battements (entre 3s et 5s).</p>
+          <input type="range" id="curseur-zoom" min="3" max="300" step="1" value="300" style="width: 100%; cursor: pointer; accent-color: var(--signal-clair);">
+          <p style="font-size: 0.9rem; margin-top: 10px; margin-bottom: 0; opacity: 0.8;">Étale le signal pour y voir plus clair (entre 3s et 5s).</p>
         </div>
 
-        <!-- Phase B : Filtres -->
-        <div id="mystere-phase-b" class="cache" style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div id="mystere-phase-b" class="glass-panel cache">
           <div style="margin-bottom: 20px;">
-            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #1e293b;">Anti-tangage (Ligne de base)</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Anti-tangage (Ligne de base)</label>
             <div class="boss-segmented-control" id="groupe-tangage">
               <button class="boss-segment-btn actif" data-val="false" type="button">Désactivé</button>
               <button class="boss-segment-btn" data-val="true" type="button">Activé</button>
             </div>
           </div>
           <div>
-            <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #1e293b;">Anti-grésillement (Haute fréquence)</label>
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Anti-grésillement (Haute fréquence)</label>
             <div class="boss-segmented-control" id="groupe-gresillement">
               <button class="boss-segment-btn actif" data-val="0" type="button">Aucun</button>
               <button class="boss-segment-btn" data-val="1" type="button">Léger</button>
@@ -378,42 +409,36 @@
             </div>
           </div>
           
-          <!-- Jauge de qualité du signal -->
           <div id="jauge-qualite-conteneur" style="opacity: 0; transition: opacity 1s; display: flex; align-items: center; gap: 12px; margin-top: 25px; pointer-events: none;">
-            <div id="jauge-emoji" style="font-size: 2rem; width: 2.4rem; text-align: center; flex-shrink: 0; transition: all .4s;">🤔</div>
-            <div style="flex: 1; height: 22px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
-              <div id="jauge-remplissage" style="height: 100%; border-radius: 999px; width: 0%; background: #ef4444; transition: width .5s ease, background-color .5s ease;"></div>
+            <div id="jauge-emoji" style="font-size: 2rem; width: 2.4rem; text-align: center; flex-shrink: 0;">🤔</div>
+            <div style="flex: 1; height: 22px; background: rgba(255,255,255,0.2); border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+              <div id="jauge-remplissage" style="height: 100%; width: 0%; background: #ef4444; transition: width .5s ease, background-color .5s ease;"></div>
             </div>
-            <div id="jauge-texte" style="font-family: var(--titre); font-weight: 700; font-size: 0.85rem; min-width: 130px; text-align: right; color: var(--encre-doux); transition: color .4s;">0% Illisible</div>
+            <div id="jauge-texte" style="font-family: var(--titre); font-weight: 700; font-size: 0.85rem; min-width: 100px; text-align: right; color: #ef4444;">0% Illisible</div>
           </div>
         </div>
 
-        <!-- Phase C : Pointage -->
-        <div id="mystere-phase-c" class="cache" style="background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-          <p style="color: white; font-weight: bold; font-size: 1.1rem; margin-top: 0;">🎯 Le signal est propre ! Pointe le curseur sur 3 grands pics (ondes R) consécutifs et clique.</p>
-          <p id="compteur-clics" style="color: #94a3b8; margin-bottom: 0; font-size: 1.05rem;">Pics trouvés : 0 / 3</p>
-          <div id="resultat-bpm" class="cache" style="margin-top: 15px; font-size: 1.6rem; font-weight: 800; color: #22c55e; letter-spacing: -0.5px;"></div>
+        <div id="mystere-phase-c" class="glass-panel cache" style="text-align: center; border-color: var(--signal);">
+          <p style="font-weight: bold; font-size: 1.1rem; margin-top: 0; color: var(--signal-clair) !important;">🎯 Le signal est propre ! Pointe le curseur sur 3 grands pics (ondes R) consécutifs et clique.</p>
+          <p id="compteur-clics" style="margin-bottom: 0; font-size: 1.05rem; font-family: var(--titre);">Pics trouvés : 0 / 3</p>
+          <div id="resultat-bpm" class="cache" style="margin-top: 15px; font-size: 1.8rem; font-weight: 900; color: #34d399; text-shadow: 0 0 10px rgba(52,211,153,0.5);"></div>
         </div>
 
-        <!-- Phase D : Diagnostic -->
-        <div id="mystere-phase-d" class="cache">
-          <h4 style="text-align: center; color: white; margin-bottom: 10px; font-size:1.2rem;">Quel est ton diagnostic final ?</h4>
-          <!-- Boutons de diagnostic (Choix) -->
-          <div id="diag-mystere-boutons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-            <button class="btn-diag" data-reponse="normal" type="button">Sain</button>
-            <button class="btn-diag" data-reponse="tachy" type="button">Tachycardie</button>
-            <button class="btn-diag" data-reponse="brady" type="button">Bradycardie</button>
-            <button class="btn-diag" data-reponse="fibr" type="button">Fibrillation</button>
+        <div id="mystere-phase-d" class="glass-panel cache" style="border-color: #f59e0b;">
+          <h4 style="text-align: center; margin-bottom: 15px; font-size: 1.3rem; color: #fcd34d !important;">Quel est ton diagnostic final ?</h4>
+          <div id="diag-mystere-boutons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <button class="btn-diag" data-reponse="normal" type="button" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3);">Sain</button>
+            <button class="btn-diag" data-reponse="tachy" type="button" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3);">Tachycardie</button>
+            <button class="btn-diag" data-reponse="brady" type="button" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3);">Bradycardie</button>
+            <button class="btn-diag" data-reponse="fibr" type="button" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3);">Fibrillation</button>
           </div>
 
-          <!-- Retour (Blague) -->
-          <div id="mystere-retour" class="cache" style="font-size: 1.05rem;">
-            <div id="mystere-patient-bulle" style="background: #334155; padding: 12px 18px; border-radius: 18px 18px 18px 4px; display: inline-block; margin-bottom: 15px; color: white; border: 1px solid #475569; text-align: left;">
+          <div id="mystere-retour" class="cache" style="margin-top: 20px; font-size: 1.05rem;">
+            <div id="mystere-patient-bulle" style="background: rgba(0,0,0,0.4); padding: 14px 20px; border-radius: 18px 18px 18px 4px; display: inline-block; margin-bottom: 15px; color: #fca5a5; border: 1px solid rgba(225,29,72,0.3); text-align: left;">
               💬 <strong id="mystere-plainte"></strong>
             </div>
-            <div id="mystere-medecin-encart" class="cache" style="background: #f0fdf4; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; color: #166534; text-align: left;">
-              👨‍⚕️ <strong>Le Cardiologue :</strong>
-              <div id="mystere-prevention" style="margin-top: 5px;"></div>
+            <div id="mystere-medecin-encart" class="cache" style="background: rgba(20,83,45,0.4); padding: 15px; border-radius: 8px; border-left: 4px solid #34d399; color: #a7f3d0; text-align: left;">
+              <div id="mystere-prevention"></div>
             </div>
           </div>
         </div>
@@ -794,6 +819,7 @@
 
   function allerEtape(n) {
     if (n > etapeMax) { majPastilles(); return; }
+    if (typeof jouerSon === 'function') jouerSon("pop", 0.4);
     etapeActuelle = n;
 
     // Afficher/cacher les sections d'étape
@@ -937,6 +963,7 @@
 
       if (reponse === patient.solution) {
         // Bonne réponse
+        if (typeof jouerSon === 'function') jouerSon("mini_succes", 0.5);
         btn.classList.add("succes");
         document.getElementById("patient-plainte").textContent = "Ouf, merci docteur !";
         document.getElementById("patient-prevention").innerHTML = patient.prevention;
@@ -960,6 +987,7 @@
         }
       } else {
         // Mauvaise réponse
+        if (typeof jouerSon === 'function') jouerSon("erreur", 0.4);
         btn.classList.add("erreur");
         document.getElementById("patient-plainte").textContent = patient.plainte;
         encartMed.classList.add("cache");
@@ -981,7 +1009,7 @@
     if(btnEtape3) {
       btnEtape3.addEventListener("click", function() {
         etapeMax = Math.max(etapeMax, 2);
-        allerEtape(2);
+        allerEtape(2); // On a viré la ligne audio complètement !
       });
     }
   });
@@ -1179,6 +1207,7 @@
     var btnD = document.getElementById("btnDemarrerMystere");
     if(btnD) {
       btnD.addEventListener("click", function() {
+        if (typeof jouerSon === 'function') jouerSon("trace", 0.6); // Son d'impact propre
         document.getElementById("mystere-intro").classList.add("cache");
         document.getElementById("mystere-epreuve").classList.remove("cache");
         initPatientMystere();
@@ -1230,13 +1259,14 @@
           encartMed.classList.remove("cache");
 
           document.querySelectorAll("#diag-mystere-boutons .btn-diag").forEach(function(b) { b.disabled = true; });
-
+          if (typeof validerModule === "function") validerModule("pathologies");
           document.getElementById("badge-obtenu-section").classList.remove("cache");
           setTimeout(function() {
             document.getElementById("badge-obtenu-section").scrollIntoView({ behavior: 'smooth' });
           }, 300);
 
         } else {
+          if (typeof jouerSon === 'function') jouerSon("erreur", 0.5);
           btn.classList.add("erreur");
           plainte.textContent = "Aaah ! Je le savais ! C'est la fin ! (Indice : regarde le BPM que tu as mesuré !)";
           encartMed.classList.add("cache");
@@ -1271,7 +1301,6 @@
      8) Initialisation de l'Étape 1
      ================================================================ */
   selectionnerPatho("normal");
-
 
   </script>
 </body>

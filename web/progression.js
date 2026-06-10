@@ -339,3 +339,44 @@ function lancerConfettis() {
   console.log("[Progression] 📄 Données brutes:", raw);
   console.log("[Progression] 🏅 Modules validés:", modulesValides());
 })();
+
+
+/* =====================================================================
+   🛠️ CHEAT CODE DÉVELOPPEUR (Taper "admin" au clavier)
+   ===================================================================== */
+var seqTriche = "";
+document.addEventListener("keydown", function(e) {
+  // On ne capte que les touches de lettres standards
+  if (e.key && e.key.length === 1) { 
+    seqTriche += e.key.toLowerCase();
+    // On garde uniquement les 10 dernières frappes en mémoire
+    if (seqTriche.length > 10) seqTriche = seqTriche.slice(-10);
+
+    // Si on détecte le mot magique
+    if (seqTriche.includes("admin")) {
+      seqTriche = ""; // On reset
+      
+      var prog = _lireProgression();
+      // On boucle sur absolument tous les badges existants
+      Object.keys(BADGES).forEach(function(id) {
+        prog[id] = { 
+          badge: BADGES[id].nom, 
+          date: new Date().toISOString() 
+        };
+      });
+      
+      // On sauvegarde la triche
+      _ecrireProgression(prog);
+      sessionStorage.removeItem("module_recent"); // Évite de lancer une animation
+      
+      alert("🛠️ MODE DÉVELOPPEUR ACTIVÉ : Tous les modules sont débloqués !");
+      
+      // Téléportation sur la carte principale pour voir le résultat
+      if (!window.location.pathname.endsWith("index.html")) {
+        window.location.href = "index.html";
+      } else {
+        window.location.reload();
+      }
+    }
+  }
+});

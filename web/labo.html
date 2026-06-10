@@ -814,6 +814,7 @@
   function allerEtape(n) {
     // Verrouillage : impossible d'aller à une étape non encore débloquée
     if (n > etapeMax) { majPastilles(); return; }
+    if (typeof jouerSon === 'function') jouerSon('pop', 0.4);
 
     etapeActuelle = n; modeClicActif = false;
     document.getElementById("graphe").style.cursor = (n === 3) ? "crosshair" : "default";
@@ -951,7 +952,12 @@
     idx = trouverSommetProche(propre, idx, Math.round(0.12 * FE));
     const seuilProche = Math.round(0.20 * FE);
     const dejaLa = picsChoisis.findIndex(function (p) { return Math.abs(p - idx) < seuilProche; });
-    if (dejaLa >= 0) picsChoisis.splice(dejaLa, 1); else picsChoisis.push(idx);
+    if (dejaLa >= 0) {
+      picsChoisis.splice(dejaLa, 1);
+    } else {
+      picsChoisis.push(idx);
+      if (typeof jouerSon === 'function') jouerSon('pop', 0.4);
+    }
     majCompteur();
     tracer(propre, "#0b7a55", plageActuelle, [{ indices: picsChoisis, couleur: "#f59e0b" }]);
   }
@@ -965,6 +971,7 @@
     msg.className = "message";
     const reussi = (r.total > 0) && (r.trouves >= r.total - 1) && (r.faux <= 1);
     if (reussi) {
+      if (typeof jouerSon === 'function') jouerSon('succes', 0.6);
       modeClicActif = false;
       msg.classList.add("bon");
       msg.textContent = "✅ Bien joué ! Tu as trouvé " + r.trouves + " battements sur " + r.total +
@@ -977,6 +984,7 @@
       document.getElementById("btnEffacer").classList.add("cache");
       document.getElementById("btnFinir").classList.remove("cache");
     } else {
+      if (typeof jouerSon === 'function') jouerSon('erreur', 0.4);
       msg.classList.add("pas-encore");
       msg.textContent = "❌ Pas encore : " + r.trouves + " bon(s), " + r.manques + " oublié(s), " +
         r.faux + " erreur(s). Indice : un pic R, c'est les pics les PLUS HAUTS et bien réguliers. Réessaie !";
@@ -1147,6 +1155,7 @@
     var NMAP = { breath: 'on-breath', move: 'on-move', elec: 'on-elec' };
     function bindNoise(type, id) {
       document.getElementById(id).addEventListener('click', function () {
+        if (typeof jouerSon === 'function') jouerSon('pop', 0.3);
         st.noise[type] = !st.noise[type];
         this.classList.toggle(NMAP[type], st.noise[type]);
       });
@@ -1173,6 +1182,23 @@
     var e = parseInt(params.get('etape'), 10);
     if (isNaN(e) || e < 0 || e > 3) e = 0;
     if (e > etapeMax) e = etapeMax;   // on ne saute pas une étape verrouillée
+
+    /* --- Audio des curseurs (Anti-Superposition) --- */
+    var audioCurseur = new Audio("audio/trace.mp3");
+    audioCurseur.volume = 0.12;
+    var dernierSonCurseur = 0;
+
+    document.querySelectorAll('input[type="range"]').forEach(function(range) {
+      range.addEventListener('input', function() {
+        var mnt = Date.now();
+        if (mnt - dernierSonCurseur > 80) {
+          audioCurseur.currentTime = 0;
+          audioCurseur.play().catch(function(e){});
+          dernierSonCurseur = mnt;
+        }
+      });
+    });
+
     allerEtape(e);
   })();
   </script>
